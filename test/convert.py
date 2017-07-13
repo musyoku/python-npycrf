@@ -116,11 +116,6 @@ def compute_z_markov(markov_weights, edge, apply_exp=True):
 		if apply_exp:
 			return math.exp(x)
 		return x
-	print("compute z")
-	if apply_exp:
-		print(np.exp(markov_weights))
-	else:
-		print(markov_weights)
 	for t in range(3, edge):
 		z[t][1] = z[t - 1][0] * exp(markov_weights[t][1][0]) + z[t - 1][1] * exp(markov_weights[t][1][1])
 		z[t][0] = z[t - 1][0] * exp(markov_weights[t][0][0]) + z[t - 1][1] * exp(markov_weights[t][0][1])
@@ -154,21 +149,23 @@ def test_markov_to_semi_markov_conversion():
 	semi_markov_prob = convert_markov_to_semi_markov(markov_weights)
 	alpha2 = generate_forward_table_from_semi_markov_prob(semi_markov_prob)
 	_markov_weights = convert_semi_markov_to_markov(semi_markov_prob)
-	print("markov")
-	print(markov_weights)
-	print("semi-markov")
-	print(semi_markov_prob)
-	print("markov")
-	print(_markov_weights)
-	raise Exception()
+	# print("markov")
+	# print(markov_weights)
+	# print("semi-markov")
+	# print(semi_markov_prob)
+	# print("markov")
+	# print(_markov_weights)
 	z_markov = compute_z_markov(markov_weights, seq_length - 2)
 	_z_markov = compute_z_markov(_markov_weights, seq_length - 2, False)
-	print("z")
-	print(z_markov, _z_markov)
-	print(alpha1 / (np.sum(alpha1, axis=1, keepdims=True) + 1e-16))
-	print(alpha2 / (np.sum(alpha2, axis=1, keepdims=True) + 1e-16))
-	print(np.exp(markov_weights) / z_markov)
-	print(np.exp(_markov_weights) / _z_markov)
+	# print("z")
+	# print(z_markov, _z_markov)
+	# print(alpha1 / (np.sum(alpha1, axis=1, keepdims=True) + 1e-16))
+	# print(alpha2 / (np.sum(alpha2, axis=1, keepdims=True) + 1e-16))
+	# print(np.exp(markov_weights) / z_markov)
+	# print(np.exp(_markov_weights) / _z_markov)
+
+def convert_markov_path_to_semi_markov_path(path):
+	pass
 
 def test_semi_markov_to_markov_conversion():
 	semi_markov_prob = np.random.normal(0, 1, size=(seq_length + 1, max_word_length + 1, max_word_length + 1))
@@ -176,7 +173,11 @@ def test_semi_markov_to_markov_conversion():
 	semi_markov_prob[0] = 0
 	semi_markov_prob[:, 0] = 0
 	semi_markov_prob[:, :, 0] = 0
+	print(semi_markov_prob)
 	markov_weights = convert_semi_markov_to_markov(semi_markov_prob)
+	print(markov_weights)
+	z = compute_z_markov(markov_weights, seq_length - 1)
+	print(z)
 
 if __name__ == "__main__":
 	np.random.seed(0)
