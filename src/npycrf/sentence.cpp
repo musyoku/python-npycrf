@@ -5,9 +5,13 @@
 // <bos>と<eos>は長さが0文字であることに注意
 
 namespace npylm {
-	Sentence::Sentence(std::wstring sentence){
+	Sentence::Sentence(std::wstring sentence, int* character_ids){
 		_sentence_str = sentence;
 		_characters = _sentence_str.data();
+		_character_ids = new int[size()];
+		for(int i = 0;i < size();i++){
+			_character_ids[i] = character_ids[i];
+		}
 		_word_ids = new id[size() + 3];
 		_segments = new int[size() + 3];
 		_start = new int[size() + 3];
@@ -30,10 +34,11 @@ namespace npylm {
 		_num_segments = 4;
 		_supervised = false;
 	}
-	Sentence::Sentence(std::wstring sentence, bool supervised): Sentence(sentence){
+	Sentence::Sentence(std::wstring sentence, int* character_ids, bool supervised): Sentence(sentence, character_ids){
 		_supervised = supervised;
 	}
 	Sentence::~Sentence(){
+		delete[] _character_ids;
 		delete[] _segments;
 		delete[] _start;
 		delete[] _word_ids;
