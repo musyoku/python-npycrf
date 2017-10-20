@@ -2,20 +2,20 @@
 
 namespace npycrf {
 	namespace crf {
-		CRF::CRF(int feature_x_unigram_start = -2,
-				 int feature_x_unigram_end = 2,
-				 int feature_x_bigram_start = -2,
-				 int feature_x_bigram_end = 1,
-				 int feature_x_identical_1_start = -2,
-				 int feature_x_identical_1_end = 1,
-				 int feature_x_identical_2_start = -3,
-				 int feature_x_identical_2_end = 1,
-				 int num_character_ids,
-				 int num_character_types)
+		CRF::CRF(int num_character_ids,
+				 int num_character_types,
+				 int feature_x_unigram_start,
+				 int feature_x_unigram_end,
+				 int feature_x_bigram_start,
+				 int feature_x_bigram_end,
+				 int feature_x_identical_1_start,
+				 int feature_x_identical_1_end,
+				 int feature_x_identical_2_start,
+				 int feature_x_identical_2_end)
 		{
 			_num_character_ids = num_character_ids;
 			_num_character_types = num_character_types;
-			bias = 0;
+			_bias = 0;
 			_x_range_unigram = feature_x_unigram_end - feature_x_unigram_start + 1;
 			_x_range_bigram = feature_x_bigram_end - feature_x_bigram_end + 1;
 			_x_range_identical_1 = feature_x_identical_1_end - feature_x_identical_1_start + 1;
@@ -77,7 +77,7 @@ namespace npycrf {
 			}
 			// (y_{i-1}, y_i, type)
 			_w_size_unigram_type_b = 2 * 2 * num_character_types;
-			_w_unigram_type_b = new double_w_size_unigram_type_b[]
+			_w_unigram_type_b = new double[_w_size_unigram_type_b];
 			// (y_i, type, type);
 			_w_size_bigram_type_u = 2 * num_character_types * num_character_types;
 			_w_bigram_type_u = new double[_w_size_bigram_type_u];
@@ -104,12 +104,12 @@ namespace npycrf {
 			assert(index < _w_size_unigram_b);
 			return _w_unigram_b[index];
 		}
-		double CRF::get_w_bigram_u(int y_i, int i, x_i_1, int x_i){
+		double CRF::get_w_bigram_u(int y_i, int i, int x_i_1, int x_i){
 			int index = x_i * _num_character_ids * _x_range_bigram * 2 + x_i_1 * _x_range_bigram * 2 + i * 2 + y_i;
 			assert(index < _w_size_bigram_u);
 			return _w_bigram_u[index];
 		}
-		double CRF::get_w_bigram_b(int y_i_1, int y_i, int i, x_i_1, int x_i){
+		double CRF::get_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
 			int index = x_i * _num_character_ids * _x_range_bigram * 2 * 2 + x_i_1 * _x_range_bigram * 2 * 2 + i * 2 * 2 + y_i * 2 + y_i_1;
 			assert(index < _w_size_bigram_b);
 			return _w_bigram_b[index];

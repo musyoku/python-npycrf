@@ -50,22 +50,22 @@ namespace npycrf {
 			// i-2, i-1, i, i+1において、x_i == x_{i+1}
 			// i-3, i-2, i-1, i, i+1において、x_i == x_{i+2}
 			// これらの素性を[y_i]と[y_{i-1}, y_i]に関連づける
-			CRF(int feature_x_unigram_start = -2,
+			CRF(int num_character_ids,		// 文字IDの総数
+				int num_character_types,	// 文字種の総数
+				int feature_x_unigram_start = -2,
 				int feature_x_unigram_end = 2,
 				int feature_x_bigram_start = -2,
 				int feature_x_bigram_end = 1,
 				int feature_x_identical_1_start = -2,
 				int feature_x_identical_1_end = 1,
 				int feature_x_identical_2_start = -3,
-				int feature_x_identical_2_end = 1,
-				int num_character_ids,		// 文字IDの総数
-				int num_character_types,	// 文字種の総数
+				int feature_x_identical_2_end = 1
 			);
 			double get_bias();
 			double get_w_unigram_u(int y_i, int i, int x_i);
 			double get_w_unigram_b(int y_i_1, int y_i, int i, int x_i);
-			double get_w_bigram_u(int y_i, int i, x_i_1, int x_i);
-			double get_w_bigram_b(int y_i_1, int y_i, int i, x_i_1, int x_i);
+			double get_w_bigram_u(int y_i, int i, int x_i_1, int x_i);
+			double get_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i);
 			double get_w_identical_1_u(int y_i, int i);
 			double get_w_identical_1_b(int y_i_1, int y_i, int i);
 			double get_w_identical_2_u(int y_i, int i);
