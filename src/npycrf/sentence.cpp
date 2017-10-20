@@ -44,7 +44,7 @@ namespace npylm {
 		delete[] _word_ids;
 	}
 	Sentence* Sentence::copy(){
-		Sentence* sentence = new Sentence(_sentence_str);
+		Sentence* sentence = new Sentence(_sentence_str, _character_ids);
 		return sentence;
 	}
 	bool Sentence::is_supervised(){

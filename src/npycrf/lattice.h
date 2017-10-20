@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
-#include "../common.h"
-#include "npylm.h"
+#include "common.h"
+#include "npylm/npylm.h"
 
 namespace npylm {
 	namespace lattice {

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <iostream>
-#include "../hash.h"
-#include "../sampler.h"
+#include "hash.h"
+#include "sampler.h"
 #include "lattice.h"
 
 // ＿人人人人人人人人人人人人人人人人人人人人人人人人人人人人＿

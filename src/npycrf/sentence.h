@@ -13,7 +13,7 @@ namespace npylm {
 		int* _start;		// <bos>2つが先頭に来る
 		bool _supervised;	// 教師データかどうか
 		wchar_t const* _characters; // _sentence_strの各文字. 実際には使わない
-		int const* _character_ids; 	// _sentence_strの各文字のid. 実際に使われるのはこっち
+		int* _character_ids; 	// _sentence_strの各文字のid. 実際に使われるのはこっち
 		id* _word_ids;		// <bos>2つと<eos>1つを含める
 		std::wstring _sentence_str;	// 生の文データ
 		Sentence(std::wstring sentence, int* character_ids);
