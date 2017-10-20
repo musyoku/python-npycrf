@@ -26,6 +26,18 @@ namespace npycrf {
 			int _x_range_identical_2;
 			int _num_character_ids;
 			int _num_character_types;
+			double _index_w_unigram_u(int y_i, int i, int x_i);
+			double _index_w_unigram_b(int y_i_1, int y_i, int i, int x_i);
+			double _index_w_bigram_u(int y_i, int i, int x_i_1, int x_i);
+			double _index_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i);
+			double _index_w_identical_1_u(int y_i, int i);
+			double _index_w_identical_1_b(int y_i_1, int y_i, int i);
+			double _index_w_identical_2_u(int y_i, int i);
+			double _index_w_identical_2_b(int y_i_1, int y_i, int i);
+			double _index_w_unigram_type_u(int y_i, int type_i);
+			double _index_w_unigram_type_b(int y_i_1, int y_i, int type_i);
+			double _index_w_bigram_type_u(int y_i, int type_i_1, int type_i);
+			double _index_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i);
 		public:
 			// y ∈ {0,1}
 			// x ∈ Z
@@ -61,19 +73,31 @@ namespace npycrf {
 				int feature_x_identical_2_start = -3,
 				int feature_x_identical_2_end = 1
 			);
-			double get_bias();
-			double get_w_unigram_u(int y_i, int i, int x_i);
-			double get_w_unigram_b(int y_i_1, int y_i, int i, int x_i);
-			double get_w_bigram_u(int y_i, int i, int x_i_1, int x_i);
-			double get_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i);
-			double get_w_identical_1_u(int y_i, int i);
-			double get_w_identical_1_b(int y_i_1, int y_i, int i);
-			double get_w_identical_2_u(int y_i, int i);
-			double get_w_identical_2_b(int y_i_1, int y_i, int i);
-			double get_w_unigram_type_u(int y_i, int type_i);
-			double get_w_unigram_type_b(int y_i_1, int y_i, int type_i);
-			double get_w_bigram_type_u(int y_i, int type_i_1, int type_i);
-			double get_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i);
+			double bias();
+			double w_unigram_u(int y_i, int i, int x_i);
+			double w_unigram_b(int y_i_1, int y_i, int i, int x_i);
+			double w_bigram_u(int y_i, int i, int x_i_1, int x_i);
+			double w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i);
+			double w_identical_1_u(int y_i, int i);
+			double w_identical_1_b(int y_i_1, int y_i, int i);
+			double w_identical_2_u(int y_i, int i);
+			double w_identical_2_b(int y_i_1, int y_i, int i);
+			double w_unigram_type_u(int y_i, int type_i);
+			double w_unigram_type_b(int y_i_1, int y_i, int type_i);
+			double w_bigram_type_u(int y_i, int type_i_1, int type_i);
+			double w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i);
+			void set_w_unigram_u(int y_i, int i, int x_i, double value);
+			void set_w_unigram_b(int y_i_1, int y_i, int i, int x_i, double value);
+			void set_w_bigram_u(int y_i, int i, int x_i_1, int x_i, double value);
+			void set_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i, double value);
+			void set_w_identical_1_u(int y_i, int i, double value);
+			void set_w_identical_1_b(int y_i_1, int y_i, int i, double value);
+			void set_w_identical_2_u(int y_i, int i, double value);
+			void set_w_identical_2_b(int y_i_1, int y_i, int i, double value);
+			void set_w_unigram_type_u(int y_i, int type_i, double value);
+			void set_w_unigram_type_b(int y_i_1, int y_i, int type_i, double value);
+			void set_w_bigram_type_u(int y_i, int type_i_1, int type_i, double value);
+			void set_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i, double value);
 		};
 	}
 }
