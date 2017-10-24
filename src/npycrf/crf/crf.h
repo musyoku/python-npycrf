@@ -99,7 +99,9 @@ namespace npycrf {
 			void set_w_unigram_type_b(int y_i_1, int y_i, int type_i, double value);
 			void set_w_bigram_type_u(int y_i, int type_i_1, int type_i, double value);
 			void set_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i, double value);
-			double compute_trigram_potential(wchar_t const* character_ids, int character_ids_length, int t, int k, int j);
+			double compute_trigram_potential(int const* character_ids, wchar_t const* characters, int character_ids_length, int t, int k, int j);
+			double compute_gamma(int const* character_ids, wchar_t const* characters, int character_ids_length, int s, int t);
+			double compute_path_cost(int const* character_ids, wchar_t const* characters, int character_ids_length, int i_1, int i, int y_i_1, int y_i);
 		};
 	}
 }
