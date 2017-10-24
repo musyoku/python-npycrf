@@ -8,18 +8,6 @@ namespace npycrf {
 	namespace crf {
 		class CRF {
 		private:
-			int _w_size_unigram_u;		// (y_i, i, x_i)
-			int _w_size_unigram_b;		// (y_{i-1}, y_i, i, x_i)
-			int _w_size_bigram_u;		// (y_i, i, x_{i-1}, x_i)
-			int _w_size_bigram_b;		// (y_{i-1}, y_i, i, x_{i-1}, x_i)
-			int _w_size_identical_1_u;	// (y_i, i)
-			int _w_size_identical_1_b;	// (y_{i-1}, y_i, i)
-			int _w_size_identical_2_u;	// (y_i, i)
-			int _w_size_identical_2_b;	// (y_{i-1}, y_i, i)
-			int _w_size_unigram_type_u;	// (y_i, type)
-			int _w_size_unigram_type_b;	// (y_{i-1}, y_i, type)
-			int _w_size_bigram_type_u;	// (y_i, type, type)
-			int _w_size_bigram_type_b;	// (y_{i-1}, y_i, type, type)
 			int _x_range_unigram;
 			int _x_range_bigram;
 			int _x_range_identical_1;
@@ -43,6 +31,18 @@ namespace npycrf {
 			// x ∈ Z
 			// i ∈ Z
 			// type ∈ Z
+			int _w_size_unigram_u;		// (y_i, i, x_i)
+			int _w_size_unigram_b;		// (y_{i-1}, y_i, i, x_i)
+			int _w_size_bigram_u;		// (y_i, i, x_{i-1}, x_i)
+			int _w_size_bigram_b;		// (y_{i-1}, y_i, i, x_{i-1}, x_i)
+			int _w_size_identical_1_u;	// (y_i, i)
+			int _w_size_identical_1_b;	// (y_{i-1}, y_i, i)
+			int _w_size_identical_2_u;	// (y_i, i)
+			int _w_size_identical_2_b;	// (y_{i-1}, y_i, i)
+			int _w_size_unigram_type_u;	// (y_i, type)
+			int _w_size_unigram_type_b;	// (y_{i-1}, y_i, type)
+			int _w_size_bigram_type_u;	// (y_i, type, type)
+			int _w_size_bigram_type_b;	// (y_{i-1}, y_i, type, type)
 			double _bias;
 			double* _w_unigram_u;		// (y_i, i, x_i)
 			double* _w_unigram_b;		// (y_{i-1}, y_i, i, x_i)
@@ -73,6 +73,7 @@ namespace npycrf {
 				int feature_x_identical_2_start = -3,
 				int feature_x_identical_2_end = 1
 			);
+			~CRF();
 			double bias();
 			double w_unigram_u(int y_i, int i, int x_i);
 			double w_unigram_b(int y_i_1, int y_i, int i, int x_i);

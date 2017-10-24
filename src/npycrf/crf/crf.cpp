@@ -17,7 +17,7 @@ namespace npycrf {
 			_num_character_types = num_character_types;
 			_bias = 0;
 			_x_range_unigram = feature_x_unigram_end - feature_x_unigram_start + 1;
-			_x_range_bigram = feature_x_bigram_end - feature_x_bigram_end + 1;
+			_x_range_bigram = feature_x_bigram_end - feature_x_bigram_start + 1;
 			_x_range_identical_1 = feature_x_identical_1_end - feature_x_identical_1_start + 1;
 			_x_range_identical_2 = feature_x_identical_2_end - feature_x_identical_2_start + 1;
 
@@ -90,6 +90,20 @@ namespace npycrf {
 			for(int i = 0;i < _w_size_bigram_type_b;i++){
 				_w_bigram_type_b[i] = 0;
 			}
+		}
+		CRF::~CRF(){
+			delete[] _w_unigram_u;
+			delete[] _w_unigram_b;
+			delete[] _w_bigram_u;
+			delete[] _w_bigram_b;
+			delete[] _w_identical_1_u;
+			delete[] _w_identical_1_b;
+			delete[] _w_identical_2_u;
+			delete[] _w_identical_2_b;
+			delete[] _w_unigram_type_u;
+			delete[] _w_unigram_type_b;
+			delete[] _w_bigram_type_u;
+			delete[] _w_bigram_type_b;
 		}
 		double CRF::bias(){
 			return _bias;
