@@ -264,5 +264,11 @@ namespace npycrf {
 			int index = _index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 			_w_bigram_type_b[index] = value;
 		}
+		// γ(t - k - j, t - k, t)
+		double CRF::compute_trigram_potential(wchar_t const* character_ids, int character_ids_length, int t, int k, int j){
+			assert(t < character_ids_length);
+			assert(k < character_ids_length);
+			assert(j < character_ids_length);
+		}
 	}
 }
