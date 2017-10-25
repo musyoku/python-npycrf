@@ -8,7 +8,8 @@
 // ＞　Latticeでは文字のインデックスtが1から始まることに注意　＜
 // ￣Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y^Y￣
 
-namespace npylm {
+namespace npycrf {
+	using namespace npylm;
 	namespace lattice {
 		void _init_alpha(double*** &alpha, int size, int max_word_length){
 			alpha = new double**[size];

@@ -1,3 +1,4 @@
+#include <iostream>
 #include "../ctype.h"
 #include "crf.h"
 
@@ -296,32 +297,50 @@ namespace npycrf {
 			}
 			return sum_cost;
 		}
-		// パスのコストを計算
+		// 隣接するノード間のパスのコストを計算
 		// yはクラス（0か1）
-		// iはノードの位置（1スタートなので注意。インデックスではない）
+		// iはノードの位置（1スタートなので注意。インデックスではない.ただし実際は隣接ノードが取れるi>=2のみ可）
+		// i_1は本来引数に与える必要はないがわかりやすさのため
 		double CRF::compute_path_cost(int const* character_ids, wchar_t const* characters, int character_ids_length, int i_1, int i, int y_i_1, int y_i){
-			assert(i_1 < i);
-			assert(0 < i);
+			assert(i_1 + 1 == i);
+			assert(2 <= i);
 			assert(i < character_ids_length);
 			assert(y_i == 0 || y_i == 1);
 			assert(y_i_1 == 0 || y_i_1 == 1);
 			double cost = 0;
-			int relative_index = 0;
-			// unigram features
-			for(int r = i;r > std::max(0, i - _x_range_unigram);r--){
+			cost += _compute_cost_unigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
+			cost += _compute_cost_bigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
+			cost += _compute_cost_identical_1_features(character_ids, character_ids_length, i, y_i_1, y_i);
+			cost += _compute_cost_identical_2_features(character_ids, character_ids_length, i, y_i_1, y_i);
+			cost += _compute_cost_unigram_and_bigram_type_features(character_ids, characters, character_ids_length, i, y_i_1, y_i);
+			return cost;
+		}
+		double CRF::_compute_cost_unigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
+			double cost = 0;
+			int r_end = std::max(0, i - _x_range_unigram);
+			for(int r = i;r > r_end;r--){
+				int feature_index = i - r;	// [0, _x_range_unigram)
 				int x_i = character_ids[r - 1];
-				cost += w_unigram_u(y_i, r, x_i);
-				cost += w_unigram_b(y_i_1, y_i, r, x_i);
+				cost += w_unigram_u(y_i, feature_index, x_i);
+				cost += w_unigram_b(y_i_1, y_i, feature_index, x_i);
 			}
-			// bigram features
-			for(int r = i;r > std::max(1, i - _x_range_bigram);r--){
+			return cost;
+		}
+		double CRF::_compute_cost_bigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
+			double cost = 0;
+			int r_end = std::max(0, i - _x_range_bigram);
+			for(int r = i;r > r_end;r--){
+				int feature_index = i - r;	// [0, _x_range_unigram)
 				int x_i = character_ids[r - 1];
 				int x_i_1 = character_ids[r - 2];
-				cost += w_bigram_u(y_i, r, x_i_1, x_i);
-				cost += w_bigram_b(y_i_1, y_i, r, x_i_1, x_i);
+				cost += w_bigram_u(y_i, feature_index, x_i_1, x_i);
+				cost += w_bigram_b(y_i_1, y_i, feature_index, x_i_1, x_i);
 			}
-			// identical_1 features (x_{i-1} == x_i)
-			relative_index = 0;
+			return cost;
+		}
+		double CRF::_compute_cost_identical_1_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
+			double cost = 0;
+			int relative_index = 0;
 			for(int r = i;r > std::max(1, i - _x_range_bigram);r--){
 				int x_i = character_ids[r - 1];
 				int x_i_1 = character_ids[r - 2];
@@ -331,8 +350,11 @@ namespace npycrf {
 				}
 				relative_index++;
 			}
-			// identical_2 features (x_{i-2} == x_i)
-			relative_index = 0;
+			return cost;
+		}
+		double CRF::_compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
+			double cost = 0;
+			int relative_index = 0;
 			for(int r = i;r > std::max(2, i - _x_range_bigram);r--){
 				int x_i = character_ids[r - 1];
 				int x_i_2 = character_ids[r - 3];
@@ -342,11 +364,14 @@ namespace npycrf {
 				}
 				relative_index++;
 			}
-			// unigram type features
+			return cost;
+		}
+		double CRF::_compute_cost_unigram_and_bigram_type_features(int const* character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i){
+			double cost = 0;
 			wchar_t char_i = characters[i - 1];
-			wchar_t char_i_1 = characters[i_1 - 1];
-			int type_i = npylm::ctype::get_type(char_i);
-			int type_i_1 = npylm::ctype::get_type(char_i_1);
+			wchar_t char_i_1 = characters[i - 2];
+			int type_i = ctype::get_type(char_i);
+			int type_i_1 = ctype::get_type(char_i_1);
 			cost += w_unigram_type_u(y_i, type_i);
 			cost += w_unigram_type_b(y_i_1, y_i, type_i);
 			cost += w_bigram_type_u(y_i, type_i_1, type_i);

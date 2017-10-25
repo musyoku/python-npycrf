@@ -1,7 +1,7 @@
 #include <chrono>
 #include "sampler.h"
 
-namespace npylm {
+namespace npycrf {
 	namespace sampler{
 		int seed = std::chrono::system_clock::now().time_since_epoch().count();
 		// int seed = 1;

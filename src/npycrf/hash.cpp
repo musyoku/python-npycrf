@@ -1,6 +1,6 @@
 #include "hash.h"
 
-namespace npylm{
+namespace npycrf{
 	size_t load_bytes(const char* p, int n){
 		size_t result = 0;
 		--n;
@@ -79,4 +79,4 @@ namespace npylm{
 		wchar_t const* ptr = str.data();
 		return hash_substring_ptr(ptr, start, end);
 	}
-} // namespace npylm
+} // namespace npycrf

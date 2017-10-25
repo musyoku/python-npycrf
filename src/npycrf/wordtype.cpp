@@ -2,7 +2,7 @@
 #include "ctype.h"
 #include "wordtype.h"
 
-namespace npylm {
+namespace npycrf {
 	namespace wordtype {
 		bool is_dash(wchar_t character){
 			if(character == 0x30FC){

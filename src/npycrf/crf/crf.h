@@ -8,10 +8,6 @@ namespace npycrf {
 	namespace crf {
 		class CRF {
 		private:
-			int _x_range_unigram;
-			int _x_range_bigram;
-			int _x_range_identical_1;
-			int _x_range_identical_2;
 			int _num_character_ids;
 			int _num_character_types;
 			double _index_w_unigram_u(int y_i, int i, int x_i);
@@ -31,6 +27,10 @@ namespace npycrf {
 			// x ∈ Z
 			// i ∈ Z
 			// type ∈ Z
+			int _x_range_unigram;
+			int _x_range_bigram;
+			int _x_range_identical_1;
+			int _x_range_identical_2;
 			int _w_size_unigram_u;		// (y_i, i, x_i)
 			int _w_size_unigram_b;		// (y_{i-1}, y_i, i, x_i)
 			int _w_size_bigram_u;		// (y_i, i, x_{i-1}, x_i)
@@ -102,6 +102,11 @@ namespace npycrf {
 			double compute_trigram_potential(int const* character_ids, wchar_t const* characters, int character_ids_length, int t, int k, int j);
 			double compute_gamma(int const* character_ids, wchar_t const* characters, int character_ids_length, int s, int t);
 			double compute_path_cost(int const* character_ids, wchar_t const* characters, int character_ids_length, int i_1, int i, int y_i_1, int y_i);
+			double _compute_cost_unigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
+			double _compute_cost_bigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
+			double _compute_cost_identical_1_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
+			double _compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
+			double _compute_cost_unigram_and_bigram_type_features(int const* character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i);
 		};
 	}
 }

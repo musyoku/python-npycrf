@@ -1,6 +1,6 @@
 #include "ctype.h"
 
-namespace npylm {
+namespace npycrf {
     namespace ctype {
         unsigned int get_type(wchar_t c){
             if(0x0000 <= c && c <= 0x007F){
@@ -1689,4 +1689,4 @@ namespace npylm {
             return "Unknown";
         }
     } // namespace chartype
-} // namespace npylm
+} // namespace npycrf

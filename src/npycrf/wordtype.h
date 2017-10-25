@@ -14,7 +14,7 @@
 #define WORDTYPE_KANJI_KATAKANA 8
 #define WORDTYPE_OTHER 9
 
-namespace npylm {
+namespace npycrf {
 	namespace wordtype {
 		bool is_dash(wchar_t character);
 		bool is_hiragana(wchar_t character);

@@ -3,14 +3,14 @@
 #include "common.h"
 #include "npylm/npylm.h"
 
-namespace npylm {
+namespace npycrf {
 	namespace lattice {
 		void _init_alpha(double*** &alpha, int size, int max_word_length);
 		void _delete_alpha(double*** &alpha, int size, int max_word_length);
 	}
 	class Lattice {
 	public:
-		NPYLM* _npylm;
+		npylm::NPYLM* _npylm;
 		id* _word_ids;
 		id** _substring_word_id_cache;
 		double*** _alpha;		// 前向き確率
@@ -22,7 +22,7 @@ namespace npylm {
 		int _max_word_length;
 		int _max_sentence_length;
 		bool _is_ready;
-		Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length);
+		Lattice(npylm::NPYLM* npylm, int max_word_length, int max_sentence_length);
 		~Lattice();
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
 		void allocate_arrays(int max_word_length, int max_sentence_length);

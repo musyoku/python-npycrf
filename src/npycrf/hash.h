@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace npylm {
+namespace npycrf {
 	size_t load_bytes(const char* p, int n);
 	size_t shift_mix(size_t v);
 	size_t unaligned_load(const char* p);

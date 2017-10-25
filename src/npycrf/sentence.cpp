@@ -4,7 +4,7 @@
 
 // <bos>と<eos>は長さが0文字であることに注意
 
-namespace npylm {
+namespace npycrf {
 	Sentence::Sentence(std::wstring sentence, int* character_ids){
 		_sentence_str = sentence;
 		_characters = _sentence_str.data();
@@ -151,4 +151,4 @@ namespace npylm {
 		}
 		_num_segments = num_segments_without_special_tokens + 3;
 	}
-} // namespace npylm
+} // namespace npycrf

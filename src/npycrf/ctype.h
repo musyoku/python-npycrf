@@ -283,7 +283,7 @@
 #define CTYPE_SUPPLEMENTARY_PRIVATE_USE_AREA_A 279
 #define CTYPE_SUPPLEMENTARY_PRIVATE_USE_AREA_B 280
 
-namespace npylm {
+namespace npycrf {
     namespace ctype {
         unsigned int get_type(wchar_t c);
         std::string get_name(unsigned int type);

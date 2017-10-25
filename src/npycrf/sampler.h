@@ -1,7 +1,7 @@
 #pragma once
 #include <random>
 
-namespace npylm {
+namespace npycrf {
 	namespace sampler {
 		extern std::mt19937 mt;
 		double gamma(double a, double b);
