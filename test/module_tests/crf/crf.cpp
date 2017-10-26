@@ -119,9 +119,12 @@ void test_init(){
 
 void test_compute_path_cost(){
 	std::unordered_map<wchar_t, int> _token_ids;
-	std::wstring sentence_str = L"あいうえおかきくけこさしすせそ";
+	std::wstring sentence_str = L"ああいうえええおかきくくけこさささしすせそ";
 	for(wchar_t character: sentence_str){
-		_token_ids[character] = _token_ids.size();
+		auto itr = _token_ids.find(character);
+		if(itr == _token_ids.end()){
+			_token_ids[character] = _token_ids.size();
+		}
 	}
 
 	int num_character_ids = _token_ids.size();
@@ -133,7 +136,7 @@ void test_compute_path_cost(){
 	int feature_x_identical_1_start = -2;
 	int feature_x_identical_1_end = 1;
 	int feature_x_identical_2_start = -3;
-	int feature_x_identical_2_end = 1;
+	int feature_x_identical_2_end = 2;
 	CRF* crf = new CRF(num_character_ids,
 					   num_character_types,
 					   feature_x_unigram_start,
@@ -158,7 +161,7 @@ void test_compute_path_cost(){
 	for(int i = 2;i <= sentence_str.size();i++){
 		double cost = crf->_compute_cost_unigram_features(character_ids, sentence_str.size(), i, 0, 0);
 		double true_cost = 0;
-		for(int t = std::max(0, i - crf->_x_range_unigram);t < i;t++){
+		for(int t = std::max(0, std::min((int)sentence_str.size(), i - crf->_x_range_unigram));t < i;t++){
 			true_cost += character_ids[t] * 3;
 		}
 		assert(cost == true_cost);
@@ -174,8 +177,44 @@ void test_compute_path_cost(){
 	for(int i = 2;i <= sentence_str.size();i++){
 		double cost = crf->_compute_cost_bigram_features(character_ids, sentence_str.size(), i, 0, 0);
 		double true_cost = 0;
-		for(int t = std::max(1, i - crf->_x_range_bigram);t < i;t++){
+		for(int t = std::max(1, std::min((int)sentence_str.size(), i - crf->_x_range_bigram));t < i;t++){
 			true_cost += character_ids[t] * character_ids[t - 1] * 3;
+		}
+		assert(cost == true_cost);
+	}
+	for(int i = 0;i < crf->_x_range_identical_1;i++){
+		crf->set_w_identical_1_u(0, i, i);
+		crf->set_w_identical_1_b(0, 0, i, i * 2);
+	}
+	for(int i = 1;i <= sentence_str.size();i++){
+		double cost = crf->_compute_cost_identical_1_features(character_ids, sentence_str.size(), i, 0, 0);
+		if(i < 2){
+			assert(cost == 0);
+			continue;
+		}
+		double true_cost = 0;
+		for(int r = i;r > std::max(1, i - crf->_x_range_identical_1);r--){
+			if(character_ids[r - 1] == character_ids[r - 2]){
+				true_cost += (i - r) * 3;
+			}
+		}
+		assert(cost == true_cost);
+	}
+	for(int i = 0;i < crf->_x_range_identical_2;i++){
+		crf->set_w_identical_2_u(0, i, i);
+		crf->set_w_identical_2_b(0, 0, i, i * 2);
+	}
+	for(int i = 1;i <= sentence_str.size();i++){
+		double cost = crf->_compute_cost_identical_2_features(character_ids, sentence_str.size(), i, 0, 0);
+		if(i < 3){
+			assert(cost == 0);
+			continue;
+		}
+		double true_cost = 0;
+		for(int r = i;r > std::max(2, i - crf->_x_range_identical_2);r--){
+			if(character_ids[r - 1] == character_ids[r - 3]){
+				true_cost += (i - r) * 3;
+			}
 		}
 		assert(cost == true_cost);
 	}

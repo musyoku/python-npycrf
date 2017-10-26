@@ -10,6 +10,8 @@ namespace npycrf {
 		private:
 			int _num_character_ids;
 			int _num_character_types;
+			double _index_w_label_u(int y_i);
+			double _index_w_label_b(int y_i_1, int y_i);
 			double _index_w_unigram_u(int y_i, int i, int x_i);
 			double _index_w_unigram_b(int y_i_1, int y_i, int i, int x_i);
 			double _index_w_bigram_u(int y_i, int i, int x_i_1, int x_i);
@@ -31,6 +33,8 @@ namespace npycrf {
 			int _x_range_bigram;
 			int _x_range_identical_1;
 			int _x_range_identical_2;
+			int _w_size_label_u;		// (y_i)
+			int _w_size_label_b;		// (y_{i-1}, y_i)
 			int _w_size_unigram_u;		// (y_i, i, x_i)
 			int _w_size_unigram_b;		// (y_{i-1}, y_i, i, x_i)
 			int _w_size_bigram_u;		// (y_i, i, x_{i-1}, x_i)
@@ -44,6 +48,8 @@ namespace npycrf {
 			int _w_size_bigram_type_u;	// (y_i, type, type)
 			int _w_size_bigram_type_b;	// (y_{i-1}, y_i, type, type)
 			double _bias;
+			double* _w_label_u;			// (y_i)
+			double* _w_label_b;			// (y_{i-1}, y_i)
 			double* _w_unigram_u;		// (y_i, i, x_i)
 			double* _w_unigram_b;		// (y_{i-1}, y_i, i, x_i)
 			double* _w_bigram_u;		// (y_i, i, x_{i-1}, x_i)
@@ -56,7 +62,7 @@ namespace npycrf {
 			double* _w_unigram_type_b;	// (y_{i-1}, y_i, type)
 			double* _w_bigram_type_u;	// (y_i, type, type)
 			double* _w_bigram_type_b;	// (y_{i-1}, y_i, type, type)
-			// 用いる素性は以下の4通り（デフォルト値の例）[1]
+			// 用いるxに関する素性は以下の4通り（デフォルト値の例）[1]
 			// i-2, i-1, i, i+1, i+2の位置のunigram文字
 			// i-2, i-1, i, i+1の位置のbigram文字
 			// i-2, i-1, i, i+1において、x_i == x_{i+1}
@@ -75,6 +81,8 @@ namespace npycrf {
 			);
 			~CRF();
 			double bias();
+			double w_label_u(int y_i);
+			double w_label_b(int y_i_1, int y_i);
 			double w_unigram_u(int y_i, int i, int x_i);
 			double w_unigram_b(int y_i_1, int y_i, int i, int x_i);
 			double w_bigram_u(int y_i, int i, int x_i_1, int x_i);
@@ -87,6 +95,8 @@ namespace npycrf {
 			double w_unigram_type_b(int y_i_1, int y_i, int type_i);
 			double w_bigram_type_u(int y_i, int type_i_1, int type_i);
 			double w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i);
+			void set_w_label_u(int y_i, double value);
+			void set_w_label_b(int y_i_1, int y_i, double value);
 			void set_w_unigram_u(int y_i, int i, int x_i, double value);
 			void set_w_unigram_b(int y_i_1, int y_i, int i, int x_i, double value);
 			void set_w_bigram_u(int y_i, int i, int x_i_1, int x_i, double value);

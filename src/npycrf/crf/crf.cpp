@@ -22,6 +22,20 @@ namespace npycrf {
 			_x_range_bigram = feature_x_bigram_end - feature_x_bigram_start + 1;
 			_x_range_identical_1 = feature_x_identical_1_end - feature_x_identical_1_start + 1;
 			_x_range_identical_2 = feature_x_identical_2_end - feature_x_identical_2_start + 1;
+			
+			// (y_i)
+			_w_size_label_u = 2;
+			_w_label_u = new double[_w_size_label_u];
+			for(int i = 0;i < _w_size_label_u;i++){
+				_w_label_u[i] = 0;
+			}
+			
+			// (y_{i-1}, y_i)
+			_w_size_label_b = 2 * 2;
+			_w_label_b = new double[_w_size_label_b];
+			for(int i = 0;i < _w_size_label_b;i++){
+				_w_label_b[i] = 0;
+			}
 
 			// (y_i, i, x_i)
 			_w_size_unigram_u = 2 * _x_range_unigram * num_character_ids;
@@ -110,6 +124,16 @@ namespace npycrf {
 		double CRF::bias(){
 			return _bias;
 		}
+		double CRF::_index_w_label_u(int y_i){
+			int index = y_i;
+			assert(index < _w_size_label_u);
+			return index;
+		}
+		double CRF::_index_w_label_b(int y_i_1, int y_i){
+			int index =  y_i_1 * 2 + y_i;
+			assert(index < _w_size_label_b);
+			return index;
+		}
 		double CRF::_index_w_unigram_u(int y_i, int i, int x_i){
 			int index = x_i * _x_range_unigram * 2 + i * 2 + y_i;
 			assert(index < _w_size_unigram_u);
@@ -170,6 +194,14 @@ namespace npycrf {
 			assert(index < _w_size_bigram_type_b);
 			return index;
 		}
+		double CRF::w_label_u(int y_i){
+			int index = _index_w_label_u(y_i);
+			return _w_label_u[index];
+		}
+		double CRF::w_label_b(int y_i_1, int y_i){
+			int index = _index_w_label_b(y_i_1, y_i);
+			return _w_label_b[index];
+		}
 		double CRF::w_unigram_u(int y_i, int i, int x_i){
 			int index = _index_w_unigram_u(y_i, i, x_i);
 			return _w_unigram_u[index];
@@ -217,6 +249,12 @@ namespace npycrf {
 		double CRF::w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
 			int index = _index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 			return _w_bigram_type_b[index];
+		}
+		void set_w_label_u(int y_i, double value){
+
+		}
+		void set_w_label_b(int y_i_1, int y_i, double value){
+
 		}
 		void CRF::set_w_unigram_u(int y_i, int i, int x_i, double value){
 			int index = _index_w_unigram_u(y_i, i, x_i);
@@ -328,9 +366,9 @@ namespace npycrf {
 		}
 		double CRF::_compute_cost_bigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			int r_end = std::max(0, i - _x_range_bigram);
+			int r_end = std::max(1, i - _x_range_bigram);
 			for(int r = i;r > r_end;r--){
-				int feature_index = i - r;	// [0, _x_range_unigram)
+				int feature_index = i - r;	// [0, _x_range_bigram)
 				int x_i = character_ids[r - 1];
 				int x_i_1 = character_ids[r - 2];
 				cost += w_bigram_u(y_i, feature_index, x_i_1, x_i);
@@ -340,29 +378,31 @@ namespace npycrf {
 		}
 		double CRF::_compute_cost_identical_1_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			int relative_index = 0;
-			for(int r = i;r > std::max(1, i - _x_range_bigram);r--){
+			int feature_index = 0;	// [0, _x_range_identical_1)
+			int r_end = std::max(1, i - _x_range_identical_1);
+			for(int r = i;r > r_end;r--){
 				int x_i = character_ids[r - 1];
 				int x_i_1 = character_ids[r - 2];
 				if(x_i == x_i_1){
-					cost += w_identical_1_u(y_i, relative_index);
-					cost += w_identical_1_b(y_i_1, y_i, relative_index);
+					cost += w_identical_1_u(y_i, feature_index);
+					cost += w_identical_1_b(y_i_1, y_i, feature_index);
 				}
-				relative_index++;
+				feature_index++;
 			}
 			return cost;
 		}
 		double CRF::_compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			int relative_index = 0;
-			for(int r = i;r > std::max(2, i - _x_range_bigram);r--){
+			int feature_index = 0;
+			int r_end = std::max(2, i - _x_range_identical_2);
+			for(int r = i;r > r_end;r--){
 				int x_i = character_ids[r - 1];
 				int x_i_2 = character_ids[r - 3];
 				if(x_i == x_i_2){
-					cost += w_identical_2_u(y_i, relative_index);
-					cost += w_identical_2_b(y_i_1, y_i, relative_index);
+					cost += w_identical_2_u(y_i, feature_index);
+					cost += w_identical_2_b(y_i_1, y_i, feature_index);
 				}
-				relative_index++;
+				feature_index++;
 			}
 			return cost;
 		}
