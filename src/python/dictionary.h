@@ -1,14 +1,17 @@
 #pragma once
-#include <unordered_set>
+#include "../npycrf/common.h"
 
-namespace npylm {
-	class Dictionary{
-	public:
-		std::unordered_set<wchar_t> _all_characters;	// すべての文字
-		Dictionary(){}
-		void add_character(wchar_t character);
-		int get_num_characters();
-		bool load(std::string filename);
-		bool save(std::string filename);
-	};
+namespace npycrf {
+	namespace python {
+		class Dictionary{
+		public:
+			hashmap<wchar_t, int> _map_character_ids;	// すべての文字
+			Dictionary(){}
+			int add_character(wchar_t character);
+			int get_character_id(wchar_t character);
+			int get_num_characters();
+			bool load(std::string filename);
+			bool save(std::string filename);
+		};
+	}
 }

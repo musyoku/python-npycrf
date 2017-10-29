@@ -108,6 +108,8 @@ namespace npycrf {
 			}
 		}
 		CRF::~CRF(){
+			delete[] _w_label_u;
+			delete[] _w_label_b;
 			delete[] _w_unigram_u;
 			delete[] _w_unigram_b;
 			delete[] _w_bigram_u;
@@ -417,6 +419,19 @@ namespace npycrf {
 			cost += w_bigram_type_u(y_i, type_i_1, type_i);
 			cost += w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 			return cost;
+		}
+		template <class Archive>
+		void CRF::serialize(Archive &archive, unsigned int version)
+		{
+			boost::serialization::split_member(archive, *this, version);
+		}
+		template void CRF::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
+		template void CRF::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
+		void CRF::save(boost::archive::binary_oarchive &archive, unsigned int version) const {
+
+		}
+		void CRF::load(boost::archive::binary_iarchive &archive, unsigned int version) {
+			
 		}
 	}
 }

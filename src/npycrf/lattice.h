@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "common.h"
+#include "crf/crf.h"
 #include "npylm/npylm.h"
 
 namespace npycrf {
@@ -11,6 +12,7 @@ namespace npycrf {
 	class Lattice {
 	public:
 		npylm::NPYLM* _npylm;
+		crf::CRF* _crf;
 		id* _word_ids;
 		id** _substring_word_id_cache;
 		double*** _alpha;		// 前向き確率
@@ -21,8 +23,7 @@ namespace npycrf {
 		int*** _viterbi_backward;
 		int _max_word_length;
 		int _max_sentence_length;
-		bool _is_ready;
-		Lattice(npylm::NPYLM* npylm, int max_word_length, int max_sentence_length);
+		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, int max_word_length, int max_sentence_length);
 		~Lattice();
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
 		void allocate_arrays(int max_word_length, int max_sentence_length);

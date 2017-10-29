@@ -40,10 +40,10 @@ namespace npycrf {
 			alpha = NULL;
 		}
 	}
-	Lattice::Lattice(NPYLM* npylm, int max_word_length, int max_sentence_length){
+	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, int max_word_length, int max_sentence_length){
 		_npylm = npylm;
+		_crf = crf;
 		_word_ids = new id[4];	// 3-gramなので<bos><bos>単語<eos>の最低4つ
-		_is_ready = false;
 		_alpha = NULL;
 		_normalized_alpha = NULL;
 		_pw_h = NULL;
@@ -203,15 +203,15 @@ namespace npycrf {
 			assert(pw_h > 0);
 
 			#ifdef __DEBUG__
-			if(value == 0){
-				std::cout << pw_h << std::endl;
-				if(normalized_alpha == NULL){
-					std::cout << _alpha[t - k][j][i] << std::endl;
-				}else{
-					std::cout << normalized_alpha[t - k][j][i] << " (normalized)" << std::endl;
+				if(value == 0){
+					std::cout << pw_h << std::endl;
+					if(normalized_alpha == NULL){
+						std::cout << _alpha[t - k][j][i] << std::endl;
+					}else{
+						std::cout << normalized_alpha[t - k][j][i] << " (normalized)" << std::endl;
+					}
+					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
-				std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
-			}
 			#endif
 
 			assert(value > 0);
@@ -361,13 +361,13 @@ namespace npycrf {
 				}else{
 					pw_h = _pw_h[t + next_word_length][next_word_length][k][j];
 					#ifdef __DEBUG__
-					double pw_h2 = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
-					if(pw_h != pw_h2){
-						std::cout << "t = " << t << ", k = " << k << ", j = " << j << std::endl;
-						std::cout << "next_word_length = " << next_word_length << std::endl;
-						std::cout << "size = " << sentence->size() << std::endl;
-					}
-					assert(pw_h == pw_h2);
+						double pw_h2 = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
+						if(pw_h != pw_h2){
+							std::cout << "t = " << t << ", k = " << k << ", j = " << j << std::endl;
+							std::cout << "next_word_length = " << next_word_length << std::endl;
+							std::cout << "size = " << sentence->size() << std::endl;
+						}
+						assert(pw_h == pw_h2);
 					#endif
 				}
 				assert(backward_alpha[t][k][j] > 0);
@@ -399,13 +399,13 @@ namespace npycrf {
 				}else{
 					pw_h = _pw_h[t + next_word_length][next_word_length][k][0];
 					#ifdef __DEBUG__
-					double pw_h2 = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
-					if(pw_h != pw_h2){
-						std::cout << "t = " << t << ", k = " << k << ", j = " << 0 << std::endl;
-						std::cout << "next_word_length = " << next_word_length << std::endl;
-						std::cout << "size = " << sentence->size() << std::endl;
-					}
-					assert(pw_h == pw_h2);
+						double pw_h2 = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t, t + next_word_length - 1);
+						if(pw_h != pw_h2){
+							std::cout << "t = " << t << ", k = " << k << ", j = " << 0 << std::endl;
+							std::cout << "next_word_length = " << next_word_length << std::endl;
+							std::cout << "size = " << sentence->size() << std::endl;
+						}
+						assert(pw_h == pw_h2);
 					#endif
 				}
 				assert(backward_alpha[t][k][0] > 0);
@@ -454,20 +454,20 @@ namespace npycrf {
 		int size = sentence->size() + 1;
 
 		#ifdef __DEBUG__
-		for(int t = 0;t < size;t++){
-			_log_z[t] = 0;
-			for(int k = 0;k < _max_word_length + 1;k++){
-				for(int j = 0;j < _max_word_length + 1;j++){
-					_alpha[t][k][j] = -1;
-					_normalized_alpha[t][k][j] = -1;
+			for(int t = 0;t < size;t++){
+				_log_z[t] = 0;
+				for(int k = 0;k < _max_word_length + 1;k++){
+					for(int j = 0;j < _max_word_length + 1;j++){
+						_alpha[t][k][j] = -1;
+						_normalized_alpha[t][k][j] = -1;
+					}
 				}
 			}
-		}
-		for(int k = 0;k < _max_word_length;k++){
-			for(int j = 0;j < _max_word_length;j++){
-				_backward_sampling_table[k * _max_word_length + j] = -1;
+			for(int k = 0;k < _max_word_length;k++){
+				for(int j = 0;j < _max_word_length;j++){
+					_backward_sampling_table[k * _max_word_length + j] = -1;
+				}
 			}
-		}
 		#endif
 
 		_alpha[0][0][0] = 1;
@@ -657,18 +657,18 @@ namespace npycrf {
 		int size = sentence->size() + 1;
 
 		#ifdef __DEBUG__
-		for(int t = 0;t < size;t++){
-			for(int k = 0;k < _max_word_length + 1;k++){
-				for(int j = 0;j < _max_word_length + 1;j++){
-					_alpha[t][k][j] = 1;
+			for(int t = 0;t < size;t++){
+				for(int k = 0;k < _max_word_length + 1;k++){
+					for(int j = 0;j < _max_word_length + 1;j++){
+						_alpha[t][k][j] = 1;
+					}
+				}
+				for(int k = 0;k < _max_word_length;k++){
+					for(int j = 0;j < _max_word_length;j++){
+						_viterbi_backward[t][k][j] = -1;
+					}
 				}
 			}
-			for(int k = 0;k < _max_word_length;k++){
-				for(int j = 0;j < _max_word_length;j++){
-					_viterbi_backward[t][k][j] = -1;
-				}
-			}
-		}
 		#endif
 
 		_alpha[0][0][0] = 0;

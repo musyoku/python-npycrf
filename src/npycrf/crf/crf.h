@@ -1,4 +1,7 @@
 #pragma once
+#include <boost/serialization/serialization.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 #include "../common.h"
 
 // [1] A discriminative latent variable chinese segmenter with hybrid word/character information
@@ -24,6 +27,11 @@ namespace npycrf {
 			double _index_w_unigram_type_b(int y_i_1, int y_i, int type_i);
 			double _index_w_bigram_type_u(int y_i, int type_i_1, int type_i);
 			double _index_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i);
+			friend class boost::serialization::access;
+			template <class Archive>
+			void serialize(Archive &archive, unsigned int version);
+			void save(boost::archive::binary_oarchive &archive, unsigned int version) const;
+			void load(boost::archive::binary_iarchive &archive, unsigned int version);
 		public:
 			// y ∈ {0,1}
 			// x ∈ Z
@@ -62,7 +70,7 @@ namespace npycrf {
 			double* _w_unigram_type_b;	// (y_{i-1}, y_i, type)
 			double* _w_bigram_type_u;	// (y_i, type, type)
 			double* _w_bigram_type_b;	// (y_{i-1}, y_i, type, type)
-			// 用いるxに関する素性は以下の4通り（デフォルト値の例）[1]
+			// xに関する素性は以下の4通り（デフォルト値の例）[1]
 			// i-2, i-1, i, i+1, i+2の位置のunigram文字
 			// i-2, i-1, i, i+1の位置のbigram文字
 			// i-2, i-1, i, i+1において、x_i == x_{i+1}
@@ -79,6 +87,7 @@ namespace npycrf {
 				int feature_x_identical_2_start = -3,
 				int feature_x_identical_2_end = 1
 			);
+			CRF(){};
 			~CRF();
 			double bias();
 			double w_label_u(int y_i);
