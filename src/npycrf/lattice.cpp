@@ -40,7 +40,7 @@ namespace npycrf {
 			alpha = NULL;
 		}
 	}
-	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, int max_word_length, int max_sentence_length){
+	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, double lambda_0, int max_word_length, int max_sentence_length){
 		_npylm = npylm;
 		_crf = crf;
 		_word_ids = new id[4];	// 3-gramなので<bos><bos>単語<eos>の最低4つ
@@ -51,6 +51,7 @@ namespace npycrf {
 		_backward_sampling_table = NULL;
 		_viterbi_backward = NULL;
 		_substring_word_id_cache = NULL;
+		_lambda_0 = lambda_0;
 		allocate_arrays(max_word_length, max_sentence_length);
 	}
 	Lattice::~Lattice(){
@@ -155,10 +156,11 @@ namespace npycrf {
 		double*** forward_alpha = (normalized_alpha == NULL) ? _alpha : normalized_alpha;
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
-		assert(t <= _max_sentence_length + 1);
-		assert(k <= _max_word_length);
-		assert(j <= _max_word_length);
+		assert(1 <= t && t <= _max_sentence_length + 1);
+		assert(1 <= k && k <= _max_word_length);
+		assert(0 <= j && j <= _max_word_length);
 		assert(t - k >= 0);
 		// <bos>から生成されている場合
 		if(j == 0){
@@ -168,8 +170,10 @@ namespace npycrf {
 			_word_ids[3] = ID_EOS;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
-			_alpha[t][k][0] = pw_h;
-			_pw_h[t][k][0][0] = pw_h;
+			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double p = exp(_lambda_0 * log(pw_h) + potential);
+			_alpha[t][k][0] = p;
+			_pw_h[t][k][0][0] = p;
 			return;
 		}
 		// i=0に相当
@@ -181,10 +185,12 @@ namespace npycrf {
 			_word_ids[3] = ID_EOS;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(pw_h > 0);
+			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(forward_alpha[t - k][j][0] > 0);
-			_alpha[t][k][j] = pw_h * forward_alpha[t - k][j][0];
+			_alpha[t][k][j] = p * forward_alpha[t - k][j][0];
 			assert(_alpha[t][k][j] > 0);
-			_pw_h[t][k][j][0] = pw_h;
+			_pw_h[t][k][j][0] = p;
 			return;
 		}
 		// それ以外の場合は周辺化
@@ -198,9 +204,11 @@ namespace npycrf {
 			_word_ids[3] = ID_EOS;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 4, 2, t - k, t - 1);
 			assert(i <= _max_word_length);
+			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(_alpha[t - k][j][i] > 0);
-			double value = pw_h * forward_alpha[t - k][j][i];
-			assert(pw_h > 0);
+			double value = p * forward_alpha[t - k][j][i];
+			assert(p > 0);
 
 			#ifdef __DEBUG__
 				if(value == 0){
@@ -216,7 +224,7 @@ namespace npycrf {
 
 			assert(value > 0);
 			sum += value;
-			_pw_h[t][k][j][i] = pw_h;
+			_pw_h[t][k][j][i] = p;
 		}
 		assert(sum > 0);
 		_alpha[t][k][j] = sum;

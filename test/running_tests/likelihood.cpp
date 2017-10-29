@@ -11,7 +11,7 @@ using std::cout;
 using std::flush;
 using std::endl;
 
-void run_training_loop(){
+int main(int argc, char *argv[]){
 	std::string filename = "../../dataset/test.txt";
 	Corpus* corpus = new Corpus();
 	corpus->add_textfile(filename);
@@ -52,20 +52,14 @@ void run_training_loop(){
 	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
 	Dictionary* dictionary = dataset->_dict;
 	dictionary->save("npylm.dict");
-	Trainer* trainer = new Trainer(dataset, model, false);
 
-	for(int epoch = 0;epoch < 20;epoch++){
-		// auto start_time = std::chrono::system_clock::now();
-		// trainer->gibbs();
-		// auto diff = std::chrono::system_clock::now() - start_time;
-		// cout << (std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0) << endl;
-		// trainer->sample_hpylm_vpylm_hyperparameters();
-		// trainer->sample_lambda();
+	double likelihood_1 = model->compute_log_p_w(L"こんにちは", dictionary);
+	cout << likelihood_1 << endl;
+	crf::CRF* crf = py_crf->_crf;
+	for(int i = 0;i < crf->_w_size_unigram_type_u;i++){
+		crf->_w_unigram_type_u[i] = 1;
 	}
-}
 
-int main(int argc, char *argv[]){
-	for(int i = 0;i < 10;i++){
-		run_training_loop();
-	}
+	double likelihood_2 = model->compute_log_p_w(L"こんにちは", dictionary);
+	cout << likelihood_2 << endl;
 }

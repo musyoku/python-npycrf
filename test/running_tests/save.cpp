@@ -48,6 +48,7 @@ int main(int argc, char *argv[]){
 	int seed = 0;
 	Dataset* dataset = new Dataset(corpus, 1, seed);
 
+	double lambda_0 = 1;
 	int max_word_length = 12;
 	int max_sentence_length = dataset->get_max_sentence_length();
 	double g0 = 1.0 / (double)dataset->_dict->get_num_characters();
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]){
 						  feature_x_identical_2_start,
 						  feature_x_identical_2_end);
 
-	Model* model = new Model(py_npylm, py_crf, max_word_length, dataset->get_max_sentence_length());
+	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
 	Dictionary* dictionary = dataset->_dict;
 	dictionary->save("npylm.dict");
 	Trainer* trainer = new Trainer(dataset, model, false);
@@ -92,7 +93,7 @@ int main(int argc, char *argv[]){
 		py_crf->save("crf.model");
 		python::model::NPYLM* _npylm = new python::model::NPYLM("npylm.model");
 		python::model::CRF* _crf = new python::model::CRF("crf.model");
-		Model* _model = new Model(_npylm, _crf, max_word_length, dataset->get_max_sentence_length());
+		Model* _model = new Model(_npylm, _crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
 		compare_npylm(model->_npylm, _model->_npylm);
 		delete _model;
 	}

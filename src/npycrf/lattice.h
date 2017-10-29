@@ -23,7 +23,8 @@ namespace npycrf {
 		int*** _viterbi_backward;
 		int _max_word_length;
 		int _max_sentence_length;
-		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, int max_word_length, int max_sentence_length);
+		double _lambda_0;
+		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, double lambda_0, int max_word_length, int max_sentence_length);
 		~Lattice();
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
 		void allocate_arrays(int max_word_length, int max_sentence_length);

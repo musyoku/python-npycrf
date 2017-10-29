@@ -1,6 +1,7 @@
+#include <fstream>
 #include <iostream>
 #include "../../npycrf/common.h"
-#include "model.h"
+#include "crf.h"
 
 namespace npycrf {
 	namespace python {
