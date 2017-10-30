@@ -214,9 +214,9 @@ namespace npycrf {
 					}
 					
 					#ifdef __DEBUG__
-					// 正規化しない場合の結果と比較するためシードを合わせる
-					int seed = (unsigned int)time(NULL);
-					sampler::mt.seed(seed);
+						// 正規化しない場合の結果と比較するためシードを合わせる
+						int seed = (unsigned int)time(NULL);
+						sampler::mt.seed(seed);
 					#endif
 
 					// 新しい分割を取得
@@ -224,15 +224,15 @@ namespace npycrf {
 					sentence->split(segments);
 					
 					#ifdef __DEBUG__
-					// 正規化しない場合の結果と比較
-					std::vector<int> a = segments;
-					sampler::mt.seed(seed);
-					_model->_lattice->blocked_gibbs(sentence, segments, false);
-					std::vector<int> b = segments;
-					assert(a.size() == b.size());
-					for(int i = 0;i < a.size();i++){
-						assert(a[i] == b[i]);
-					}
+						// 正規化しない場合の結果と比較
+						std::vector<int> a = segments;
+						sampler::mt.seed(seed);
+						_model->_lattice->blocked_gibbs(sentence, segments, false);
+						std::vector<int> b = segments;
+						assert(a.size() == b.size());
+						for(int i = 0;i < a.size();i++){
+							assert(a[i] == b[i]);
+						}
 					#endif
 
 					// 以前の分割結果と現在の分割結果の確率を求める

@@ -39,5 +39,6 @@ namespace npycrf {
 		void viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j);
 		void viterbi_backward(Sentence* sentence, std::vector<int> &segments);
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
+		double compute_forward_probability(Sentence* sentence, bool normalize = true);
 	};
 } // namespace npylm

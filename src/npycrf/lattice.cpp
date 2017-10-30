@@ -457,6 +457,7 @@ namespace npycrf {
 	}
 	// Blocked Gibbs Samplingによる分割のサンプリング
 	// 分割結果が確率的に決まる
+	// normalize=trueでアンダーフローを防ぐ
 	void Lattice::blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
@@ -688,5 +689,28 @@ namespace npycrf {
 		}
 		this->viterbi_forward(sentence);
 		this->viterbi_backward(sentence, segments);
+	}
+	// 文の可能な分割全てを考慮した前向き確率
+	// normalize=trueならアンダーフローを防ぐ
+	double Lattice::compute_forward_probability(Sentence* sentence, bool normalize = true){
+		assert(sentence->size() <= _max_sentence_length);
+		int size = sentence->size() + 1;
+		_alpha[0][0][0] = 1;
+		_log_z[0] = 0;
+		for(int i = 0;i < size;i++){
+			for(int j = 0;j < _max_word_length + 1;j++){
+				_substring_word_id_cache[i][j] = 0;
+			}
+		}
+		double*** normalized_alpha = normalize ? _normalized_alpha : NULL;
+		this->forward_filtering(sentence, normalized_alpha);
+		double sum_probability = 0;
+		int t = sentence->size();
+		for(int k = 1;k <= std::min(t, _max_word_length);k++){
+			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+				sum_probability += normalized_alpha[t][k][j];
+			}
+		}
+		return sum_probability;
 	}
 } // namespace npylm

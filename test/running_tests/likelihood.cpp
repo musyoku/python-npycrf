@@ -59,7 +59,6 @@ int main(int argc, char *argv[]){
 	for(int i = 0;i < crf->_w_size_unigram_type_u;i++){
 		crf->_w_unigram_type_u[i] = 1;
 	}
-
 	double likelihood_2 = model->compute_log_p_w(L"こんにちは", dictionary);
 	cout << likelihood_2 << endl;
 }
