@@ -6,7 +6,9 @@ namespace npycrf {
 		class Dictionary{
 		public:
 			hashmap<wchar_t, int> _map_character_ids;	// すべての文字
-			Dictionary(){}
+			Dictionary(){
+				_map_character_ids[0] = 0;	// <unk>
+			}
 			int add_character(wchar_t character);
 			int get_character_id(wchar_t character);
 			int get_num_characters();

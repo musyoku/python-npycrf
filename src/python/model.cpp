@@ -59,8 +59,7 @@ namespace npycrf {
 			int* character_ids = new int[sentence_str.size()];
 			for(int i = 0;i < sentence_str.size();i++){
 				wchar_t character = sentence_str[i];
-				int character_id = dictionary->add_character(character);
-				assert(character_id != -1);
+				int character_id = dictionary->get_character_id(character);
 				character_ids[i] = character_id;
 			}
 			Sentence* sentence = new Sentence(sentence_str, character_ids);
@@ -84,8 +83,7 @@ namespace npycrf {
 			int* character_ids = new int[sentence_str.size()];
 			for(int i = 0;i < sentence_str.size();i++){
 				wchar_t character = sentence_str[i];
-				int character_id = dictionary->add_character(character);
-				assert(character_id != -1);
+				int character_id = dictionary->get_character_id(character);
 				character_ids[i] = character_id;
 			}
 			Sentence* sentence = new Sentence(sentence_str, character_ids);

@@ -137,24 +137,30 @@ namespace npycrf {
 			return index;
 		}
 		double CRF::_index_w_unigram_u(int y_i, int i, int x_i){
+			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_unigram);
 			int index = x_i * _x_range_unigram * 2 + (i - 1) * 2 + y_i;
 			assert(index < _w_size_unigram_u);
 			return index;
 		}
 		double CRF::_index_w_unigram_b(int y_i_1, int y_i, int i, int x_i){
+			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_unigram);
 			int index = x_i * _x_range_unigram * 2 * 2 + (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
 			assert(index < _w_size_unigram_b);
 			return index;
 		}
 		double CRF::_index_w_bigram_u(int y_i, int i, int x_i_1, int x_i){
+			assert(x_i_1 < _num_character_ids);
+			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_bigram);
 			int index = x_i * _num_character_ids * _x_range_bigram * 2 + x_i_1 * _x_range_bigram * 2 + (i - 1) * 2 + y_i;
 			assert(index < _w_size_bigram_u);
 			return index;
 		}
 		double CRF::_index_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
+			assert(x_i_1 < _num_character_ids);
+			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_bigram);
 			int index = x_i * _num_character_ids * _x_range_bigram * 2 * 2 + x_i_1 * _x_range_bigram * 2 * 2 + (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
 			assert(index < _w_size_bigram_b);
@@ -190,16 +196,21 @@ namespace npycrf {
 			return index;
 		}
 		double CRF::_index_w_unigram_type_b(int y_i_1, int y_i, int type_i){
+			assert(type_i < _num_character_types);
 			int index = type_i * 2 * 2 + y_i * 2 + y_i_1;
 			assert(index < _w_size_unigram_type_b);
 			return index;
 		}
 		double CRF::_index_w_bigram_type_u(int y_i, int type_i_1, int type_i){
+			assert(type_i_1 < _num_character_types);
+			assert(type_i < _num_character_types);
 			int index = type_i * _num_character_types * 2 + type_i_1 * 2 + y_i;
 			assert(index < _w_size_bigram_type_u);
 			return index;
 		}
 		double CRF::_index_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
+			assert(type_i_1 < _num_character_types);
+			assert(type_i < _num_character_types);
 			int index = type_i * _num_character_types * 2 * 2 + type_i_1 * 2 * 2 + y_i * 2 + y_i_1;
 			assert(index < _w_size_bigram_type_b);
 			return index;
@@ -213,18 +224,24 @@ namespace npycrf {
 			return _w_label_b[index];
 		}
 		double CRF::w_unigram_u(int y_i, int i, int x_i){
+			assert(x_i < _num_character_ids);
 			int index = _index_w_unigram_u(y_i, i, x_i);
 			return _w_unigram_u[index];
 		}
 		double CRF::w_unigram_b(int y_i_1, int y_i, int i, int x_i){
+			assert(x_i < _num_character_ids);
 			int index = _index_w_unigram_b(y_i_1, y_i, i, x_i);
 			return _w_unigram_b[index];
 		}
 		double CRF::w_bigram_u(int y_i, int i, int x_i_1, int x_i){
+			assert(x_i_1 < _num_character_ids);
+			assert(x_i < _num_character_ids);
 			int index = _index_w_bigram_u(y_i, i, x_i_1, x_i);
 			return _w_bigram_u[index];
 		}
 		double CRF::w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
+			assert(x_i_1 < _num_character_ids);
+			assert(x_i < _num_character_ids);
 			int index = _index_w_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
 			return _w_bigram_b[index];
 		}
@@ -245,18 +262,24 @@ namespace npycrf {
 			return _w_identical_2_b[index];
 		}
 		double CRF::w_unigram_type_u(int y_i, int type_i){
+			assert(type_i < _num_character_types);
 			int index = _index_w_unigram_type_u(y_i, type_i);
 			return _w_unigram_type_u[index];
 		}
 		double CRF::w_unigram_type_b(int y_i_1, int y_i, int type_i){
+			assert(type_i < _num_character_types);
 			int index = _index_w_unigram_type_b(y_i_1, y_i, type_i);
 			return _w_unigram_type_b[index];
 		}
 		double CRF::w_bigram_type_u(int y_i, int type_i_1, int type_i){
+			assert(type_i_1 < _num_character_types);
+			assert(type_i < _num_character_types);
 			int index = _index_w_bigram_type_u(y_i, type_i_1, type_i);
 			return _w_bigram_type_u[index];
 		}
 		double CRF::w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
+			assert(type_i_1 < _num_character_types);
+			assert(type_i < _num_character_types);
 			int index = _index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 			return _w_bigram_type_b[index];
 		}
