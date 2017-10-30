@@ -137,42 +137,50 @@ namespace npycrf {
 			return index;
 		}
 		double CRF::_index_w_unigram_u(int y_i, int i, int x_i){
-			int index = x_i * _x_range_unigram * 2 + i * 2 + y_i;
+			assert(1 <= i && i <= _x_range_unigram);
+			int index = x_i * _x_range_unigram * 2 + (i - 1) * 2 + y_i;
 			assert(index < _w_size_unigram_u);
 			return index;
 		}
 		double CRF::_index_w_unigram_b(int y_i_1, int y_i, int i, int x_i){
-			int index = x_i * _x_range_unigram * 2 * 2 + i * 2 * 2 + y_i * 2 + y_i_1;
+			assert(1 <= i && i <= _x_range_unigram);
+			int index = x_i * _x_range_unigram * 2 * 2 + (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
 			assert(index < _w_size_unigram_b);
 			return index;
 		}
 		double CRF::_index_w_bigram_u(int y_i, int i, int x_i_1, int x_i){
-			int index = x_i * _num_character_ids * _x_range_bigram * 2 + x_i_1 * _x_range_bigram * 2 + i * 2 + y_i;
+			assert(1 <= i && i <= _x_range_bigram);
+			int index = x_i * _num_character_ids * _x_range_bigram * 2 + x_i_1 * _x_range_bigram * 2 + (i - 1) * 2 + y_i;
 			assert(index < _w_size_bigram_u);
 			return index;
 		}
 		double CRF::_index_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
-			int index = x_i * _num_character_ids * _x_range_bigram * 2 * 2 + x_i_1 * _x_range_bigram * 2 * 2 + i * 2 * 2 + y_i * 2 + y_i_1;
+			assert(1 <= i && i <= _x_range_bigram);
+			int index = x_i * _num_character_ids * _x_range_bigram * 2 * 2 + x_i_1 * _x_range_bigram * 2 * 2 + (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
 			assert(index < _w_size_bigram_b);
 			return index;
 		}
 		double CRF::_index_w_identical_1_u(int y_i, int i){
-			int index = i * 2 + y_i;
+			assert(1 <= i && i <= _x_range_identical_1);
+			int index = (i - 1) * 2 + y_i;
 			assert(index < _w_size_identical_1_u);
 			return index;
 		}
 		double CRF::_index_w_identical_1_b(int y_i_1, int y_i, int i){
-			int index = i * 2 * 2 + y_i * 2 + y_i_1;
+			assert(1 <= i && i <= _x_range_identical_1);
+			int index = (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
 			assert(index < _w_size_identical_1_b);
 			return index;
 		}
 		double CRF::_index_w_identical_2_u(int y_i, int i){
-			int index = i * 2 + y_i;
+			assert(1 <= i && i <= _x_range_identical_2);
+			int index = (i - 1) * 2 + y_i;
 			assert(index < _w_size_identical_2_u);
 			return index;
 		}
 		double CRF::_index_w_identical_2_b(int y_i_1, int y_i, int i){
-			int index = i * 2 * 2 + y_i * 2 + y_i_1;
+			assert(1 <= i && i <= _x_range_identical_2);
+			int index = (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
 			assert(index < _w_size_identical_2_b);
 			return index;
 		}
@@ -252,10 +260,10 @@ namespace npycrf {
 			int index = _index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 			return _w_bigram_type_b[index];
 		}
-		void set_w_label_u(int y_i, double value){
+		void CRF::set_w_label_u(int y_i, double value){
 
 		}
-		void set_w_label_b(int y_i_1, int y_i, double value){
+		void CRF::set_w_label_b(int y_i_1, int y_i, double value){
 
 		}
 		void CRF::set_w_unigram_u(int y_i, int i, int x_i, double value){
@@ -359,10 +367,10 @@ namespace npycrf {
 			double cost = 0;
 			int r_end = std::max(0, i - _x_range_unigram);
 			for(int r = i;r > r_end;r--){
-				int feature_index = i - r;	// [0, _x_range_unigram)
+				int pos = i - r + 1;	// [1, _x_range_unigram]
 				int x_i = character_ids[r - 1];
-				cost += w_unigram_u(y_i, feature_index, x_i);
-				cost += w_unigram_b(y_i_1, y_i, feature_index, x_i);
+				cost += w_unigram_u(y_i, pos, x_i);
+				cost += w_unigram_b(y_i_1, y_i, pos, x_i);
 			}
 			return cost;
 		}
@@ -370,41 +378,41 @@ namespace npycrf {
 			double cost = 0;
 			int r_end = std::max(1, i - _x_range_bigram);
 			for(int r = i;r > r_end;r--){
-				int feature_index = i - r;	// [0, _x_range_bigram)
+				int pos = i - r + 1;	// [1, _x_range_bigram]
 				int x_i = character_ids[r - 1];
 				int x_i_1 = character_ids[r - 2];
-				cost += w_bigram_u(y_i, feature_index, x_i_1, x_i);
-				cost += w_bigram_b(y_i_1, y_i, feature_index, x_i_1, x_i);
+				cost += w_bigram_u(y_i, pos, x_i_1, x_i);
+				cost += w_bigram_b(y_i_1, y_i, pos, x_i_1, x_i);
 			}
 			return cost;
 		}
 		double CRF::_compute_cost_identical_1_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			int feature_index = 0;	// [0, _x_range_identical_1)
+			int pos = 1;	// [1, _x_range_identical_1]
 			int r_end = std::max(1, i - _x_range_identical_1);
 			for(int r = i;r > r_end;r--){
 				int x_i = character_ids[r - 1];
 				int x_i_1 = character_ids[r - 2];
 				if(x_i == x_i_1){
-					cost += w_identical_1_u(y_i, feature_index);
-					cost += w_identical_1_b(y_i_1, y_i, feature_index);
+					cost += w_identical_1_u(y_i, pos);
+					cost += w_identical_1_b(y_i_1, y_i, pos);
 				}
-				feature_index++;
+				pos++;
 			}
 			return cost;
 		}
 		double CRF::_compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			int feature_index = 0;
+			int pos = 1;	// [1, _x_range_identical_2]
 			int r_end = std::max(2, i - _x_range_identical_2);
 			for(int r = i;r > r_end;r--){
 				int x_i = character_ids[r - 1];
 				int x_i_2 = character_ids[r - 3];
 				if(x_i == x_i_2){
-					cost += w_identical_2_u(y_i, feature_index);
-					cost += w_identical_2_b(y_i_1, y_i, feature_index);
+					cost += w_identical_2_u(y_i, pos);
+					cost += w_identical_2_b(y_i_1, y_i, pos);
 				}
-				feature_index++;
+				pos++;
 			}
 			return cost;
 		}

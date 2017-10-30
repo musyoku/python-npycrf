@@ -23,7 +23,7 @@ check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
 
 module_tests: ## 各モジュールのテスト.
-	$(CC) test/module_tests/crf/crf.cpp src/npycrf/*.cpp src/npycrf/crf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/module_tests/crf/crf $(INCLUDE) $(LDFLAGS) -O0 -g
+	$(CC) test/module_tests/crf/crf.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/module_tests/crf/crf $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/crf/crf
 	$(CC) test/module_tests/npylm/wordtype.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/module_tests/npylm/wordtype $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm/wordtype

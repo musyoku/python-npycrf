@@ -692,7 +692,7 @@ namespace npycrf {
 	}
 	// 文の可能な分割全てを考慮した前向き確率
 	// normalize=trueならアンダーフローを防ぐ
-	double Lattice::compute_forward_probability(Sentence* sentence, bool normalize = true){
+	double Lattice::compute_forward_probability(Sentence* sentence, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		_alpha[0][0][0] = 1;

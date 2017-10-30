@@ -23,7 +23,7 @@ namespace npycrf {
 			void set_initial_lambda_b(double lambda);
 			void set_vpylm_beta_stop(double stop);
 			void set_vpylm_beta_pass(double pass);
-			double compute_log_p_w(std::wstring sentence_str, Dictionary* dictionary);
+			double compute_forward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize = true);
 			boost::python::list python_parse(std::wstring sentence_str, Dictionary* dictionary);
 		};
 	}

@@ -43,7 +43,8 @@ namespace npycrf {
 		void Model::set_vpylm_beta_pass(double pass){
 			_npylm->_vpylm->_beta_pass = pass;
 		}
-		double Model::compute_log_p_w(std::wstring sentence_str, Dictionary* dictionary){
+		// normalize=trueならアンダーフローを防ぐ
+		double Model::compute_forward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize){
 			// キャッシュの再確保
 			if(sentence_str.size() > _lattice->_max_sentence_length){
 				_lattice->delete_arrays();
@@ -63,10 +64,10 @@ namespace npycrf {
 				character_ids[i] = character_id;
 			}
 			Sentence* sentence = new Sentence(sentence_str, character_ids);
-			double log_p_w = _npylm->compute_log_p_w(sentence);
+			double probability = _lattice->compute_forward_probability(sentence, normalize);
 			delete[] character_ids;
 			delete sentence;
-			return log_p_w;
+			return probability;
 		}
 		boost::python::list Model::python_parse(std::wstring sentence_str, Dictionary* dictionary){
 			// キャッシュの再確保

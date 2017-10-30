@@ -90,6 +90,7 @@ namespace npycrf {
 			CRF(){};
 			~CRF();
 			double bias();
+			// 以下のiは全て番号なので1スタート
 			double w_label_u(int y_i);
 			double w_label_b(int y_i_1, int y_i);
 			double w_unigram_u(int y_i, int i, int x_i);

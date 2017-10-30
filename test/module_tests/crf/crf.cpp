@@ -36,13 +36,13 @@ void test_init(){
 	double value = 1.5;
 	for(int y_i = 0;y_i < 2;y_i++){
 		for(int x_i = 0;x_i < num_character_ids;x_i++){
-			for(int i = 0;i < feature_x_unigram_end - feature_x_unigram_start + 1;i++){
+			for(int i = 1;i <= feature_x_unigram_end - feature_x_unigram_start + 1;i++){
 				crf->set_w_unigram_u(y_i, i, x_i, value);
 				for(int y_i_1 = 0;y_i_1 < 2;y_i_1++){
 					crf->set_w_unigram_b(y_i_1, y_i, i, x_i, value);
 				}
 			}
-			for(int i = 0;i < feature_x_bigram_end - feature_x_bigram_start + 1;i++){
+			for(int i = 1;i <= feature_x_bigram_end - feature_x_bigram_start + 1;i++){
 				for(int x_i_1 = 0;x_i_1 < num_character_ids;x_i_1++){
 					crf->set_w_bigram_u(y_i, i, x_i_1, x_i, value);
 					for(int y_i_1 = 0;y_i_1 < 2;y_i_1++){
@@ -52,13 +52,13 @@ void test_init(){
 			}
 			
 		}
-		for(int i = 0;i < feature_x_identical_1_end - feature_x_identical_1_start + 1;i++){
+		for(int i = 1;i <= feature_x_identical_1_end - feature_x_identical_1_start + 1;i++){
 			crf->set_w_identical_1_u(y_i, i, value);
 			for(int y_i_1 = 0;y_i_1 < 2;y_i_1++){
 				crf->set_w_identical_1_b(y_i_1, y_i, i, value);
 			}
 		}
-		for(int i = 0;i < feature_x_identical_2_end - feature_x_identical_2_start + 1;i++){
+		for(int i = 1;i <= feature_x_identical_2_end - feature_x_identical_2_start + 1;i++){
 			crf->set_w_identical_2_u(y_i, i, value);
 			for(int y_i_1 = 0;y_i_1 < 2;y_i_1++){
 				crf->set_w_identical_2_b(y_i_1, y_i, i, value);
@@ -152,7 +152,7 @@ void test_compute_path_cost(){
 	for(int i = 0;i < sentence_str.size();i++){
 		character_ids[i] = _token_ids[sentence_str[i]];
 	}
-	for(int i = 0;i < crf->_x_range_unigram;i++){
+	for(int i = 1;i <= crf->_x_range_unigram;i++){
 		for(int x_i = 0;x_i < _token_ids.size();x_i++){
 			crf->set_w_unigram_u(0, i, x_i, x_i);
 			crf->set_w_unigram_b(0, 0, i, x_i, x_i * 2);
@@ -166,7 +166,7 @@ void test_compute_path_cost(){
 		}
 		assert(cost == true_cost);
 	}
-	for(int i = 0;i < crf->_x_range_bigram;i++){
+	for(int i = 1;i <= crf->_x_range_bigram;i++){
 		for(int x_i = 0;x_i < _token_ids.size();x_i++){
 			for(int x_i_1 = 0;x_i_1 < _token_ids.size();x_i_1++){
 				crf->set_w_bigram_u(0, i, x_i_1, x_i, x_i * x_i_1);
@@ -182,25 +182,25 @@ void test_compute_path_cost(){
 		}
 		assert(cost == true_cost);
 	}
-	for(int i = 0;i < crf->_x_range_identical_1;i++){
+	for(int i = 1;i <= crf->_x_range_identical_1;i++){
 		crf->set_w_identical_1_u(0, i, i);
 		crf->set_w_identical_1_b(0, 0, i, i * 2);
 	}
 	for(int i = 1;i <= sentence_str.size();i++){
 		double cost = crf->_compute_cost_identical_1_features(character_ids, sentence_str.size(), i, 0, 0);
-		if(i < 2){
+		if(i == 1){
 			assert(cost == 0);
 			continue;
 		}
 		double true_cost = 0;
-		for(int r = i;r > std::max(1, i - crf->_x_range_identical_1);r--){
+		for(int r = i;r >= std::max(2, i - crf->_x_range_identical_1 + 1);r--){
 			if(character_ids[r - 1] == character_ids[r - 2]){
-				true_cost += (i - r) * 3;
+				true_cost += (i - r + 1) * 3;
 			}
 		}
 		assert(cost == true_cost);
 	}
-	for(int i = 0;i < crf->_x_range_identical_2;i++){
+	for(int i = 1;i <= crf->_x_range_identical_2;i++){
 		crf->set_w_identical_2_u(0, i, i);
 		crf->set_w_identical_2_b(0, 0, i, i * 2);
 	}
@@ -211,9 +211,9 @@ void test_compute_path_cost(){
 			continue;
 		}
 		double true_cost = 0;
-		for(int r = i;r > std::max(2, i - crf->_x_range_identical_2);r--){
+		for(int r = i;r >= std::max(3, i - crf->_x_range_identical_2 + 1);r--){
 			if(character_ids[r - 1] == character_ids[r - 3]){
-				true_cost += (i - r) * 3;
+				true_cost += (i - r + 1) * 3;
 			}
 		}
 		assert(cost == true_cost);
