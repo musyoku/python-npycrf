@@ -340,20 +340,25 @@ namespace npycrf {
 		// V(t, k, j) = γ(t - k + 1, t + 1) + γ(t - k - j + 1, t - k + 1)
 		// tは1スタートであることに注意
 		double CRF::compute_trigram_potential(int const* character_ids, wchar_t const* characters, int character_ids_length, int t, int k, int j){
-			assert(t < character_ids_length);
-			assert(k < character_ids_length);
-			assert(j < character_ids_length);
+			assert(1 <= t && t <= character_ids_length);
+			assert(1 <= k && k <= character_ids_length);
+			assert(0 <= j && j < character_ids_length);
 			assert(0 < t);
+			if(j == 0){
+				// <s>と接続するパスのコストは0と考える（必ず通るため）
+				// exp(0) = 1
+				return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
+			}
 			return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1) + compute_gamma(character_ids, characters, character_ids_length, t - k - j + 1, t - k + 1);
 		}
 		// γ(s, t)
 		// あるノードから別のノードを辿るV字型のパスのコストの合計
 		double CRF::compute_gamma(int const* character_ids, wchar_t const* characters, int character_ids_length, int s, int t){
-			assert(s < character_ids_length);
-			assert(t < character_ids_length);
+			assert(s <= character_ids_length);
+			assert(t <= character_ids_length + 1);
 			assert(s < t);
 			if(t <= 1){
-				return 0;
+				return 0;	// 必ず通る
 			}
 			int repeat = t - s;
 			if(repeat == 1){
@@ -363,7 +368,9 @@ namespace npycrf {
 			if(repeat == 2){
 				return sum_cost;
 			}
-			for(int i = 0;i < repeat - 2;i++){
+			for(int i = 1;i < repeat - 2;i++){
+				assert(s + i + 1 > s);
+				assert(s + i + 2 < t);
 				sum_cost += compute_path_cost(character_ids, characters, character_ids_length, s + i + 1, s + i + 2, 0, 0);
 			}
 			return sum_cost;
@@ -371,14 +378,17 @@ namespace npycrf {
 		// 隣接するノード間のパスのコストを計算
 		// yはクラス（0か1）
 		// iはノードの位置（1スタートなので注意。インデックスではない.ただし実際は隣接ノードが取れるi>=2のみ可）
-		// i_1は本来引数に与える必要はないがわかりやすさのため
+		// i_1は本来引数にする必要はないがわかりやすさのため
 		double CRF::compute_path_cost(int const* character_ids, wchar_t const* characters, int character_ids_length, int i_1, int i, int y_i_1, int y_i){
 			assert(i_1 + 1 == i);
 			assert(2 <= i);
-			assert(i < character_ids_length);
+			assert(i <= character_ids_length + 1);
 			assert(y_i == 0 || y_i == 1);
 			assert(y_i_1 == 0 || y_i_1 == 1);
 			double cost = 0;
+			if(i == character_ids_length + 1){	// </s>
+				return cost;
+			}
 			cost += _compute_cost_unigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
 			cost += _compute_cost_bigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
 			cost += _compute_cost_identical_1_features(character_ids, character_ids_length, i, y_i_1, y_i);

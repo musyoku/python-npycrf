@@ -172,6 +172,7 @@ namespace npycrf {
 			assert(pw_h > 0);
 			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
+			assert(p > 0);
 			_alpha[t][k][0] = p;
 			_pw_h[t][k][0][0] = p;
 			return;
@@ -187,6 +188,7 @@ namespace npycrf {
 			assert(pw_h > 0);
 			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
+			assert(p > 0);
 			assert(forward_alpha[t - k][j][0] > 0);
 			_alpha[t][k][j] = p * forward_alpha[t - k][j][0];
 			assert(_alpha[t][k][j] > 0);
@@ -206,6 +208,7 @@ namespace npycrf {
 			assert(i <= _max_word_length);
 			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
+			assert(p > 0);
 			assert(_alpha[t - k][j][i] > 0);
 			double value = p * forward_alpha[t - k][j][i];
 			assert(p > 0);
