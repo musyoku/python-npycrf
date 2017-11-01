@@ -3,7 +3,12 @@ BOOST = /usr/local/Cellar/boost/1.65.0
 INCLUDE = `python3-config --includes` -std=c++14 -I$(BOOST)/include
 LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(BOOST)/lib
 SOFLAGS = -shared -fPIC -march=native
-SOURCES = src/python/*.cpp src/python/model/*.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp
+SOURCES = 	src/python/*.cpp \
+			src/python/model/*.cpp \
+			src/npycrf/*.cpp \
+			src/npycrf/npylm/*.cpp \
+			src/npycrf/npylm/lm/*.cpp \
+			src/npycrf/crf/*.cpp
 
 install: ## npylm.soを生成
 	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp $(LDFLAGS) -o run/npylm.so -O3
