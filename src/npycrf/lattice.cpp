@@ -155,7 +155,7 @@ namespace npycrf {
 		assert(k < _max_sentence_length + 1);
 		id word_id = _substring_word_id_cache[t][k];
 		if(word_id == 0){
-			word_id = sentence->get_substr_word_id(t - k, t - 1);
+			word_id = sentence->get_substr_word_id(t - k, t - 1);	// 引数はインデックスなので注意
 			_substring_word_id_cache[t][k] = word_id;
 		}
 		return word_id;
@@ -164,6 +164,7 @@ namespace npycrf {
 	void Lattice::sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		assert(t <= _max_sentence_length + 1);
 		assert(k <= _max_word_length);
@@ -176,7 +177,10 @@ namespace npycrf {
 			_word_ids[2] = word_k_id;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 			assert(pw_h > 0);
-			_alpha[t][k][0] = pw_h;
+			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double p = exp(_lambda_0 * log(pw_h) + potential);
+			assert(p > 0);
+			_alpha[t][k][0] = p;
 			_pw_h[t][k][0][0] = pw_h;
 			return;
 		}
@@ -189,7 +193,10 @@ namespace npycrf {
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			assert(_alpha[t - k][j][0] > 0);
-			_alpha[t][k][j] = pw_h * _alpha[t - k][j][0];
+			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double p = exp(_lambda_0 * log(pw_h) + potential);
+			assert(p > 0);
+			_alpha[t][k][j] = p * _alpha[t - k][j][0];
 			assert(_alpha[t][k][j] > 0);
 			_pw_h[t][k][j][0] = pw_h;
 			return;
@@ -203,10 +210,13 @@ namespace npycrf {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+			assert(pw_h > 0);
 			assert(i <= _max_word_length);
 			assert(_alpha[t - k][j][i] > 0);
-			double value = pw_h * _alpha[t - k][j][i];
-			assert(pw_h > 0);
+			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double p = exp(_lambda_0 * log(pw_h) + potential);
+			assert(p > 0);
+			double value = p * _alpha[t - k][j][i];
 
 			#ifdef __DEBUG__
 				if(value == 0){
@@ -675,7 +685,51 @@ namespace npycrf {
 		viterbi_forward(sentence);
 		viterbi_backward(sentence, segments);
 	}
-	// 文の可能な分割全てを考慮した前向き確率
+	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
+	// normalize=trueならアンダーフローを防ぐ
+	double Lattice::compute_sentence_probability(Sentence* sentence, bool normalize){
+		assert(sentence->size() <= _max_sentence_length);
+		int size = sentence->size() + 1;
+		_alpha[0][0][0] = 1;
+		_log_z[0] = 0;
+		for(int i = 0;i < size;i++){
+			for(int j = 0;j < _max_word_length + 1;j++){
+				_substring_word_id_cache[i][j] = 0;
+			}
+		}
+		#ifdef __DEBUG__
+			for(int t = 0;t < size;t++){
+				for(int k = 0;k < _max_word_length + 1;k++){
+					for(int j = 0;j < _max_word_length + 1;j++){
+						_alpha[t][k][j] = -1;
+					}
+				}
+			}
+		#endif 
+		forward_filtering(sentence, normalize);
+		double sum_probability = 0;
+		int t = sentence->size();
+		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
+		int character_ids_length = sentence->size();
+		for(int k = 1;k <= std::min(t, _max_word_length);k++){
+			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+				id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
+				id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
+				_word_ids[0] = word_j_id;
+				_word_ids[1] = word_k_id;
+				_word_ids[2] = ID_EOS;
+				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+				assert(_alpha[t][k][j] > 0);
+				double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t + 1, 1, k);
+				double p = exp(_lambda_0 * log(pw_h) + potential);
+				assert(p > 0);
+				sum_probability += _alpha[t][k][j] * p;
+			}
+		}
+		return sum_probability;
+	}
+	// 文の可能な分割全てを考慮した前向き確率（<eos>への接続は除く）
 	// normalize=trueならアンダーフローを防ぐ
 	double Lattice::compute_forward_probability(Sentence* sentence, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
@@ -711,7 +765,7 @@ namespace npycrf {
 	double Lattice::compute_backward_probability(Sentence* sentence, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
-		_alpha[0][0][0] = 1;
+		_beta[0][0][0] = 1;
 		_log_z[0] = 0;
 		for(int i = 0;i < size;i++){
 			for(int j = 0;j < _max_word_length + 1;j++){
@@ -722,7 +776,7 @@ namespace npycrf {
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
-						_alpha[t][k][j] = -1;
+						_beta[t][k][j] = -1;
 					}
 				}
 			}
@@ -739,7 +793,7 @@ namespace npycrf {
 	}
 	// 動的計画法による後向き確率の計算
 	void Lattice::backward_filtering(Sentence* sentence, bool normalize){
-		for(int t = sentence->size();t >= 1;t++){
+		for(int t = sentence->size();t >= 1;t--){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				if(t - k == 0){
 					sum_beta_t_k_j(sentence, t, k, 0);
@@ -750,57 +804,57 @@ namespace npycrf {
 				}
 			}
 			// 正規化
-			if(normalize){
-				// アンダーフローを防ぐためlogsumexpを経由して正規化後の前向き確率テーブルを計算
-				double log_sum = 0;
-				// 最大値を求める
-				double max_log_z = 0;
-				for(int k = 1;k <= std::min(t, _max_word_length);k++){
-					if(t - k == 0){
-						assert(_alpha[t][k][0] > 0);
-						double tmp = log(_alpha[t][k][0]) + _log_z[t - k];
-						if(max_log_z == 0 || tmp > max_log_z){
-							max_log_z = tmp;
-						}
-					}
-					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-						assert(_alpha[t][k][j] > 0);
-						double tmp = log(_alpha[t][k][j]) + _log_z[t - k];
-						if(max_log_z == 0 || tmp > max_log_z){
-							max_log_z = tmp;
-						}
-					}
-				}
-				// 求めた最大値をもとにlogsumexp
-				for(int k = 1;k <= std::min(t, _max_word_length);k++){
-					if(t - k == 0){
-						log_sum += exp(log(_alpha[t][k][0]) + _log_z[t - k] - max_log_z);
-						continue;
-					}
-					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-						assert(_alpha[t][k][j] > 0);
-						log_sum += exp(log(_alpha[t][k][j]) + _log_z[t - k] - max_log_z);
-					}
-				}
-				log_sum = log(log_sum) + max_log_z;
-				// 正規化
-				assert(log_sum != 0);
-				for(int k = 1;k <= std::min(t, _max_word_length);k++){
-					if(t - k == 0){
-						_alpha[t][k][0] = exp(log(_alpha[t][k][0]) + _log_z[t - k] - log_sum);
-						assert(_alpha[t][k][0] > 0);
-						continue;
-					}
-					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-						_alpha[t][k][j] = exp(log(_alpha[t][k][j]) + _log_z[t - k] - log_sum);
-						assert(_alpha[t][k][j] > 0);
-					}
-				}
-				assert(t <= _max_sentence_length + 1);
-				_log_z[t] = log_sum;
-			}else{
-				_log_z[t] = 1;
-			}
+			// if(normalize){
+			// 	// アンダーフローを防ぐためlogsumexpを経由して正規化後の前向き確率テーブルを計算
+			// 	double log_sum = 0;
+			// 	// 最大値を求める
+			// 	double max_log_z = 0;
+			// 	for(int k = 1;k <= std::min(t, _max_word_length);k++){
+			// 		if(t - k == 0){
+			// 			assert(_alpha[t][k][0] > 0);
+			// 			double tmp = log(_alpha[t][k][0]) + _log_z[t - k];
+			// 			if(max_log_z == 0 || tmp > max_log_z){
+			// 				max_log_z = tmp;
+			// 			}
+			// 		}
+			// 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+			// 			assert(_alpha[t][k][j] > 0);
+			// 			double tmp = log(_alpha[t][k][j]) + _log_z[t - k];
+			// 			if(max_log_z == 0 || tmp > max_log_z){
+			// 				max_log_z = tmp;
+			// 			}
+			// 		}
+			// 	}
+			// 	// 求めた最大値をもとにlogsumexp
+			// 	for(int k = 1;k <= std::min(t, _max_word_length);k++){
+			// 		if(t - k == 0){
+			// 			log_sum += exp(log(_alpha[t][k][0]) + _log_z[t - k] - max_log_z);
+			// 			continue;
+			// 		}
+			// 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+			// 			assert(_alpha[t][k][j] > 0);
+			// 			log_sum += exp(log(_alpha[t][k][j]) + _log_z[t - k] - max_log_z);
+			// 		}
+			// 	}
+			// 	log_sum = log(log_sum) + max_log_z;
+			// 	// 正規化
+			// 	assert(log_sum != 0);
+			// 	for(int k = 1;k <= std::min(t, _max_word_length);k++){
+			// 		if(t - k == 0){
+			// 			_alpha[t][k][0] = exp(log(_alpha[t][k][0]) + _log_z[t - k] - log_sum);
+			// 			assert(_alpha[t][k][0] > 0);
+			// 			continue;
+			// 		}
+			// 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+			// 			_alpha[t][k][j] = exp(log(_alpha[t][k][j]) + _log_z[t - k] - log_sum);
+			// 			assert(_alpha[t][k][j] > 0);
+			// 		}
+			// 	}
+			// 	assert(t <= _max_sentence_length + 1);
+			// 	_log_z[t] = log_sum;
+			// }else{
+			// 	_log_z[t] = 1;
+			// }
 		}
 	}
 	// 後ろ向き確率を計算
@@ -815,7 +869,6 @@ namespace npycrf {
 		assert(0 <= j && j <= _max_word_length);
 		assert(t - k >= 0);
 		// <eos>へ接続する場合
-		// iが取れない
 		if(t == sentence->size()){
 			_word_ids[0] = ID_BOS;
 			_word_ids[1] = word_k_id;
@@ -826,73 +879,109 @@ namespace npycrf {
 			}
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
 			assert(pw_h > 0);
-			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t + 1, t, k);
+			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t + 1, 1, k);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
-			_alpha[t][k][0] = p;
-			_pw_h[t][k][0][0] = p;
-			return;
-		}
-		if(j == 0){
-			_word_ids[0] = ID_BOS;
-			_word_ids[1] = ID_BOS;
-			_word_ids[2] = word_k_id;
-			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
-			assert(pw_h > 0);
-			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
-			double p = exp(_lambda_0 * log(pw_h) + potential);
-			assert(p > 0);
-			_alpha[t][k][0] = p;
-			_pw_h[t][k][0][0] = p;
-			return;
-		}
-		// i=0に相当
-		if(t - k - j == 0){
-			id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-			_word_ids[0] = ID_BOS;
-			_word_ids[1] = word_j_id;
-			_word_ids[2] = word_k_id;
-			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
-			assert(pw_h > 0);
-			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
-			double p = exp(_lambda_0 * log(pw_h) + potential);
-			assert(p > 0);
-			assert(_alpha[t - k][j][0] > 0);
-			_alpha[t][k][j] = p * _alpha[t - k][j][0];
-			assert(_alpha[t][k][j] > 0);
-			_pw_h[t][k][j][0] = p;
+			_beta[t][k][j] = p;
+			// assert(_pw_h[t][k][j][0] == _pw_h);
+			// _pw_h[t][k][0][0] = p;
 			return;
 		}
 		// それ以外の場合は周辺化
 		double sum = 0;
-		for(int i = 1;i <= std::min(t - k - j, _max_word_length);i++){
-			id word_i_id = get_substring_word_id_at_t_k(sentence, t - k - j, i);
+		for(int i = 1;i <= std::min(sentence->size() - t, _max_word_length);i++){
+			id word_i_id = get_substring_word_id_at_t_k(sentence, t + i, i);
 			id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-			_word_ids[0] = word_i_id;
-			_word_ids[1] = word_j_id;
-			_word_ids[2] = word_k_id;
-			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
-			assert(i <= _max_word_length);
+			_word_ids[0] = word_j_id;
+			_word_ids[1] = word_k_id;
+			_word_ids[2] = word_i_id;
+			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
+			assert(pw_h > 0);
 			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
-			assert(_alpha[t - k][j][i] > 0);
-			double value = p * _alpha[t - k][j][i];
+			assert(_beta[t + i][i][k] > 0);
+			double value = p * _beta[t + i][i][k];
 			assert(p > 0);
 
 			#ifdef __DEBUG__
 				if(value == 0){
 					std::cout << pw_h << std::endl;
-					std::cout << _alpha[t - k][j][i] << std::endl;
+					std::cout << _beta[t + i][i][k] << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
 			#endif
 
 			assert(value > 0);
 			sum += value;
-			_pw_h[t][k][j][i] = p;
+			assert(_pw_h[t + i][i][k][j] == pw_h);
 		}
 		assert(sum > 0);
-		_alpha[t][k][j] = sum;
+		_beta[t][k][j] = sum;
+		return;
+
+
+
+		// if(j == 0){
+		// 	_word_ids[0] = ID_BOS;
+		// 	_word_ids[1] = ID_BOS;
+		// 	_word_ids[2] = word_k_id;
+		// 	double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+		// 	assert(pw_h > 0);
+		// 	double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+		// 	double p = exp(_lambda_0 * log(pw_h) + potential);
+		// 	assert(p > 0);
+		// 	_alpha[t][k][0] = p;
+		// 	_pw_h[t][k][0][0] = p;
+		// 	return;
+		// }
+		// // i=0に相当
+		// if(t - k - j == 0){
+		// 	id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
+		// 	_word_ids[0] = ID_BOS;
+		// 	_word_ids[1] = word_j_id;
+		// 	_word_ids[2] = word_k_id;
+		// 	double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+		// 	assert(pw_h > 0);
+		// 	double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+		// 	double p = exp(_lambda_0 * log(pw_h) + potential);
+		// 	assert(p > 0);
+		// 	assert(_alpha[t - k][j][0] > 0);
+		// 	_alpha[t][k][j] = p * _alpha[t - k][j][0];
+		// 	assert(_alpha[t][k][j] > 0);
+		// 	_pw_h[t][k][j][0] = p;
+		// 	return;
+		// }
+		// // それ以外の場合は周辺化
+		// double sum = 0;
+		// for(int i = 1;i <= std::min(t - k - j, _max_word_length);i++){
+		// 	id word_i_id = get_substring_word_id_at_t_k(sentence, t - k - j, i);
+		// 	id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
+		// 	_word_ids[0] = word_i_id;
+		// 	_word_ids[1] = word_j_id;
+		// 	_word_ids[2] = word_k_id;
+		// 	double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+		// 	assert(i <= _max_word_length);
+		// 	double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+		// 	double p = exp(_lambda_0 * log(pw_h) + potential);
+		// 	assert(p > 0);
+		// 	assert(_alpha[t - k][j][i] > 0);
+		// 	double value = p * _alpha[t - k][j][i];
+		// 	assert(p > 0);
+
+		// 	#ifdef __DEBUG__
+		// 		if(value == 0){
+		// 			std::cout << pw_h << std::endl;
+		// 			std::cout << _alpha[t - k][j][i] << std::endl;
+		// 			std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
+		// 		}
+		// 	#endif
+
+		// 	assert(value > 0);
+		// 	sum += value;
+		// 	_pw_h[t][k][j][i] = p;
+		// }
+		// assert(sum > 0);
+		// _alpha[t][k][j] = sum;
 	}
 } // namespace npylm

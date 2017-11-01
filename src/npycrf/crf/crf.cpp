@@ -340,12 +340,56 @@ namespace npycrf {
 		// V(t, k, j) = γ(t - k + 1, t + 1) + γ(t - k - j + 1, t - k + 1)
 		// tは1スタートであることに注意
 		double CRF::compute_trigram_potential(int const* character_ids, wchar_t const* characters, int character_ids_length, int t, int k, int j){
-			assert(1 <= t && t <= character_ids_length);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+			return 0;
+			
+			assert(1 <= t && t <= character_ids_length + 1); // tは<eos>を指すこともある
 			assert(1 <= k && k <= character_ids_length);
 			assert(0 <= j && j < character_ids_length);
 			assert(0 < t);
 			if(j == 0){
 				return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
+			}
+			if(t == character_ids_length + 1){
+				return compute_gamma(character_ids, characters, character_ids_length, t - k - j + 1, t - k + 1);
 			}
 			return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1) + compute_gamma(character_ids, characters, character_ids_length, t - k - j + 1, t - k + 1);
 		}
