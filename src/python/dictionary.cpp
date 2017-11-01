@@ -23,7 +23,7 @@ namespace npycrf {
 		int Dictionary::get_character_id(wchar_t character){
 			auto itr = _map_character_ids.find(character);
 			if(itr == _map_character_ids.end()){
-				return 0;
+				return CHARACTER_ID_UNK;
 			}
 			return itr->second;
 		}

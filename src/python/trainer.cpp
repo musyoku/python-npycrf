@@ -210,7 +210,7 @@ namespace npycrf {
 						}
 						num_old_segments = sentence->get_num_segments_without_special_tokens();
 						// 古い分割での文の確率を計算
-						old_log_ps = _model->_npylm->compute_log_p_w(sentence);
+						old_log_ps = _model->_npylm->compute_log_p_s(sentence);
 					}
 					
 					#ifdef __DEBUG__
@@ -238,7 +238,7 @@ namespace npycrf {
 					// 以前の分割結果と現在の分割結果の確率を求める
 					// 本来は分割を一定数サンプリングして平均をとるべき
 					if(_always_accept_new_segmentation == false){
-						new_log_ps = _model->_npylm->compute_log_p_w(sentence);
+						new_log_ps = _model->_npylm->compute_log_p_s(sentence);
 						// 新しい分割の方が確率が低い場合、比率のベルヌーイ試行でどちらを採用するか決める.
 						double bernoulli = std::min(1.0, exp(new_log_ps - old_log_ps));
 						double r = sampler::uniform(0, 1);
@@ -281,7 +281,7 @@ namespace npycrf {
 				Sentence* sentence = dataset[data_index]->copy();	// 干渉を防ぐためコピー
 				_model->_lattice->viterbi_decode(sentence, segments);
 				sentence->split(segments);
-				ppl += _model->_npylm->compute_log_p_w(sentence) / ((double)sentence->get_num_segments() - 2);
+				ppl += _model->_npylm->compute_log_p_s(sentence) / ((double)sentence->get_num_segments() - 2);
 				delete sentence;
 			}
 			ppl = exp(-ppl / num_sentences);

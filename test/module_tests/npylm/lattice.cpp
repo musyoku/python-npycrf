@@ -1,17 +1,17 @@
 #include  <iostream>
 #include <chrono>
-#include "../../src/npycrf/sampler.h"
-#include "../../src/python/model.h"
-#include "../../src/python/dataset.h"
-#include "../../src/python/dictionary.h"
-#include "../../src/python/trainer.h"
+#include "../../../src/npycrf/sampler.h"
+#include "../../../src/python/model.h"
+#include "../../../src/python/dataset.h"
+#include "../../../src/python/dictionary.h"
+#include "../../../src/python/trainer.h"
 using namespace npycrf;
 using namespace npycrf::python;
 using std::cout;
 using std::flush;
 using std::endl;
 
-int main(int argc, char *argv[]){
+void test_compute_backward_probability(){
 	std::string filename = "../../dataset/test.txt";
 	Corpus* corpus = new Corpus();
 	corpus->add_textfile(filename);
@@ -51,14 +51,31 @@ int main(int argc, char *argv[]){
 
 	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
 	Dictionary* dictionary = dataset->_dict;
-	dictionary->save("npylm.dict");
 
-	double likelihood_1 = model->compute_forward_probability(L"こんにちは", dictionary);
-	cout << likelihood_1 << endl;
-	crf::CRF* crf = py_crf->_crf;
-	for(int i = 0;i < crf->_w_size_unigram_type_u;i++){
-		crf->_w_unigram_type_u[i] = 1;
+	Lattice* lattice = model->_lattice;
+	npylm::NPYLM* npylm = model->_npylm;
+	
+	// キャッシュの再確保
+	lattice->reserve(npylm->_max_word_length, sentence_str.size());
+	npylm->reserve(sentence_str.size());
+
+	// 構成文字を辞書に追加し、文字IDに変換
+	int* character_ids = new int[sentence_str.size()];
+	for(int i = 0;i < sentence_str.size();i++){
+		wchar_t character = sentence_str[i];
+		int character_id = dictionary->get_character_id(character);
+		character_ids[i] = character_id;
 	}
-	double likelihood_2 = model->compute_forward_probability(L"こんにちは", dictionary);
-	cout << likelihood_2 << endl;
+	Sentence* sentence = new Sentence(sentence_str, character_ids);
+	double probability = lattice->compute_backward_probability(sentence, normalize);
+
+	double forward_prob = model->compute_forward_probability(L"こんにちは", dictionary);
+	double backward_prob = model->compute_backward_probability(L"こんにちは", dictionary);
+	cout << forward_prob << endl;
+	cout << backward_prob << endl;
+}
+
+int main(int argc, char *argv[]){
+	test_compute_backward_probability();
+	cout << "OK" << endl;
 }

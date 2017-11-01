@@ -46,15 +46,8 @@ namespace npycrf {
 		// normalize=trueならアンダーフローを防ぐ
 		double Model::compute_forward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize){
 			// キャッシュの再確保
-			if(sentence_str.size() > _lattice->_max_sentence_length){
-				_lattice->delete_arrays();
-				_lattice->allocate_arrays(_npylm->_max_word_length, sentence_str.size());
-			}
-			if(sentence_str.size() > _npylm->_max_sentence_length){
-				_npylm->delete_arrays();
-				_npylm->allocate_arrays(sentence_str.size());
-			}
-			std::vector<int> segments;		// 分割の一時保存用
+			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
+			_npylm->reserve(sentence_str.size());
 			// 構成文字を辞書に追加し、文字IDに変換
 			int* character_ids = new int[sentence_str.size()];
 			for(int i = 0;i < sentence_str.size();i++){
@@ -68,16 +61,28 @@ namespace npycrf {
 			delete sentence;
 			return probability;
 		}
+		// normalize=trueならアンダーフローを防ぐ
+		double Model::compute_backward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize){
+			// キャッシュの再確保
+			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
+			_npylm->reserve(sentence_str.size());
+			// 構成文字を辞書に追加し、文字IDに変換
+			int* character_ids = new int[sentence_str.size()];
+			for(int i = 0;i < sentence_str.size();i++){
+				wchar_t character = sentence_str[i];
+				int character_id = dictionary->get_character_id(character);
+				character_ids[i] = character_id;
+			}
+			Sentence* sentence = new Sentence(sentence_str, character_ids);
+			double probability = _lattice->compute_backward_probability(sentence, normalize);
+			delete[] character_ids;
+			delete sentence;
+			return probability;
+		}
 		boost::python::list Model::python_parse(std::wstring sentence_str, Dictionary* dictionary){
 			// キャッシュの再確保
-			if(sentence_str.size() > _lattice->_max_sentence_length){
-				_lattice->delete_arrays();
-				_lattice->allocate_arrays(_npylm->_max_word_length, sentence_str.size());
-			}
-			if(sentence_str.size() > _npylm->_max_sentence_length){
-				_npylm->delete_arrays();
-				_npylm->allocate_arrays(sentence_str.size());
-			}
+			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
+			_npylm->reserve(sentence_str.size());
 			std::vector<int> segments;		// 分割の一時保存用
 			// 構成文字を辞書に追加し、文字IDに変換
 			int* character_ids = new int[sentence_str.size()];

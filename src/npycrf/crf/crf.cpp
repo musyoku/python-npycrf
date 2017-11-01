@@ -345,8 +345,6 @@ namespace npycrf {
 			assert(0 <= j && j < character_ids_length);
 			assert(0 < t);
 			if(j == 0){
-				// <s>と接続するパスのコストは0と考える（必ず通るため）
-				// exp(0) = 1
 				return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
 			}
 			return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1) + compute_gamma(character_ids, characters, character_ids_length, t - k - j + 1, t - k + 1);
@@ -358,7 +356,7 @@ namespace npycrf {
 			assert(t <= character_ids_length + 1);
 			assert(s < t);
 			if(t <= 1){
-				return 0;	// 必ず通る
+				return 0;
 			}
 			int repeat = t - s;
 			if(repeat == 1){
@@ -368,9 +366,8 @@ namespace npycrf {
 			if(repeat == 2){
 				return sum_cost;
 			}
-			for(int i = 1;i < repeat - 2;i++){
-				assert(s + i + 1 > s);
-				assert(s + i + 2 < t);
+			for(int i = 0;i < repeat - 2;i++){
+				assert(s + i + 2 <= character_ids_length);
 				sum_cost += compute_path_cost(character_ids, characters, character_ids_length, s + i + 1, s + i + 2, 0, 0);
 			}
 			return sum_cost;
@@ -387,7 +384,7 @@ namespace npycrf {
 			assert(y_i_1 == 0 || y_i_1 == 1);
 			double cost = 0;
 			if(i == character_ids_length + 1){	// </s>
-				return cost;
+				assert(y_i == 1);
 			}
 			cost += _compute_cost_unigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
 			cost += _compute_cost_bigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
@@ -401,7 +398,7 @@ namespace npycrf {
 			int r_end = std::max(0, i - _x_range_unigram);
 			for(int r = i;r > r_end;r--){
 				int pos = i - r + 1;	// [1, _x_range_unigram]
-				int x_i = character_ids[r - 1];
+				int x_i = character_ids[r - 1] ? r <= character_ids_length : CHARACTER_ID_EOW;
 				cost += w_unigram_u(y_i, pos, x_i);
 				cost += w_unigram_b(y_i_1, y_i, pos, x_i);
 			}
@@ -412,7 +409,7 @@ namespace npycrf {
 			int r_end = std::max(1, i - _x_range_bigram);
 			for(int r = i;r > r_end;r--){
 				int pos = i - r + 1;	// [1, _x_range_bigram]
-				int x_i = character_ids[r - 1];
+				int x_i = character_ids[r - 1] ? r <= character_ids_length : CHARACTER_ID_EOW;
 				int x_i_1 = character_ids[r - 2];
 				cost += w_bigram_u(y_i, pos, x_i_1, x_i);
 				cost += w_bigram_b(y_i_1, y_i, pos, x_i_1, x_i);
@@ -424,7 +421,7 @@ namespace npycrf {
 			int pos = 1;	// [1, _x_range_identical_1]
 			int r_end = std::max(1, i - _x_range_identical_1);
 			for(int r = i;r > r_end;r--){
-				int x_i = character_ids[r - 1];
+				int x_i = character_ids[r - 1] ? r <= character_ids_length : CHARACTER_ID_EOW;
 				int x_i_1 = character_ids[r - 2];
 				if(x_i == x_i_1){
 					cost += w_identical_1_u(y_i, pos);
@@ -439,7 +436,7 @@ namespace npycrf {
 			int pos = 1;	// [1, _x_range_identical_2]
 			int r_end = std::max(2, i - _x_range_identical_2);
 			for(int r = i;r > r_end;r--){
-				int x_i = character_ids[r - 1];
+				int x_i = character_ids[r - 1] ? r <= character_ids_length : CHARACTER_ID_EOW;
 				int x_i_2 = character_ids[r - 3];
 				if(x_i == x_i_2){
 					cost += w_identical_2_u(y_i, pos);
@@ -451,9 +448,9 @@ namespace npycrf {
 		}
 		double CRF::_compute_cost_unigram_and_bigram_type_features(int const* character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			wchar_t char_i = characters[i - 1];
+			wchar_t char_i = characters[i - 1] ? i <= character_ids_length : 0;
 			wchar_t char_i_1 = characters[i - 2];
-			int type_i = ctype::get_type(char_i);
+			int type_i = ctype::get_type(char_i) ? i <= character_ids_length : CTYPE_UNKNOWN;
 			int type_i_1 = ctype::get_type(char_i_1);
 			cost += w_unigram_type_u(y_i, type_i);
 			cost += w_unigram_type_b(y_i_1, y_i, type_i);

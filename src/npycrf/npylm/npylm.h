@@ -15,8 +15,8 @@ namespace npycrf {
 		double factorial(double n);
 		class NPYLM {
 		private:
-			void _init_cache(int max_word_length, int max_sentence_length);
-			void _delete_cache();
+			void _allocate_capacity(int max_sentence_length);
+			void _delete_capacity();
 			friend class boost::serialization::access;
 			template <class Archive>
 			void serialize(Archive &archive, unsigned int version);
@@ -51,8 +51,7 @@ namespace npycrf {
 				double vpylm_beta_stop, 
 				double vpylm_beta_pass);
 			~NPYLM();
-			void allocate_arrays(int max_sentence_length);
-			void delete_arrays();
+			void reserve(int max_sentence_length);
 			void set_vpylm_g0(double g0);
 			void set_lambda_prior(double a, double b);
 			void sample_lambda_with_initial_params();
@@ -72,8 +71,8 @@ namespace npycrf {
 			double compute_poisson_k_lambda(unsigned int k, double lambda);
 			double compute_p_k_given_vpylm(int k);
 			void sample_hpylm_vpylm_hyperparameters();
-			double compute_log_p_w(Sentence* sentence);
-			double compute_p_w(Sentence* sentence);
+			double compute_log_p_s(Sentence* sentence);
+			double compute_p_s(Sentence* sentence);
 			double compute_p_w_given_h(Sentence* sentence, int word_t_index);
 			double compute_p_w_given_h(
 				wchar_t const* character_ids, int character_ids_length, 

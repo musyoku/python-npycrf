@@ -24,6 +24,7 @@ namespace npycrf {
 			void set_vpylm_beta_stop(double stop);
 			void set_vpylm_beta_pass(double pass);
 			double compute_forward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize = true);
+			double compute_backward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize = true);
 			boost::python::list python_parse(std::wstring sentence_str, Dictionary* dictionary);
 		};
 	}

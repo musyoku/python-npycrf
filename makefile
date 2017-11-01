@@ -3,6 +3,7 @@ BOOST = /usr/local/Cellar/boost/1.65.0
 INCLUDE = `python3-config --includes` -std=c++14 -I$(BOOST)/include
 LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(BOOST)/lib
 SOFLAGS = -shared -fPIC -march=native
+SOURCES = src/python/*.cpp src/python/model/*.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp
 
 install: ## npylm.soを生成
 	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp $(LDFLAGS) -o run/npylm.so -O3
@@ -23,23 +24,25 @@ check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
 
 module_tests: ## 各モジュールのテスト.
-	$(CC) test/module_tests/crf/crf.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/module_tests/crf/crf $(INCLUDE) $(LDFLAGS) -O0 -g
+	$(CC) test/module_tests/npylm/lattice.cpp $(SOURCES) -o test/module_tests/npylm/lattice $(INCLUDE) $(LDFLAGS) -O0 -g
+	./test/module_tests/npylm/lattice
+	$(CC) test/module_tests/crf/crf.cpp $(SOURCES) -o test/module_tests/crf/crf $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/crf/crf
-	$(CC) test/module_tests/npylm/wordtype.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/module_tests/npylm/wordtype $(INCLUDE) $(LDFLAGS) -O0 -g
+	$(CC) test/module_tests/npylm/wordtype.cpp $(SOURCES) -o test/module_tests/npylm/wordtype $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm/wordtype
-	$(CC) test/module_tests/npylm/npylm.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/module_tests/npylm/npylm $(INCLUDE) $(LDFLAGS) -O0 -g
+	$(CC) test/module_tests/npylm/npylm.cpp $(SOURCES) -o test/module_tests/npylm/npylm $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm/npylm
-	$(CC) test/module_tests/npylm/vpylm.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/module_tests/npylm/vpylm $(INCLUDE) $(LDFLAGS) -O0 -g
+	$(CC) test/module_tests/npylm/vpylm.cpp $(SOURCES) -o test/module_tests/npylm/vpylm $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm/vpylm
-	$(CC) test/module_tests/npylm/sentence.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/module_tests/npylm/sentence $(INCLUDE) $(LDFLAGS) -O0 -g
+	$(CC) test/module_tests/npylm/sentence.cpp $(SOURCES) -o test/module_tests/npylm/sentence $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm/sentence
-	$(CC) test/module_tests/npylm/hash.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/module_tests/npylm/hash $(INCLUDE) $(LDFLAGS) -O0 -g
+	$(CC) test/module_tests/npylm/hash.cpp $(SOURCES) -o test/module_tests/npylm/hash $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm/hash
 
 running_tests:	## 運用テスト
-	$(CC) test/running_tests/likelihood.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/running_tests/likelihood $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
-	$(CC) test/running_tests/save.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp -o test/running_tests/save $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
-	$(CC) test/running_tests/train.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp  -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
+	$(CC) test/running_tests/likelihood.cpp $(SOURCES) -o test/running_tests/likelihood $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
+	$(CC) test/running_tests/save.cpp $(SOURCES) -o test/running_tests/save $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
+	$(CC) test/running_tests/train.cpp $(SOURCES)  -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 
 .PHONY: help
 help:

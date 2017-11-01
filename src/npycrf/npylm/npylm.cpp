@@ -55,11 +55,19 @@ namespace npycrf {
 			delete[] _characters;
 			delete[] _pk_vpylm;
 		}
-		void NPYLM::allocate_arrays(int max_sentence_length){
+		void NPYLM::reserve(int max_sentence_length){
+			if(max_sentence_length <= _max_sentence_length){
+				return;
+			}
+			_delete_capacity();
+			_allocate_capacity(max_sentence_length);
+			_max_sentence_length = max_sentence_length;
+		}
+		void NPYLM::_allocate_capacity(int max_sentence_length){
 			_max_sentence_length = max_sentence_length;
 			_characters = new wchar_t[max_sentence_length + 2];
 		}
-		void NPYLM::delete_arrays(){
+		void NPYLM::_delete_capacity(){
 			delete[] _characters;
 		}
 		void NPYLM::set_vpylm_g0(double g0){
@@ -246,8 +254,8 @@ namespace npycrf {
 			}
 
 			#ifdef __DEBUG__
-			id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
-			assert(a == word_t_id);
+				id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
+				assert(a == word_t_id);
 			#endif
 
 			assert(substr_char_t_end < _max_sentence_length);
@@ -313,14 +321,14 @@ namespace npycrf {
 			_hpylm->sample_hyperparams();
 			_vpylm->sample_hyperparams();
 		}
-		double NPYLM::compute_log_p_w(Sentence* sentence){
+		double NPYLM::compute_log_p_s(Sentence* sentence){
 			double pw = 0;
 			for(int t = 2;t < sentence->get_num_segments();t++){
 				pw += log(compute_p_w_given_h(sentence, t));
 			}
 			return pw;
 		}
-		double NPYLM::compute_p_w(Sentence* sentence){
+		double NPYLM::compute_p_s(Sentence* sentence){
 			double pw = 1;
 			for(int t = 2;t < sentence->get_num_segments();t++){
 				pw *= compute_p_w_given_h(sentence, t);
@@ -335,24 +343,21 @@ namespace npycrf {
 			int substr_char_t_end = sentence->_start[word_t_index] + sentence->_segments[word_t_index] - 1;
 			return compute_p_w_given_h(sentence->_characters, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t_index, substr_char_t_start, substr_char_t_end);
 		}
+		// word_t_index, substr_char_t_start, substr_char_t_endはインデックス
 		double NPYLM::compute_p_w_given_h(
 				wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
 				int word_t_index, int substr_char_t_start, int substr_char_t_end){
-			assert(word_t_index < word_ids_length);
+			assert(0 <= word_t_index && word_t_index < word_ids_length);
 			assert(substr_char_t_start >= 0);
 			id word_id = word_ids[word_t_index];
 
-			if(word_t_index == word_ids_length - 1){
-				assert(word_id == ID_EOS);
-			}else{
-				if(word_id != ID_EOS){
-					assert(substr_char_t_end < character_ids_length);
-					#ifdef __DEBUG__
+			if(word_id != ID_EOS){
+				assert(0 <= substr_char_t_end && substr_char_t_end < character_ids_length);
+				#ifdef __DEBUG__
 					id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);
 					assert(a == word_id);
-					#endif
-				}
+				#endif
 			}
 			// ノードを探しながら_hpylm_parent_pw_cacheをセット
 			Node<id>* node = find_node_by_tracing_back_context_from_time_t(characters, character_ids_length, word_ids, word_ids_length, word_t_index, substr_char_t_start, substr_char_t_end, _hpylm_parent_pw_cache, false, true);
