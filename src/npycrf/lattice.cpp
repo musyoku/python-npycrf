@@ -153,6 +153,7 @@ namespace npycrf {
 	id Lattice::get_substring_word_id_at_t_k(Sentence* sentence, int t, int k){
 		assert(t < _max_sentence_length + 1);
 		assert(k < _max_sentence_length + 1);
+		assert(t - k >= 0);
 		id word_id = _substring_word_id_cache[t][k];
 		if(word_id == 0){
 			word_id = sentence->get_substr_word_id(t - k, t - 1);	// 引数はインデックスなので注意
@@ -729,6 +730,47 @@ namespace npycrf {
 		}
 		return sum_probability;
 	}
+	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
+	// normalize=trueならアンダーフローを防ぐ
+	double Lattice::compute_sentence_probability_backward(Sentence* sentence, bool normalize){
+		assert(sentence->size() <= _max_sentence_length);
+		int size = sentence->size() + 1;
+		_beta[0][0][0] = 1;
+		_log_z[0] = 0;
+		for(int i = 0;i < size;i++){
+			for(int j = 0;j < _max_word_length + 1;j++){
+				_substring_word_id_cache[i][j] = 0;
+			}
+		}
+		#ifdef __DEBUG__
+			for(int t = 0;t < size;t++){
+				for(int k = 0;k < _max_word_length + 1;k++){
+					for(int j = 0;j < _max_word_length + 1;j++){
+						_beta[t][k][j] = -1;
+					}
+				}
+			}
+		#endif 
+		backward_filtering(sentence, normalize);
+		double sum_probability = 0;
+		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
+		int character_ids_length = sentence->size();
+		for(int k = 1;k <= _max_word_length;k++){
+			int t = k;
+			id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
+			_word_ids[0] = ID_BOS;
+			_word_ids[1] = ID_BOS;
+			_word_ids[2] = word_k_id;
+			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, 0, t - 1);
+			assert(pw_h > 0);
+			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, 0);
+			double p = exp(_lambda_0 * log(pw_h) + potential);
+			assert(p > 0);
+			sum_probability += _beta[t][k][0] * p;
+		}
+		return sum_probability;
+	}
 	// 文の可能な分割全てを考慮した前向き確率（<eos>への接続は除く）
 	// normalize=trueならアンダーフローを防ぐ
 	double Lattice::compute_forward_probability(Sentence* sentence, bool normalize){
@@ -914,7 +956,7 @@ namespace npycrf {
 
 			assert(value > 0);
 			sum += value;
-			assert(_pw_h[t + i][i][k][j] == pw_h);
+			// assert(_pw_h[t + i][i][k][j] == pw_h);
 		}
 		assert(sum > 0);
 		_beta[t][k][j] = sum;

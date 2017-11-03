@@ -30,8 +30,8 @@ namespace npycrf {
 		void Trainer::sample_hpylm_vpylm_hyperparameters(){
 			_model->_npylm->sample_hpylm_vpylm_hyperparameters();
 		}
-		// 文字種ごとにλのサンプリング
-		void Trainer::sample_lambda(){
+		// 文字種ごとにNPYLMのλをサンプリング
+		void Trainer::sample_npylm_lambda(){
 			std::vector<double> a_for_type(WORDTYPE_NUM_TYPES + 1, 0.0);
 			std::vector<double> b_for_type(WORDTYPE_NUM_TYPES + 1, 0.0);
 			std::unordered_set<id> words;
@@ -260,6 +260,44 @@ namespace npycrf {
 			// 客数チェック
 			assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
 			delete[] old_segments;
+		}
+		void Trainer::sgd(bool pure_crf, int batchsize){
+			int data_index = 0;
+			Sentence* sentence = _dataset->_sentence_sequences_train[data_index];
+			Lattice* lattice = _model->_lattice;
+			npylm::NPYLM* npylm = _model->_npylm;
+			crf::CRF* crf = _model->_crf;
+			id* word_ids = lattice->_word_ids;
+			wchar_t const* characters = sentence->_characters;
+			int const* character_ids = sentence->_character_ids;
+			int character_ids_length = sentence->size();
+			lattice->compute_forward_probability(sentence, false);
+			lattice->compute_backward_probability(sentence, false);
+			double*** alpha = lattice->_alpha;
+			double*** beta = lattice->_beta;
+			double zx_npycrf = lattice->compute_sentence_probability(sentence, false);
+			for(int t = 0;t <= sentence->size();t++){
+				for(int k = 1;k <= std::min(t, _model->get_max_word_length());k++){
+					for(int j = 1;j <= std::min(t - k, _model->get_max_word_length());j++){
+						for(int i = 1;i <= std::min(t - k - j, _model->get_max_word_length());i++){
+							id word_i_id = lattice->get_substring_word_id_at_t_k(sentence, t - k - j, i);
+							id word_j_id = lattice->get_substring_word_id_at_t_k(sentence, t - k, j);
+							id word_k_id = lattice->get_substring_word_id_at_t_k(sentence, t, k);
+							word_ids[0] = word_i_id;
+							word_ids[1] = word_j_id;
+							word_ids[2] = word_k_id;
+							double pw_h = npylm->compute_p_w_given_h(characters, character_ids_length, word_ids, 3, 2, t - k, t - 1);
+							assert(pw_h > 0);
+							double potential = crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+							double p = exp(lattice->_lambda_0 * log(pw_h) + potential);
+							assert(p > 0);
+
+							double p_conc = alpha[t - k][j][i] * beta[t][k][j] * p / zx_npycrf;
+							std::cout << "p_conc = " << p_conc << std::endl;
+						}
+					}
+				}
+			}
 		}
 		double Trainer::compute_perplexity_train(){
 			return _compute_perplexity(_dataset->_sentence_sequences_train);

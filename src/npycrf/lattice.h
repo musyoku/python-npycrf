@@ -44,6 +44,7 @@ namespace npycrf {
 		void viterbi_backward(Sentence* sentence, std::vector<int> &segments);
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
 		double compute_sentence_probability(Sentence* sentence, bool normalize = true);
+		double compute_sentence_probability_backward(Sentence* sentence, bool normalize = true);
 		double compute_forward_probability(Sentence* sentence, bool normalize = true);
 		double compute_backward_probability(Sentence* sentence, bool normalize = true);
 	};
