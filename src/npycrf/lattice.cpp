@@ -688,16 +688,9 @@ namespace npycrf {
 	}
 	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// normalize=trueならアンダーフローを防ぐ
-	double Lattice::compute_sentence_probability(Sentence* sentence, bool normalize){
+	double Lattice::compute_z_x(Sentence* sentence, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
-		_alpha[0][0][0] = 1;
-		_log_z[0] = 0;
-		for(int i = 0;i < size;i++){
-			for(int j = 0;j < _max_word_length + 1;j++){
-				_substring_word_id_cache[i][j] = 0;
-			}
-		}
 		#ifdef __DEBUG__
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < _max_word_length + 1;k++){
@@ -707,6 +700,13 @@ namespace npycrf {
 				}
 			}
 		#endif 
+		_alpha[0][0][0] = 1;
+		_log_z[0] = 0;
+		for(int i = 0;i < size;i++){
+			for(int j = 0;j < _max_word_length + 1;j++){
+				_substring_word_id_cache[i][j] = 0;
+			}
+		}
 		forward_filtering(sentence, normalize);
 		double sum_probability = 0;
 		int t = sentence->size();
@@ -732,16 +732,9 @@ namespace npycrf {
 	}
 	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// normalize=trueならアンダーフローを防ぐ
-	double Lattice::compute_sentence_probability_backward(Sentence* sentence, bool normalize){
+	double Lattice::compute_z_x_backward(Sentence* sentence, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
-		_beta[0][0][0] = 1;
-		_log_z[0] = 0;
-		for(int i = 0;i < size;i++){
-			for(int j = 0;j < _max_word_length + 1;j++){
-				_substring_word_id_cache[i][j] = 0;
-			}
-		}
 		#ifdef __DEBUG__
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < _max_word_length + 1;k++){
@@ -751,6 +744,13 @@ namespace npycrf {
 				}
 			}
 		#endif 
+		_beta[0][0][0] = 1;
+		_log_z[0] = 0;
+		for(int i = 0;i < size;i++){
+			for(int j = 0;j < _max_word_length + 1;j++){
+				_substring_word_id_cache[i][j] = 0;
+			}
+		}
 		backward_filtering(sentence, normalize);
 		double sum_probability = 0;
 		wchar_t const* characters = sentence->_characters;
@@ -776,13 +776,6 @@ namespace npycrf {
 	double Lattice::compute_forward_probability(Sentence* sentence, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
-		_alpha[0][0][0] = 1;
-		_log_z[0] = 0;
-		for(int i = 0;i < size;i++){
-			for(int j = 0;j < _max_word_length + 1;j++){
-				_substring_word_id_cache[i][j] = 0;
-			}
-		}
 		#ifdef __DEBUG__
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < _max_word_length + 1;k++){
@@ -792,6 +785,13 @@ namespace npycrf {
 				}
 			}
 		#endif 
+		_alpha[0][0][0] = 1;
+		_log_z[0] = 0;
+		for(int i = 0;i < size;i++){
+			for(int j = 0;j < _max_word_length + 1;j++){
+				_substring_word_id_cache[i][j] = 0;
+			}
+		}
 		forward_filtering(sentence, normalize);
 		double sum_probability = 0;
 		int t = sentence->size();
@@ -807,13 +807,6 @@ namespace npycrf {
 	double Lattice::compute_backward_probability(Sentence* sentence, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
-		_beta[0][0][0] = 1;
-		_log_z[0] = 0;
-		for(int i = 0;i < size;i++){
-			for(int j = 0;j < _max_word_length + 1;j++){
-				_substring_word_id_cache[i][j] = 0;
-			}
-		}
 		#ifdef __DEBUG__
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < _max_word_length + 1;k++){
@@ -823,6 +816,13 @@ namespace npycrf {
 				}
 			}
 		#endif 
+		_beta[0][0][0] = 1;
+		_log_z[0] = 0;
+		for(int i = 0;i < size;i++){
+			for(int j = 0;j < _max_word_length + 1;j++){
+				_substring_word_id_cache[i][j] = 0;
+			}
+		}
 		backward_filtering(sentence, normalize);
 		double sum_probability = 0;
 		int t = sentence->size();

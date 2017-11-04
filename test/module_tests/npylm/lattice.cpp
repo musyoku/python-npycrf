@@ -188,7 +188,7 @@ void test_compute_backward_probability(){
 	}
 }
 
-void test_compute_sentence_probability(){
+void test_compute_z_x(){
 	std::string filename = "../../../dataset/test.txt";
 	Corpus* corpus = new Corpus();
 	corpus->add_textfile(filename);
@@ -236,8 +236,8 @@ void test_compute_sentence_probability(){
 	for(int epoch = 0;epoch < 2;epoch++){
 		trainer->gibbs();
 		for(Sentence* sentence: dataset->_sentence_sequences_train){
-			double prob_f = lattice->compute_sentence_probability(sentence, false);
-			double prob_b = lattice->compute_sentence_probability_backward(sentence, false);
+			double prob_f = lattice->compute_z_x(sentence, false);
+			double prob_b = lattice->compute_z_x_backward(sentence, false);
 			assert(std::abs(prob_f - prob_b) / prob_b < 1e-14);
 			// lattice->compute_forward_probability(sentence, false);
 			// lattice->compute_backward_probability(sentence, false);
@@ -307,10 +307,10 @@ void test_sgd(){
 	Lattice* lattice = model->_lattice;
 	npylm::NPYLM* npylm = model->_npylm;
 
-	for(int epoch = 0;epoch < 2;epoch++){
+	for(int epoch = 0;epoch < 5;epoch++){
 		trainer->gibbs();
-		trainer->sgd(false, 1);
 	}
+	trainer->sgd(false, 1);
 }
 
 int main(int argc, char *argv[]){
@@ -318,7 +318,7 @@ int main(int argc, char *argv[]){
 	cout << "OK" << endl;
 	test_compute_backward_probability();
 	cout << "OK" << endl;
-	test_compute_sentence_probability();
+	test_compute_z_x();
 	cout << "OK" << endl;
 	test_compute_forward_probability();
 	cout << "OK" << endl;

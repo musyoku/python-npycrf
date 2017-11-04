@@ -271,33 +271,48 @@ namespace npycrf {
 			wchar_t const* characters = sentence->_characters;
 			int const* character_ids = sentence->_character_ids;
 			int character_ids_length = sentence->size();
+
+			_model->parse(sentence);	// debug
+			sentence->dump_words();
+			double log_py_x = _model->compute_log_p_y_given_x(sentence);
+			std::cout << "log_py_x = " << log_py_x << std::endl;
+
 			lattice->compute_forward_probability(sentence, false);
 			lattice->compute_backward_probability(sentence, false);
 			double*** alpha = lattice->_alpha;
 			double*** beta = lattice->_beta;
-			double zx_npycrf = lattice->compute_sentence_probability(sentence, false);
-			for(int t = 0;t <= sentence->size();t++){
-				for(int k = 1;k <= std::min(t, _model->get_max_word_length());k++){
-					for(int j = 1;j <= std::min(t - k, _model->get_max_word_length());j++){
-						for(int i = 1;i <= std::min(t - k - j, _model->get_max_word_length());i++){
-							id word_i_id = lattice->get_substring_word_id_at_t_k(sentence, t - k - j, i);
-							id word_j_id = lattice->get_substring_word_id_at_t_k(sentence, t - k, j);
-							id word_k_id = lattice->get_substring_word_id_at_t_k(sentence, t, k);
-							word_ids[0] = word_i_id;
-							word_ids[1] = word_j_id;
-							word_ids[2] = word_k_id;
-							double pw_h = npylm->compute_p_w_given_h(characters, character_ids_length, word_ids, 3, 2, t - k, t - 1);
-							assert(pw_h > 0);
-							double potential = crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
-							double p = exp(lattice->_lambda_0 * log(pw_h) + potential);
-							assert(p > 0);
+			double zx_npycrf = _model->compute_z_x(sentence, false);
+			std::cout << "zx_npycrf = " << zx_npycrf << std::endl;
+			double grad = 0;
+			int t, k, j, i;
+			for(int word_t = 2;word_t < sentence->get_num_segments();word_t++){
+				id word_i_id = sentence->get_word_id_at(word_t - 2);
+				id word_j_id = sentence->get_word_id_at(word_t - 1);
+				id word_k_id = sentence->get_word_id_at(word_t);
+				word_ids[0] = word_i_id;
+				word_ids[1] = word_j_id;
+				word_ids[2] = word_k_id;
+				i = word_t > 3 ? sentence->_segments[word_t - 2] : 0;
+				j = word_t > 2 ? sentence->_segments[word_t - 1] : 0;
+				k = sentence->_segments[word_t];
+				t = sentence->_start[word_t] + k;
+				std::cout << "t, k, j, i = " << t << ", " << k << ", " << j << ", " << i << std::endl;
+				double pw_h = npylm->compute_p_w_given_h(characters, character_ids_length, word_ids, 3, 2, t - k, t - 1);
+				assert(pw_h > 0);
+				double potential = crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+				double p = exp(_model->_lambda_0 * log(pw_h) + potential);
+				std::cout << "pw_h = " << pw_h << ", gamma = " << potential << ", p = " << p << std::endl;
+				assert(p > 0);
 
-							double p_conc = alpha[t - k][j][i] * beta[t][k][j] * p / zx_npycrf;
-							std::cout << "p_conc = " << p_conc << std::endl;
-						}
-					}
-				}
+				double p_conc = alpha[t - k][j][i] * beta[t][k][j] * p;
+				std::cout << "p_conc = " << p_conc << ", alpha[t - k][j][i] = " << alpha[t - k][j][i] << ", beta[t][k][j] = " << beta[t][k][j] << std::endl;
+				grad += log(pw_h) * (1 - p_conc);
 			}
+			std::cout << "grad = " << grad << std::endl;
+			_model->_lambda_0 += 1e-8;
+			double _log_py_x = _model->compute_log_p_y_given_x(sentence);
+			std::cout << "_log_py_x = " << _log_py_x << std::endl;
+			std::cout << ((_log_py_x - log_py_x) / 1e-8) << std::endl;
 		}
 		double Trainer::compute_perplexity_train(){
 			return _compute_perplexity(_dataset->_sentence_sequences_train);

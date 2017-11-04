@@ -43,8 +43,8 @@ namespace npycrf {
 		void viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j);
 		void viterbi_backward(Sentence* sentence, std::vector<int> &segments);
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
-		double compute_sentence_probability(Sentence* sentence, bool normalize = true);
-		double compute_sentence_probability_backward(Sentence* sentence, bool normalize = true);
+		double compute_z_x(Sentence* sentence, bool normalize = true);
+		double compute_z_x_backward(Sentence* sentence, bool normalize = true);
 		double compute_forward_probability(Sentence* sentence, bool normalize = true);
 		double compute_backward_probability(Sentence* sentence, bool normalize = true);
 	};

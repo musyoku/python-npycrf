@@ -12,6 +12,7 @@ namespace npycrf {
 			_npylm = py_npylm->_npylm;
 			_crf = py_crf->_crf;
 			_lattice = new Lattice(_npylm, _crf, lambda_0, max_word_length, max_sentence_length);
+			_lambda_0 = lambda_0;
 		}
 		Model::~Model(){
 
@@ -42,6 +43,24 @@ namespace npycrf {
 		}
 		void Model::set_vpylm_beta_pass(double pass){
 			_npylm->_vpylm->_beta_pass = pass;
+		}
+		// 分配関数の計算
+		// normalize=trueならアンダーフローを防ぐ
+		double Model::compute_z_x(Sentence* sentence, bool normalize){
+			// キャッシュの再確保
+			_lattice->reserve(_npylm->_max_word_length, sentence->size());
+			_npylm->reserve(sentence->size());
+			double zx = _lattice->compute_z_x(sentence, normalize);
+			return zx;
+		}
+		// sentenceは分割済みの必要がある
+		double Model::compute_log_p_y_given_x(Sentence* sentence){
+			double log_crf = 0;
+			double log_npylm = _npylm->compute_log_p_s(sentence);
+			double log_py_x = log_crf + _lambda_0 * log_npylm;
+			double zx = compute_z_x(sentence, false);
+			assert(zx > 0);
+			return log_py_x;
 		}
 		// normalize=trueならアンダーフローを防ぐ
 		double Model::compute_forward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize){
@@ -78,6 +97,14 @@ namespace npycrf {
 			delete[] character_ids;
 			delete sentence;
 			return probability;
+		}
+		void Model::parse(Sentence* sentence){
+			// キャッシュの再確保
+			_lattice->reserve(_npylm->_max_word_length, sentence->size());
+			_npylm->reserve(sentence->size());
+			std::vector<int> segments;		// 分割の一時保存用
+			_lattice->viterbi_decode(sentence, segments);
+			sentence->split(segments);
 		}
 		boost::python::list Model::python_parse(std::wstring sentence_str, Dictionary* dictionary){
 			// キャッシュの再確保
