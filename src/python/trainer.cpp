@@ -274,15 +274,15 @@ namespace npycrf {
 
 			_model->parse(sentence);	// debug
 			sentence->dump_words();
-			double log_py_x = _model->compute_log_p_proportional_y_given_x(sentence);
+			double log_py_x = _model->compute_log_proportional_p_y_given_x(sentence);
+			double px = _model->compute_marginal_p_x(sentence, false);
 			std::cout << "log_py_x = " << log_py_x << std::endl;
+			std::cout << "px = " << px << std::endl;
 
 			lattice->compute_forward_probability(sentence, false);
 			lattice->compute_backward_probability(sentence, false);
 			double*** alpha = lattice->_alpha;
 			double*** beta = lattice->_beta;
-			double zx_npycrf = _model->compute_z_x(sentence, false);
-			std::cout << "zx_npycrf = " << zx_npycrf << std::endl;
 			double grad = 0;
 			int t, k, j, i;
 			for(int word_t = 2;word_t < sentence->get_num_segments();word_t++){
@@ -305,13 +305,14 @@ namespace npycrf {
 				assert(p > 0);
 
 				double p_conc = alpha[t - k][j][i] * beta[t][k][j] * p;
+				assert(p_conc < px);
 				std::cout << "p_conc = " << p_conc << ", alpha[t - k][j][i] = " << alpha[t - k][j][i] << ", beta[t][k][j] = " << beta[t][k][j] << std::endl;
 				grad += log(pw_h) * (1 - p_conc);
 				std::cout << "grad += " << log(pw_h) * (1 - p_conc) << std::endl;
 			}
 			std::cout << "grad = " << grad << std::endl;
 			_model->_lambda_0 += 1e-8;
-			double _log_py_x = _model->compute_log_p_proportional_y_given_x(sentence);
+			double _log_py_x = _model->compute_log_proportional_p_y_given_x(sentence);
 			std::cout << "_log_py_x = " << _log_py_x << std::endl;
 			std::cout << ((_log_py_x - log_py_x) / 1e-8) << std::endl;
 		}

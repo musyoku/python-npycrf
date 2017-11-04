@@ -22,6 +22,7 @@ namespace npycrf {
 		double*** _beta;		// 後向き確率
 		double**** _pw_h;		// キャッシュ
 		double* _log_z;			// 正規化定数
+		double** _pc_s;			// 文の部分文字列が単語になる条件付き確率
 		double* _backward_sampling_table;
 		int*** _viterbi_backward;
 		int _max_word_length;
@@ -43,8 +44,9 @@ namespace npycrf {
 		void viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j);
 		void viterbi_backward(Sentence* sentence, std::vector<int> &segments);
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
-		double compute_z_x(Sentence* sentence, bool normalize = true);
-		double compute_z_x_backward(Sentence* sentence, bool normalize = true);
+		double compute_marginal_p_x(Sentence* sentence, bool normalize = true);
+		double compute_marginal_p_x_backward(Sentence* sentence, bool normalize = true);
+		void enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** &pc_s);
 		double compute_forward_probability(Sentence* sentence, bool normalize = true);
 		double compute_backward_probability(Sentence* sentence, bool normalize = true);
 	};

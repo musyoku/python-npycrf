@@ -46,16 +46,16 @@ namespace npycrf {
 		}
 		// 分配関数の計算
 		// normalize=trueならアンダーフローを防ぐ
-		double Model::compute_z_x(Sentence* sentence, bool normalize){
+		double Model::compute_marginal_p_x(Sentence* sentence, bool normalize){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
-			double zx = _lattice->compute_z_x(sentence, normalize);
+			double zx = _lattice->compute_marginal_p_x(sentence, normalize);
 			return zx;
 		}
 		// sentenceは分割済みの必要がある
 		// 比例のままの確率を返す
-		double Model::compute_log_p_proportional_y_given_x(Sentence* sentence){
+		double Model::compute_log_proportional_p_y_given_x(Sentence* sentence){
 			double log_crf = 0;
 			double log_npylm = _npylm->compute_log_p_s(sentence);
 			double log_py_x = log_crf + _lambda_0 * log_npylm;

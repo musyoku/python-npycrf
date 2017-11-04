@@ -11,33 +11,33 @@
 namespace npycrf {
 	using namespace npylm;
 	namespace lattice {
-		void _init_table(double*** &alpha, int size, int max_word_length){
-			alpha = new double**[size];
-			assert(alpha != NULL);
+		void _init_table(double*** &table, int size, int max_word_length){
+			table = new double**[size];
+			assert(table != NULL);
 			for(int t = 0;t < size;t++){
-				alpha[t] = new double*[max_word_length + 1];
-				assert(alpha[t] != NULL);
+				table[t] = new double*[max_word_length + 1];
+				assert(table[t] != NULL);
 				for(int k = 0;k < max_word_length + 1;k++){
-					alpha[t][k] = new double[max_word_length + 1];
-					assert(alpha[t][k] != NULL);
+					table[t][k] = new double[max_word_length + 1];
+					assert(table[t][k] != NULL);
 					for(int j = 0;j < max_word_length + 1;j++){
-						alpha[t][k][j] = 0;
+						table[t][k][j] = 0;
 					}
 				}
 			}
 		}
-		void _delete_table(double*** &alpha, int size, int max_word_length){
-			if(alpha == NULL){
+		void _delete_table(double*** &table, int size, int max_word_length){
+			if(table == NULL){
 				return;
 			}
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < max_word_length + 1;k++){
-					delete[] alpha[t][k];
+					delete[] table[t][k];
 				}
-				delete[] alpha[t];
+				delete[] table[t];
 			}
-			delete[] alpha;
-			alpha = NULL;
+			delete[] table;
+			table = NULL;
 		}
 	}
 	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, double lambda_0, int max_word_length, int max_sentence_length){
@@ -48,6 +48,7 @@ namespace npycrf {
 		_beta = NULL;
 		_pw_h = NULL;
 		_log_z = NULL;
+		_pc_s = NULL;
 		_backward_sampling_table = NULL;
 		_viterbi_backward = NULL;
 		_substring_word_id_cache = NULL;
@@ -93,6 +94,15 @@ namespace npycrf {
 		lattice::_init_table(_alpha, size, max_word_length);
 		// 後向き確率
 		lattice::_init_table(_beta, size, max_word_length);
+		// 部分文字列が単語になる条件付き確率テーブル
+		_pc_s = new double*[size];
+		for(int t = 0;t < size;t++){
+			_pc_s[t] = new double[max_word_length + 1];
+			assert(_pc_s[t] != NULL);
+			for(int k = 0;k < max_word_length + 1;k++){
+				_pc_s[t][k] = 0;
+			}
+		}
 		// 3-gram確率のキャッシュ
 		_pw_h = new double***[size];
 		assert(_pw_h != NULL);
@@ -137,6 +147,10 @@ namespace npycrf {
 			}
 			delete[] _viterbi_backward[t];
 		}
+		for(int t = 0;t < size;t++){
+			delete[] _pc_s[t];
+		}
+		delete[] _pc_s;
 		delete[] _viterbi_backward;
 		delete[] _backward_sampling_table;
 		for(int t = 0;t < size;t++){
@@ -688,7 +702,7 @@ namespace npycrf {
 	}
 	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// normalize=trueならアンダーフローを防ぐ
-	double Lattice::compute_z_x(Sentence* sentence, bool normalize){
+	double Lattice::compute_marginal_p_x(Sentence* sentence, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		#ifdef __DEBUG__
@@ -732,7 +746,7 @@ namespace npycrf {
 	}
 	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// normalize=trueならアンダーフローを防ぐ
-	double Lattice::compute_z_x_backward(Sentence* sentence, bool normalize){
+	double Lattice::compute_marginal_p_x_backward(Sentence* sentence, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		#ifdef __DEBUG__
@@ -770,6 +784,34 @@ namespace npycrf {
 			sum_probability += _beta[t][k][0] * p;
 		}
 		return sum_probability;
+	}
+	// 文の部分文字列が単語になる確率
+	// 確率値は全て比例のまま
+	void Lattice::enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** &pc_s){
+		assert(sentence->size() <= _max_sentence_length);
+		int size = sentence->size() + 1;
+		#ifdef __DEBUG__
+			for(int t = 0;t < size;t++){
+				for(int k = 0;k < _max_word_length + 1;k++){
+						pc_s[t][k] = -1;
+				}
+			}
+		#endif 
+		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
+		int character_ids_length = sentence->size();
+		for(int t = 1;t <= sentence->size();t++){
+			for(int k = 1;k <= std::min(t, _max_word_length);k++){
+				// jを網羅する
+				double sum_probability = 0;
+				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+					assert(alpha[t][k][j] > 0);
+					assert(beta[t][k][j] > 0);
+					sum_probability += alpha[t][k][j] * beta[t][k][j];
+				}
+				pc_s[t][k] = sum_probability;
+			}
+		}
 	}
 	// 文の可能な分割全てを考慮した前向き確率（<eos>への接続は除く）
 	// normalize=trueならアンダーフローを防ぐ
