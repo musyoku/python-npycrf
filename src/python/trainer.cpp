@@ -274,7 +274,7 @@ namespace npycrf {
 
 			_model->parse(sentence);	// debug
 			sentence->dump_words();
-			double log_py_x = _model->compute_log_p_y_given_x(sentence);
+			double log_py_x = _model->compute_log_p_proportional_y_given_x(sentence);
 			std::cout << "log_py_x = " << log_py_x << std::endl;
 
 			lattice->compute_forward_probability(sentence, false);
@@ -307,10 +307,11 @@ namespace npycrf {
 				double p_conc = alpha[t - k][j][i] * beta[t][k][j] * p;
 				std::cout << "p_conc = " << p_conc << ", alpha[t - k][j][i] = " << alpha[t - k][j][i] << ", beta[t][k][j] = " << beta[t][k][j] << std::endl;
 				grad += log(pw_h) * (1 - p_conc);
+				std::cout << "grad += " << log(pw_h) * (1 - p_conc) << std::endl;
 			}
 			std::cout << "grad = " << grad << std::endl;
 			_model->_lambda_0 += 1e-8;
-			double _log_py_x = _model->compute_log_p_y_given_x(sentence);
+			double _log_py_x = _model->compute_log_p_proportional_y_given_x(sentence);
 			std::cout << "_log_py_x = " << _log_py_x << std::endl;
 			std::cout << ((_log_py_x - log_py_x) / 1e-8) << std::endl;
 		}

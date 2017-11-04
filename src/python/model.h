@@ -24,7 +24,7 @@ namespace npycrf {
 			void set_initial_lambda_b(double lambda);
 			void set_vpylm_beta_stop(double stop);
 			void set_vpylm_beta_pass(double pass);
-			double compute_log_p_y_given_x(Sentence* sentence);
+			double compute_log_p_proportional_y_given_x(Sentence* sentence);
 			double compute_z_x(Sentence* sentence, bool normalize = true);
 			double compute_forward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize = true);
 			double compute_backward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize = true);

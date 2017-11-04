@@ -54,12 +54,11 @@ namespace npycrf {
 			return zx;
 		}
 		// sentenceは分割済みの必要がある
-		double Model::compute_log_p_y_given_x(Sentence* sentence){
+		// 比例のままの確率を返す
+		double Model::compute_log_p_proportional_y_given_x(Sentence* sentence){
 			double log_crf = 0;
 			double log_npylm = _npylm->compute_log_p_s(sentence);
 			double log_py_x = log_crf + _lambda_0 * log_npylm;
-			double zx = compute_z_x(sentence, false);
-			assert(zx > 0);
 			return log_py_x;
 		}
 		// normalize=trueならアンダーフローを防ぐ

@@ -305,10 +305,29 @@ void test_sgd(){
 
 	Trainer* trainer = new Trainer(dataset, model, false);
 	Lattice* lattice = model->_lattice;
+	crf::CRF* crf = model->_crf;
 	npylm::NPYLM* npylm = model->_npylm;
 
 	for(int epoch = 0;epoch < 5;epoch++){
 		trainer->gibbs();
+	}
+	for(int i = 0;i < crf->_w_size_label_u + crf->_w_size_label_b;i++){
+		crf->_w_label[i] = 1;
+	}
+	for(int i = 0;i < crf->_w_size_unigram_u + crf->_w_size_unigram_b;i++){
+		crf->_w_unigram[i] = 1;
+	}
+	for(int i = 0;i < crf->_w_size_bigram_u + crf->_w_size_bigram_b;i++){
+		crf->_w_bigram[i] = 1;
+	}
+	for(int i = 0;i < crf->_w_size_identical_1_u + crf->_w_size_identical_1_b;i++){
+		crf->_w_identical_1[i] = 1;
+	}
+	for(int i = 0;i < crf->_w_size_identical_2_u + crf->_w_size_identical_2_b;i++){
+		crf->_w_identical_2[i] = 1;
+	}
+	for(int i = 0;i < crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b;i++){
+		crf->_w_unigram_type[i] = 1;
 	}
 	trainer->sgd(false, 1);
 }

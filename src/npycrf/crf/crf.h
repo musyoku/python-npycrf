@@ -56,20 +56,13 @@ namespace npycrf {
 			int _w_size_bigram_type_u;	// (y_i, type, type)
 			int _w_size_bigram_type_b;	// (y_{i-1}, y_i, type, type)
 			double _bias;
-			double* _w_label_u;			// (y_i)
-			double* _w_label_b;			// (y_{i-1}, y_i)
-			double* _w_unigram_u;		// (y_i, i, x_i)
-			double* _w_unigram_b;		// (y_{i-1}, y_i, i, x_i)
-			double* _w_bigram_u;		// (y_i, i, x_{i-1}, x_i)
-			double* _w_bigram_b;		// (y_{i-1}, y_i, i, x_{i-1}, x_i)
-			double* _w_identical_1_u;	// (y_i, i)
-			double* _w_identical_1_b;	// (y_{i-1}, y_i, i)
-			double* _w_identical_2_u;	// (y_i, i)
-			double* _w_identical_2_b;	// (y_{i-1}, y_i, i)
-			double* _w_unigram_type_u;	// (y_i, type)
-			double* _w_unigram_type_b;	// (y_{i-1}, y_i, type)
-			double* _w_bigram_type_u;	// (y_i, type, type)
-			double* _w_bigram_type_b;	// (y_{i-1}, y_i, type, type)
+			double* _w_label;			// (y_i), (y_{i-1}, y_i)
+			double* _w_unigram;			// (y_i, i, x_i), (y_{i-1}, y_i, i, x_i)
+			double* _w_bigram;			// (y_i, i, x_{i-1}, x_i), (y_{i-1}, y_i, i, x_{i-1}, x_i)
+			double* _w_identical_1;		// (y_i, i), (y_{i-1}, y_i, i)
+			double* _w_identical_2;		// (y_i, i), (y_{i-1}, y_i, i)
+			double* _w_unigram_type;	// (y_i, type), (y_{i-1}, y_i, type)
+			double* _w_bigram_type;		// (y_i, type, type), (y_{i-1}, y_i, type, type)
 			// xに関する素性は以下の4通り（デフォルト値の例）[1]
 			// i-2, i-1, i, i+1, i+2の位置のunigram文字
 			// i-2, i-1, i, i+1の位置のbigram文字

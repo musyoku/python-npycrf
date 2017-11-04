@@ -78,41 +78,23 @@ void test_init(){
 		}
 	}
 
-	for(int i = 0;i < crf->_w_size_unigram_u;i++){
-		assert(crf->_w_unigram_u[i] == value);
+	for(int i = 0;i < crf->_w_size_unigram_u + crf->_w_size_unigram_b;i++){
+		assert(crf->_w_unigram[i] == value);
 	}
-	for(int i = 0;i < crf->_w_size_unigram_b;i++){
-		assert(crf->_w_unigram_b[i] == value);
+	for(int i = 0;i < crf->_w_size_bigram_u + crf->_w_size_bigram_b;i++){
+		assert(crf->_w_bigram[i] == value);
 	}
-	for(int i = 0;i < crf->_w_size_bigram_u;i++){
-		assert(crf->_w_bigram_u[i] == value);
+	for(int i = 0;i < crf->_w_size_identical_1_u + crf->_w_size_identical_1_b;i++){
+		assert(crf->_w_identical_1[i] == value);
 	}
-	for(int i = 0;i < crf->_w_size_bigram_b;i++){
-		assert(crf->_w_bigram_b[i] == value);
+	for(int i = 0;i < crf->_w_size_identical_2_u + crf->_w_size_identical_2_b;i++){
+		assert(crf->_w_identical_2[i] == value);
 	}
-	for(int i = 0;i < crf->_w_size_identical_1_u;i++){
-		assert(crf->_w_identical_1_u[i] == value);
+	for(int i = 0;i < crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b;i++){
+		assert(crf->_w_unigram_type[i] == value);
 	}
-	for(int i = 0;i < crf->_w_size_identical_1_b;i++){
-		assert(crf->_w_identical_1_b[i] == value);
-	}
-	for(int i = 0;i < crf->_w_size_identical_2_u;i++){
-		assert(crf->_w_identical_2_u[i] == value);
-	}
-	for(int i = 0;i < crf->_w_size_identical_2_b;i++){
-		assert(crf->_w_identical_2_b[i] == value);
-	}
-	for(int i = 0;i < crf->_w_size_unigram_type_u;i++){
-		assert(crf->_w_unigram_type_u[i] == value);
-	}
-	for(int i = 0;i < crf->_w_size_unigram_type_b;i++){
-		assert(crf->_w_unigram_type_b[i] == value);
-	}
-	for(int i = 0;i < crf->_w_size_bigram_type_u;i++){
-		assert(crf->_w_bigram_type_u[i] == value);
-	}
-	for(int i = 0;i < crf->_w_size_bigram_type_b;i++){
-		assert(crf->_w_bigram_type_b[i] == value);
+	for(int i = 0;i < crf->_w_size_bigram_type_u + crf->_w_size_bigram_type_b;i++){
+		assert(crf->_w_bigram_type[i] == value);
 	}
 	delete crf;
 }
@@ -158,7 +140,7 @@ void test_compute_path_cost(){
 			crf->set_w_unigram_b(0, 0, i, x_i, x_i * 2);
 		}
 	}
-	for(int i = 2;i <= sentence_str.size();i++){
+	for(int i = 1;i <= sentence_str.size();i++){
 		double cost = crf->_compute_cost_unigram_features(character_ids, sentence_str.size(), i, 0, 0);
 		double true_cost = 0;
 		for(int t = std::max(0, std::min((int)sentence_str.size(), i - crf->_x_range_unigram));t < i;t++){
