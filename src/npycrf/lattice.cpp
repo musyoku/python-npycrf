@@ -176,7 +176,9 @@ namespace npycrf {
 		return word_id;
 	}
 	// alpha[t-k][j][i]自体は正規化されている場合があるが、alpha[t][k][j]の正規化はここでは行わない
-	void Lattice::sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j){
+	// NPYLMによる確率計算の結果をpw_h_tkjiにキャッシュする
+	// このキャッシュは後向き確率の計算時に使う
+	void Lattice::sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** &alpha, double**** &pw_h_tkji){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
 		int const* character_ids = sentence->_character_ids;
@@ -195,8 +197,8 @@ namespace npycrf {
 			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
-			_alpha[t][k][0] = p;
-			_pw_h[t][k][0][0] = pw_h;
+			alpha[t][k][0] = p;
+			pw_h_tkji[t][k][0][0] = pw_h;
 			return;
 		}
 		// i=0に相当
@@ -207,13 +209,13 @@ namespace npycrf {
 			_word_ids[2] = word_k_id;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 			assert(pw_h > 0);
-			assert(_alpha[t - k][j][0] > 0);
+			assert(alpha[t - k][j][0] > 0);
 			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
-			_alpha[t][k][j] = p * _alpha[t - k][j][0];
-			assert(_alpha[t][k][j] > 0);
-			_pw_h[t][k][j][0] = pw_h;
+			alpha[t][k][j] = p * alpha[t - k][j][0];
+			assert(alpha[t][k][j] > 0);
+			pw_h_tkji[t][k][j][0] = pw_h;
 			return;
 		}
 		// それ以外の場合は周辺化
@@ -227,35 +229,41 @@ namespace npycrf {
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			assert(i <= _max_word_length);
-			assert(_alpha[t - k][j][i] > 0);
+			assert(alpha[t - k][j][i] > 0);
 			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
-			double value = p * _alpha[t - k][j][i];
+			double value = p * alpha[t - k][j][i];
 
 			#ifdef __DEBUG__
 				if(value == 0){
 					std::cout << pw_h << std::endl;
-					std::cout << _alpha[t - k][j][i] << std::endl;
+					std::cout << alpha[t - k][j][i] << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
 			#endif
 
 			assert(value > 0);
 			sum += value;
-			_pw_h[t][k][j][i] = pw_h;
+			pw_h_tkji[t][k][j][i] = pw_h;
 		}
 		assert(sum > 0);
-		_alpha[t][k][j] = sum;
+		alpha[t][k][j] = sum;
 	}
-	void Lattice::forward_filtering(Sentence* sentence, bool normalize){
+	void forward_filtering(Sentence* sentence, bool normalize){
+		_forward_filtering(sentence, _alpha, normalize);
+	}
+	void backward_sampling(Sentence* sentence, std::vector<int> &segments){
+		_backward_sampling(sentence, _alpha, normalize);
+	}
+	void Lattice::_forward_filtering(Sentence* sentence, double*** alpha, bool normalize){
 		for(int t = 1;t <= sentence->size();t++){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				if(t - k == 0){
-					sum_alpha_t_k_j(sentence, t, k, 0);
+					sum_alpha_t_k_j(sentence, t, k, 0, alpha);
 				}
 				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-					sum_alpha_t_k_j(sentence, t, k, j);
+					sum_alpha_t_k_j(sentence, t, k, j, alpha);
 				}
 			}
 			// 正規化
@@ -313,7 +321,7 @@ namespace npycrf {
 			}
 		}
 	}
-	void Lattice::backward_sampling(Sentence* sentence, std::vector<int> &segments){
+	void Lattice::_backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments){
 		segments.clear();
 		int k = 0;
 		int j = 0;
@@ -787,7 +795,7 @@ namespace npycrf {
 	}
 	// 文の部分文字列が単語になる確率
 	// 確率値は全て比例のまま
-	void Lattice::enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** &pc_s){
+	void Lattice::_enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** &pc_s){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		#ifdef __DEBUG__
@@ -812,6 +820,80 @@ namespace npycrf {
 				pc_s[t][k] = sum_probability;
 			}
 		}
+	}
+	// 文の部分文字列が単語になる確率
+	// 確率値は全て比例のまま
+	// アンダーフローを抑えるためにlogで計算
+	// log_zは各時刻の正規化定数
+	void Lattice::_enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z, double** &pc_s){
+		assert(sentence->size() <= _max_sentence_length);
+		int size = sentence->size() + 1;
+		#ifdef __DEBUG__
+			for(int t = 0;t < size;t++){
+				for(int k = 0;k < _max_word_length + 1;k++){
+						pc_s[t][k] = -1;
+				}
+			}
+		#endif 
+		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
+		int character_ids_length = sentence->size();
+		for(int t = 1;t <= sentence->size();t++){
+			for(int k = 1;k <= std::min(t, _max_word_length);k++){
+				// jを網羅する
+				double sum_probability = 0;
+				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+					assert(alpha[t][k][j] > 0);
+					assert(beta[t][k][j] > 0);
+					sum_probability += alpha[t][k][j] * beta[t][k][j];
+				}
+				pc_s[t][k] = sum_probability;
+			}
+		}
+	}
+	void Lattice::_enumerate_forward_probabilities(Sentence* sentence, double*** &alpha, bool normalize){
+		assert(sentence->size() <= _max_sentence_length);
+		int size = sentence->size() + 1;
+		#ifdef __DEBUG__
+			for(int t = 0;t < size;t++){
+				for(int k = 0;k < _max_word_length + 1;k++){
+					for(int j = 0;j < _max_word_length + 1;j++){
+						alpha[t][k][j] = -1;
+					}
+				}
+			}
+		#endif 
+		alpha[0][0][0] = 1;
+		_log_z[0] = 0;
+		for(int i = 0;i < size;i++){
+			for(int j = 0;j < _max_word_length + 1;j++){
+				_substring_word_id_cache[i][j] = 0;
+			}
+		}
+		forward_filtering(sentence, normalize);
+	}
+	void Lattice::enumerate_backward_probabilities(Sentence* sentence, double*** &beta, bool normalize){
+		assert(sentence->size() <= _max_sentence_length);
+		int size = sentence->size() + 1;
+		#ifdef __DEBUG__
+			for(int t = 0;t < size;t++){
+				for(int k = 0;k < _max_word_length + 1;k++){
+					for(int j = 0;j < _max_word_length + 1;j++){
+						_beta[t][k][j] = -1;
+					}
+				}
+			}
+		#endif 
+		for(int j = 0;j < _max_word_length + 1;j++){
+			_beta[size][1][j] = 1;
+		}
+		_log_z[0] = 0;
+		for(int i = 0;i < size;i++){
+			for(int j = 0;j < _max_word_length + 1;j++){
+				_substring_word_id_cache[i][j] = 0;
+			}
+		}
+		backward_filtering(sentence, normalize);
 	}
 	// 文の可能な分割全てを考慮した前向き確率（<eos>への接続は除く）
 	// normalize=trueならアンダーフローを防ぐ
@@ -858,7 +940,9 @@ namespace npycrf {
 				}
 			}
 		#endif 
-		_beta[0][0][0] = 1;
+		for(int j = 0;j < _max_word_length + 1;j++){
+			_beta[size][1][j] = 1;
+		}
 		_log_z[0] = 0;
 		for(int i = 0;i < size;i++){
 			for(int j = 0;j < _max_word_length + 1;j++){
@@ -943,7 +1027,8 @@ namespace npycrf {
 	}
 	// 後ろ向き確率を計算
 	// 正規化定数をここでは掛けないことに注意
-	void Lattice::sum_beta_t_k_j(Sentence* sentence, int t, int k, int j){
+	// pw_h_tkjiは前向き確率計算時にキャッシュされている（-1が入っている場合再計算する）
+	void Lattice::sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** &beta, double**** pw_h_tkji){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
 		int const* character_ids = sentence->_character_ids;
@@ -961,12 +1046,16 @@ namespace npycrf {
 				id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
 				_word_ids[0] = word_j_id;
 			}
-			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+			double pw_h = (pw_h_tkji > 0) ? pw_h_tkji[t][k][0][0] : _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+			#ifdef __DEBUG__
+				double _pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+				assert(_pw_h == pw_h_tkji[t][k][0][0]);
+			#endif
 			assert(pw_h > 0);
 			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t + 1, 1, k);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
-			_beta[t][k][j] = p;
+			beta[t][k][j] = p;
 			// assert(_pw_h[t][k][j][0] == _pw_h);
 			// _pw_h[t][k][0][0] = p;
 			return;
@@ -979,19 +1068,21 @@ namespace npycrf {
 			_word_ids[0] = word_j_id;
 			_word_ids[1] = word_k_id;
 			_word_ids[2] = word_i_id;
-			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
+			double pw_h = (pw_h_tkji[t + i][i][k][j] > 0) ? pw_h_tkji[t + i][i][k][j] : _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
 			assert(pw_h > 0);
 			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
-			assert(_beta[t + i][i][k] > 0);
-			double value = p * _beta[t + i][i][k];
+			assert(beta[t + i][i][k] > 0);
+			double value = p * beta[t + i][i][k];
 			assert(p > 0);
 
 			#ifdef __DEBUG__
+				double _pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
+				assert(_pw_h == pw_h_tkji[t + i][i][k][j]);
 				if(value == 0){
 					std::cout << pw_h << std::endl;
-					std::cout << _beta[t + i][i][k] << std::endl;
+					std::cout << beta[t + i][i][k] << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
 			#endif
@@ -1001,7 +1092,7 @@ namespace npycrf {
 			// assert(_pw_h[t + i][i][k][j] == pw_h);
 		}
 		assert(sum > 0);
-		_beta[t][k][j] = sum;
+		beta[t][k][j] = sum;
 		return;
 
 

@@ -274,17 +274,17 @@ namespace npycrf {
 
 			_model->parse(sentence);	// debug
 			sentence->dump_words();
-			double log_py_x = _model->compute_log_proportional_p_y_given_x(sentence);
 			double px = _model->compute_marginal_p_x(sentence, false);
-			std::cout << "log_py_x = " << log_py_x << std::endl;
 			std::cout << "px = " << px << std::endl;
+			double log_py_x = _model->compute_log_proportional_p_y_given_x(sentence) - log(px);
+			std::cout << "log_py_x = " << log_py_x << std::endl;
 
 			lattice->compute_forward_probability(sentence, false);
 			lattice->compute_backward_probability(sentence, false);
 			double*** alpha = lattice->_alpha;
 			double*** beta = lattice->_beta;
 			double grad = 0;
-			int t, k, j, i;
+			int t = 0, k, j, i;
 			for(int word_t = 2;word_t < sentence->get_num_segments();word_t++){
 				id word_i_id = sentence->get_word_id_at(word_t - 2);
 				id word_j_id = sentence->get_word_id_at(word_t - 1);
@@ -295,25 +295,28 @@ namespace npycrf {
 				i = word_t > 3 ? sentence->_segments[word_t - 2] : 0;
 				j = word_t > 2 ? sentence->_segments[word_t - 1] : 0;
 				k = sentence->_segments[word_t];
-				t = sentence->_start[word_t] + k;
-				std::cout << "t, k, j, i = " << t << ", " << k << ", " << j << ", " << i << std::endl;
+				t += k;
+				std::cout << "t, k, j, i = " << t << ", " << k << ", " << j << ", " << i << ", word_k_id = " << word_k_id << std::endl;
 				double pw_h = npylm->compute_p_w_given_h(characters, character_ids_length, word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				double potential = crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
-				double p = exp(_model->_lambda_0 * log(pw_h) + potential);
-				std::cout << "pw_h = " << pw_h << ", gamma = " << potential << ", p = " << p << std::endl;
+				double p = exp(_model->get_lambda_0() * log(pw_h) + potential);
+				std::cout << "pw_h = " << pw_h << ", log(pw_h) = " << log(pw_h) << ", gamma = " << potential << ", p = " << p << std::endl;
 				assert(p > 0);
 
-				double p_conc = alpha[t - k][j][i] * beta[t][k][j] * p;
-				assert(p_conc < px);
+				double proportional_p_conc = alpha[t - k][j][i] * beta[t][k][j] * p;
+				assert(proportional_p_conc < px);
+				double p_conc = proportional_p_conc / px;
 				std::cout << "p_conc = " << p_conc << ", alpha[t - k][j][i] = " << alpha[t - k][j][i] << ", beta[t][k][j] = " << beta[t][k][j] << std::endl;
 				grad += log(pw_h) * (1 - p_conc);
 				std::cout << "grad += " << log(pw_h) * (1 - p_conc) << std::endl;
 			}
 			std::cout << "grad = " << grad << std::endl;
-			_model->_lambda_0 += 1e-8;
-			double _log_py_x = _model->compute_log_proportional_p_y_given_x(sentence);
+			_model->set_lambda_0(_model->get_lambda_0() + 1e-8);
+			double _px = _model->compute_marginal_p_x(sentence, false);
+			double _log_py_x = _model->compute_log_proportional_p_y_given_x(sentence) - log(_px);
 			std::cout << "_log_py_x = " << _log_py_x << std::endl;
+			std::cout << "_px = " << _px << std::endl;
 			std::cout << ((_log_py_x - log_py_x) / 1e-8) << std::endl;
 		}
 		double Trainer::compute_perplexity_train(){

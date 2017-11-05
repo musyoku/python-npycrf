@@ -143,7 +143,7 @@ namespace npycrf {
 		assert(sum == _sentence_str.size());
 		_segments[n + 2] = 1;
 		_word_ids[n + 2] = ID_EOS;
-		_start[n + 2] = _start[n + 1];
+		_start[n + 2] = _sentence_str.size() - 1;
 		n++;
 		for(;n < _sentence_str.size();n++){
 			_segments[n + 2] = 0;

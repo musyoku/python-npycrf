@@ -205,7 +205,61 @@ void test_compute_path_cost(){
 	delete[] character_ids;
 }
 
+void test_grads(){
+	setlocale(LC_CTYPE, "ja_JP.UTF-8");
+	std::ios_base::sync_with_stdio(false);
+	std::locale default_loc("ja_JP.UTF-8");
+	std::locale::global(default_loc);
+	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
+	std::wcout.imbue(ctype_default);
+	std::wcin.imbue(ctype_default);
+
+	std::unordered_map<wchar_t, int> _token_ids;
+	std::wstring sentence_str = L"あああいいいいうううううええええおおお";
+	for(wchar_t character: sentence_str){
+		auto itr = _token_ids.find(character);
+		if(itr == _token_ids.end()){
+			_token_ids[character] = _token_ids.size();
+		}
+	}
+
+	int num_character_ids = _token_ids.size();
+	int num_character_types = 281;
+	int feature_x_unigram_start = -2;
+	int feature_x_unigram_end = 2;
+	int feature_x_bigram_start = -2;
+	int feature_x_bigram_end = 1;
+	int feature_x_identical_1_start = -2;
+	int feature_x_identical_1_end = 1;
+	int feature_x_identical_2_start = -3;
+	int feature_x_identical_2_end = 2;
+	CRF* crf = new CRF(num_character_ids,
+					   num_character_types,
+					   feature_x_unigram_start,
+					   feature_x_unigram_end,
+					   feature_x_bigram_start,
+					   feature_x_bigram_end,
+					   feature_x_identical_1_start,
+					   feature_x_identical_1_end,
+					   feature_x_identical_2_start,
+					   feature_x_identical_2_end
+	);
+	int* character_ids = new int[sentence_str.size()];
+	for(int i = 0;i < sentence_str.size();i++){
+		character_ids[i] = _token_ids[sentence_str[i]];
+	}
+	Sentence* sentence = new Sentence(sentence_str, character_ids);
+	std::vector<int> segments {3, 4, 5, 4, 3};
+	sentence->split(segments);
+	sentence->dump_words();
+
+	delete crf;
+	delete[] character_ids;
+}
+
 int main(){
+	test_grads();
+	cout << "OK" << endl;
 	test_init();
 	cout << "OK" << endl;
 	test_compute_path_cost();

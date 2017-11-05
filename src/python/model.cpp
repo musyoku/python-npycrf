@@ -12,7 +12,6 @@ namespace npycrf {
 			_npylm = py_npylm->_npylm;
 			_crf = py_crf->_crf;
 			_lattice = new Lattice(_npylm, _crf, lambda_0, max_word_length, max_sentence_length);
-			_lambda_0 = lambda_0;
 		}
 		Model::~Model(){
 
@@ -44,21 +43,32 @@ namespace npycrf {
 		void Model::set_vpylm_beta_pass(double pass){
 			_npylm->_vpylm->_beta_pass = pass;
 		}
+		double Model::get_lambda_0(){
+			return _lattice->_lambda_0;
+		}
+		void Model::set_lambda_0(double lambda_0){
+			_lattice->_lambda_0 = lambda_0;
+		}
 		// 分配関数の計算
 		// normalize=trueならアンダーフローを防ぐ
 		double Model::compute_marginal_p_x(Sentence* sentence, bool normalize){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
-			double zx = _lattice->compute_marginal_p_x(sentence, normalize);
-			return zx;
+			double px = _lattice->compute_marginal_p_x(sentence, normalize);
+			#ifdef __DEBUG__
+				double _px = _lattice->compute_marginal_p_x_backward(sentence, normalize);
+				assert(abs(px - _px) < 1e-16);
+			#endif 
+			return px;
 		}
 		// sentenceは分割済みの必要がある
 		// 比例のままの確率を返す
 		double Model::compute_log_proportional_p_y_given_x(Sentence* sentence){
+			_npylm->reserve(sentence->size());	// キャッシュの再確保
 			double log_crf = 0;
 			double log_npylm = _npylm->compute_log_p_s(sentence);
-			double log_py_x = log_crf + _lambda_0 * log_npylm;
+			double log_py_x = log_crf + get_lambda_0() * log_npylm;
 			return log_py_x;
 		}
 		// normalize=trueならアンダーフローを防ぐ

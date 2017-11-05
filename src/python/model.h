@@ -13,7 +13,6 @@ namespace npycrf {
 		private:
 			void _set_locale();
 		public:
-			double _lambda_0;
 			npylm::NPYLM* _npylm;
 			crf::CRF* _crf;
 			Lattice* _lattice;			// forward filtering-backward sampling
@@ -24,6 +23,8 @@ namespace npycrf {
 			void set_initial_lambda_b(double lambda);
 			void set_vpylm_beta_stop(double stop);
 			void set_vpylm_beta_pass(double pass);
+			double get_lambda_0();
+			void set_lambda_0(double lambda_0);
 			double compute_log_proportional_p_y_given_x(Sentence* sentence);
 			double compute_marginal_p_x(Sentence* sentence, bool normalize = true);
 			double compute_forward_probability(std::wstring sentence_str, Dictionary* dictionary, bool normalize = true);
