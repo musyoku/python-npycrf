@@ -48,7 +48,7 @@ namespace npycrf {
 		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** pw_h_tkji);
 		void _backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments);
 		void _enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** pc_s);
-		void _enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z, double** pc_s);
+		void _enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z_alpha, double* log_z_beta, double** pc_s);
 		void _enumerate_forward_probabilities(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* log_z, bool normalize = true);
 		void _enumerate_backward_probabilities(Sentence* sentence, double*** beta, double**** pw_h_tkji, double* log_z, bool normalize = true);
 		void _clear_pw_h_tkji(double**** pw_h_tkji);
