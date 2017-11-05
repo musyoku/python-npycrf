@@ -67,18 +67,18 @@ double compute_backward_probability(Lattice* lattice, Sentence* sentence, bool n
 						lattice->_beta[t][k][j] = -1;
 					}
 				}
+				lattice->_log_z_beta[t] = 0;
 			}
 		#endif 
 		lattice->_enumerate_backward_probabilities(sentence, lattice->_beta, lattice->_pw_h, lattice->_log_z_beta, normalize);
 		double sum_probability = 0;
-		int t = sentence->size();
-		for(int k = 1;k <= std::min(t, lattice->_max_word_length);k++){
-			for(int j = 1;j <= std::min(t - k, lattice->_max_word_length);j++){
-				if(normalize){
-					sum_probability += lattice->_beta[t][k][j] * exp(lattice->_log_z_beta[t]);
-				}else{
-					sum_probability += lattice->_beta[t][k][j];
-				}
+		for(int k = 1;k <= std::min(sentence->size(), lattice->_max_word_length);k++){
+			int t = k;
+			if(normalize){
+				assert(lattice->_log_z_beta[t] < 0);
+				sum_probability += lattice->_beta[t][k][0] * exp(lattice->_log_z_beta[t]);
+			}else{
+				sum_probability += lattice->_beta[t][k][0];
 			}
 		}
 		return sum_probability;
@@ -149,7 +149,7 @@ void test_compute_forward_probability(){
 
 void test_compute_backward_probability(){
 	std::unordered_map<wchar_t, int> _token_ids;
-	std::wstring sentence_str = L"ああいいいううううえええおお";
+	std::wstring sentence_str = L"ああいいいううううえええおおああいいいううううえええおおああいいいううううえええおおああいいいううううえええおおああいいいううううえええおお";
 	for(wchar_t character: sentence_str){
 		auto itr = _token_ids.find(character);
 		if(itr == _token_ids.end()){
@@ -161,7 +161,7 @@ void test_compute_backward_probability(){
 		character_ids[i] = _token_ids[sentence_str[i]];
 	}
 	Sentence* sentence = new Sentence(sentence_str, character_ids);
-	std::vector<int> segments {2, 3, 4, 3, 2};
+	std::vector<int> segments {2, 3, 4, 3, 2, 2, 3, 4, 3, 2, 2, 3, 4, 3, 2, 2, 3, 4, 3, 2, 2, 3, 4, 3, 2};
 	sentence->split(segments);
 
 	double lambda_0 = 1;
@@ -262,6 +262,30 @@ void test_enumerate_proportional_log_p_substring_given_sentence(){
 	Lattice* lattice = model->_lattice;
 	npylm::NPYLM* npylm = model->_npylm;
 
+	double** pc_s = new double*[sentence->size() + 1];
+	double** log_pc_s = new double*[sentence->size() + 1];
+	for(int t = 0;t < sentence->size() + 1;t++){
+		pc_s[t] = new double[max_word_length + 1];
+		log_pc_s[t] = new double[max_word_length + 1];
+		for(int k = 0;k < max_word_length + 1;k++){
+			pc_s[t][k] = -1;
+			log_pc_s[t][k] = 0;
+		}
+	}
+	lattice->_enumerate_forward_probabilities(sentence, lattice->_alpha, lattice->_pw_h, lattice->_log_z_alpha, false);
+	lattice->_enumerate_backward_probabilities(sentence, lattice->_beta, lattice->_pw_h, lattice->_log_z_beta, false);
+	lattice->_enumerate_proportional_p_substring_given_sentence(sentence, lattice->_alpha, lattice->_beta, pc_s);
+
+	lattice->_enumerate_forward_probabilities(sentence, lattice->_alpha, lattice->_pw_h, lattice->_log_z_alpha, true);
+	lattice->_enumerate_backward_probabilities(sentence, lattice->_beta, lattice->_pw_h, lattice->_log_z_beta, true);
+	lattice->_enumerate_proportional_log_p_substring_given_sentence(sentence, lattice->_alpha, lattice->_beta, lattice->_log_z_alpha, lattice->_log_z_beta, log_pc_s);
+
+	for(int t = 1;t <= sentence->size();t++){
+		for(int k = 1;k <= std::min(t, max_word_length);k++){
+			cout << pc_s[t][k] << ", " << log(pc_s[t][k]) << "==" << log_pc_s[t][k] << endl;
+			assert(abs(log(pc_s[t][k]) - log_pc_s[t][k]) < 1e-12);
+		}
+	}
 	delete[] character_ids;
 	delete sentence;
 	delete model;

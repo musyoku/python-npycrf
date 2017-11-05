@@ -53,6 +53,7 @@ namespace npycrf {
 		_backward_sampling_table = NULL;
 		_viterbi_backward = NULL;
 		_substring_word_id_cache = NULL;
+		_log_alpha_beta_j = NULL;
 		_lambda_0 = lambda_0;
 		_allocate_capacity(max_word_length, max_sentence_length);
 	}
@@ -134,6 +135,13 @@ namespace npycrf {
 				_substring_word_id_cache[i][j] = 0;
 			}
 		}
+		// logsumexp用キャッシュ
+		_log_alpha_beta_j = new double[max_word_length + 1];
+		_log_alpha_k_j = new double*[max_word_length + 1];
+		for(int k = 0;k < max_word_length + 1;k++){
+			_log_alpha_k_j[k] = new double[max_word_length + 1];
+		}
+		_log_beta_k_j = _log_alpha_k_j;
 	}
 	void Lattice::_delete_capacity(){
 		delete[] _log_z_alpha;
@@ -167,6 +175,11 @@ namespace npycrf {
 			delete[] _pw_h[t];
 		}
 		delete[] _pw_h;
+		delete[] _log_alpha_beta_j;
+		for(int k = 0;k < _max_word_length + 1;k++){
+			delete[] _log_alpha_k_j[k];
+		}
+		delete[] _log_alpha_k_j;
 	}
 	id Lattice::get_substring_word_id_at_t_k(Sentence* sentence, int t, int k){
 		assert(t < _max_sentence_length + 1);
@@ -734,6 +747,7 @@ namespace npycrf {
 	}
 	// 文の部分文字列が単語になる確率
 	// 確率値は全て比例のまま
+	// alphaとbetaは計算時に正規化を行なってはいけない
 	void Lattice::_enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** pc_s){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
@@ -764,6 +778,7 @@ namespace npycrf {
 	// 確率値は全て比例のまま
 	// アンダーフローを抑えるためにlogで計算
 	// log_zは各時刻の正規化定数
+	// alphaとbetaは計算時に正規化を行う必要がある
 	void Lattice::_enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z_alpha, double* log_z_beta, double** pc_s){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
@@ -777,31 +792,33 @@ namespace npycrf {
 		wchar_t const* characters = sentence->_characters;
 		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
-		double* log_alpha_beta_j = new double[_max_word_length + 1]; // logの計算は重いのでキャッシュ
 		for(int t = 1;t <= sentence->size();t++){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				// jを網羅する
 				double sum_probability = 0;
 				// アンダーフローを防ぐためlogsumexp
-				double exp_sum = 0;
+				double sum_exp = 0;
 				// まず最大値を求める
 				double max_log_alpha_beta = 0;
 				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 					assert(alpha[t][k][j] > 0);
 					assert(beta[t][k][j] > 0);
+					assert(log_z_alpha[t] < 0);
+					assert(log_z_beta[t] < 0);
 					double tmp = log(alpha[t][k][j]) + log(beta[t][k][j]) + log_z_alpha[t] + log_z_beta[t];
 					if(max_log_alpha_beta == 0 || tmp > max_log_alpha_beta){
 						max_log_alpha_beta = tmp;
 					}
-					log_alpha_beta_j[j] = tmp;
+					_log_alpha_beta_j[j] = tmp;
 				}
+				std::cout << "max_log_alpha_beta = " << max_log_alpha_beta << std::endl;
 				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-					exp_sum += exp(log_alpha_beta_j[j] - max_log_alpha_beta);
+					sum_exp += exp(_log_alpha_beta_j[j] - max_log_alpha_beta);
 				}
-				pc_s[t][k] = log(exp_sum) + max_log_alpha_beta;
+				std::cout << "sum_exp = " << sum_exp << std::endl;
+				pc_s[t][k] = log(sum_exp) + max_log_alpha_beta;
 			}
 		}
-		delete[] log_alpha_beta_j;
 	}
 	void Lattice::_enumerate_forward_probabilities(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* log_z, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
@@ -835,7 +852,7 @@ namespace npycrf {
 			// 分配関数はkとjを網羅する
 			// アンダーフローを防ぐためlogsumexpを経由して正規化後の前向き確率テーブルを計算
 			if(normalize == true){
-				double exp_sum = 0;
+				double sum_exp = 0;
 				// 最大値を求める
 				double max_log_z = 0;
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
@@ -845,6 +862,7 @@ namespace npycrf {
 						if(max_log_z == 0 || tmp > max_log_z){
 							max_log_z = tmp;
 						}
+						_log_alpha_k_j[k][0] = tmp;	// キャッシュ
 					}
 					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 						assert(_alpha[t][k][j] > 0);
@@ -852,38 +870,39 @@ namespace npycrf {
 						if(max_log_z == 0 || tmp > max_log_z){
 							max_log_z = tmp;
 						}
+						_log_alpha_k_j[k][j] = tmp;	// キャッシュ
 					}
 				}
 				// 求めた最大値をもとにlogsumexp
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
 					if(t - k == 0){
-						exp_sum += exp(log(_alpha[t][k][0]) + log_z[t - k] - max_log_z);
+						sum_exp += exp(_log_alpha_k_j[k][0] - max_log_z);
 						continue;
 					}
 					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 						assert(_alpha[t][k][j] > 0);
-						exp_sum += exp(log(_alpha[t][k][j]) + log_z[t - k] - max_log_z);
+						sum_exp += exp(_log_alpha_k_j[k][j] - max_log_z);
 					}
 				}
-				exp_sum = log(exp_sum) + max_log_z;
+				double log_z_t = log(sum_exp) + max_log_z;
 				// 正規化
-				assert(exp_sum != 0);
+				assert(log_z_t != 0);
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
 					if(t - k == 0){
-						_alpha[t][k][0] = exp(log(_alpha[t][k][0]) + log_z[t - k] - exp_sum);
+						_alpha[t][k][0] = exp(_log_alpha_k_j[k][0] - log_z_t);
 						assert(_alpha[t][k][0] > 0);
 						continue;
 					}
 					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-						_alpha[t][k][j] = exp(log(_alpha[t][k][j]) + log_z[t - k] - exp_sum);
+						_alpha[t][k][j] = exp(_log_alpha_k_j[k][j] - log_z_t);
 						assert(_alpha[t][k][j] > 0);
 					}
 				}
 				assert(t <= _max_sentence_length + 1);
-				log_z[t] = exp_sum;
-			}else{
-				log_z[t] = 1;
+				log_z[t] = log_z_t;
+				continue;
 			}
+			log_z[t] = 1;
 		}
 	}
 	void Lattice::_enumerate_backward_probabilities(Sentence* sentence, double*** beta, double**** pw_h_tkji, double* log_z, bool normalize){
@@ -915,57 +934,78 @@ namespace npycrf {
 				}
 			}
 			// 正規化
-			// if(normalize){
-			// 	// アンダーフローを防ぐためlogsumexpを経由して正規化後の前向き確率テーブルを計算
-			// 	double exp_sum = 0;
-			// 	// 最大値を求める
-			// 	double max_log_z = 0;
-			// 	for(int k = 1;k <= std::min(t, _max_word_length);k++){
-			// 		if(t - k == 0){
-			// 			assert(_alpha[t][k][0] > 0);
-			// 			double tmp = log(_alpha[t][k][0]) + log_z[t - k];
-			// 			if(max_log_z == 0 || tmp > max_log_z){
-			// 				max_log_z = tmp;
-			// 			}
-			// 		}
-			// 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-			// 			assert(_alpha[t][k][j] > 0);
-			// 			double tmp = log(_alpha[t][k][j]) + log_z[t - k];
-			// 			if(max_log_z == 0 || tmp > max_log_z){
-			// 				max_log_z = tmp;
-			// 			}
-			// 		}
-			// 	}
-			// 	// 求めた最大値をもとにlogsumexp
-			// 	for(int k = 1;k <= std::min(t, _max_word_length);k++){
-			// 		if(t - k == 0){
-			// 			exp_sum += exp(log(_alpha[t][k][0]) + log_z[t - k] - max_log_z);
-			// 			continue;
-			// 		}
-			// 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-			// 			assert(_alpha[t][k][j] > 0);
-			// 			exp_sum += exp(log(_alpha[t][k][j]) + log_z[t - k] - max_log_z);
-			// 		}
-			// 	}
-			// 	exp_sum = log(exp_sum) + max_log_z;
-			// 	// 正規化
-			// 	assert(exp_sum != 0);
-			// 	for(int k = 1;k <= std::min(t, _max_word_length);k++){
-			// 		if(t - k == 0){
-			// 			_alpha[t][k][0] = exp(log(_alpha[t][k][0]) + log_z[t - k] - exp_sum);
-			// 			assert(_alpha[t][k][0] > 0);
-			// 			continue;
-			// 		}
-			// 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-			// 			_alpha[t][k][j] = exp(log(_alpha[t][k][j]) + log_z[t - k] - exp_sum);
-			// 			assert(_alpha[t][k][j] > 0);
-			// 		}
-			// 	}
-			// 	assert(t <= _max_sentence_length + 1);
-			// 	log_z[t] = exp_sum;
-			// }else{
-			// 	log_z[t] = 1;
-			// }
+			if(normalize){
+				if(t == sentence->size()){
+					double z_t = 0;
+					for(int k = 1;k <= std::min(t, _max_word_length);k++){
+						if(t - k == 0){
+							z_t += beta[t][k][0];
+						}
+						for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+							z_t += beta[t][k][j];
+						}
+					}
+					for(int k = 1;k <= std::min(t, _max_word_length);k++){
+						if(t - k == 0){
+							beta[t][k][0] /= z_t;
+						}
+						for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+							beta[t][k][j] /= z_t;
+						}
+					}
+					log_z[t] = log(z_t);
+					continue;
+				}
+				// アンダーフローを防ぐためlogsumexpを経由して正規化後の後向き確率を計算
+				double sum_exp = 0;
+				// 最大値を求める
+				double max_log_z = 0;
+				for(int k = 1;k <= std::min(t, _max_word_length);k++){
+					if(t - k == 0){
+						assert(beta[t][k][0] > 0);
+						double tmp = log(beta[t][k][0]) + log_z[t - k];
+						if(max_log_z == 0 || tmp > max_log_z){
+							max_log_z = tmp;
+						}
+					}
+					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+						assert(beta[t][k][j] > 0);
+						double tmp = log(beta[t][k][j]) + log_z[t - k];
+						if(max_log_z == 0 || tmp > max_log_z){
+							max_log_z = tmp;
+						}
+					}
+				}
+				// 求めた最大値をもとにlogsumexp
+				for(int k = 1;k <= std::min(t, _max_word_length);k++){
+					if(t - k == 0){
+						sum_exp += exp(log(beta[t][k][0]) + log_z[t - k] - max_log_z);
+						continue;
+					}
+					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+						assert(beta[t][k][j] > 0);
+						sum_exp += exp(log(beta[t][k][j]) + log_z[t - k] - max_log_z);
+					}
+				}
+				double log_z_t = log(sum_exp) + max_log_z;
+				// 正規化
+				assert(sum_exp != 0);
+				for(int k = 1;k <= std::min(t, _max_word_length);k++){
+					if(t - k == 0){
+						beta[t][k][0] = exp(log(beta[t][k][0]) + log_z[t - k] - log_z_t);
+						assert(beta[t][k][0] > 0);
+						continue;
+					}
+					for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+						beta[t][k][j] = exp(log(beta[t][k][j]) + log_z[t - k] - log_z_t);
+						assert(beta[t][k][j] > 0);
+					}
+				}
+				assert(t <= _max_sentence_length + 1);
+				log_z[t] = log_z_t;
+				continue;
+			}
+			log_z[t] = 1;
 		}
 	}
 	// 後ろ向き確率を計算

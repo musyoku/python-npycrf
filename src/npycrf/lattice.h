@@ -26,6 +26,10 @@ namespace npycrf {
 		double** _pc_s;			// 文の部分文字列が単語になる条件付き確率
 		double* _backward_sampling_table;
 		int*** _viterbi_backward;
+		// 以下はlogsumexp用の対数計算結果のキャッシュ
+		double* _log_alpha_beta_j;
+		double** _log_alpha_k_j;
+		double** _log_beta_k_j;
 		int _max_word_length;
 		int _max_sentence_length;
 		double _lambda_0;
