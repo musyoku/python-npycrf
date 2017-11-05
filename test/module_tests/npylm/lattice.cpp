@@ -11,6 +11,12 @@ using std::cout;
 using std::flush;
 using std::endl;
 
+void npylm_add_customers(npylm::NPYLM* npylm, Sentence* sentence){
+	for(int t = 2;t < sentence->get_num_segments();t++){
+		npylm->add_customer_at_time_t(sentence, t);
+	}
+}
+
 double compute_forward_probability(Lattice* lattice, Sentence* sentence, bool normalize){
 	assert(sentence->size() <= lattice->_max_sentence_length);
 	int size = sentence->size() + 1;
@@ -79,23 +85,33 @@ double compute_backward_probability(Lattice* lattice, Sentence* sentence, bool n
 }
 
 void test_compute_forward_probability(){
-	std::string filename = "../../../dataset/test.txt";
-	Corpus* corpus = new Corpus();
-	corpus->add_textfile(filename);
-	int seed = 0;
-	Dataset* dataset = new Dataset(corpus, 1, seed);
+	std::unordered_map<wchar_t, int> _token_ids;
+	std::wstring sentence_str = L"ああいいいううううえええおお";
+	for(wchar_t character: sentence_str){
+		auto itr = _token_ids.find(character);
+		if(itr == _token_ids.end()){
+			_token_ids[character] = _token_ids.size();
+		}
+	}
+	int* character_ids = new int[sentence_str.size()];
+	for(int i = 0;i < sentence_str.size();i++){
+		character_ids[i] = _token_ids[sentence_str[i]];
+	}
+	Sentence* sentence = new Sentence(sentence_str, character_ids);
+	std::vector<int> segments {2, 3, 4, 3, 2};
+	sentence->split(segments);
 
 	double lambda_0 = 1;
-	int max_word_length = 12;
-	int max_sentence_length = dataset->get_max_sentence_length();
-	double g0 = 1.0 / (double)dataset->_dict->get_num_characters();
+	int max_word_length = 4;
+	int max_sentence_length = sentence->size();
+	double g0 = 1.0 / (double)_token_ids.size();
 	double initial_lambda_a = 4;
 	double initial_lambda_b = 1;
 	double vpylm_beta_stop = 4;
 	double vpylm_beta_pass = 1;
 	python::model::NPYLM* py_npylm = new python::model::NPYLM(max_word_length, max_sentence_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
 
-	int num_character_ids = dataset->_dict->get_num_characters();
+	int num_character_ids = _token_ids.size();
 	int num_character_types = 281;
 	int feature_x_unigram_start = -2;
 	int feature_x_unigram_end = 2;
@@ -116,96 +132,49 @@ void test_compute_forward_probability(){
 														feature_x_identical_2_start,
 														feature_x_identical_2_end);
 
-	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
-	Dictionary* dictionary = dataset->_dict;
-
-	Trainer* trainer = new Trainer(dataset, model, false);
+	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, sentence->size());
 	Lattice* lattice = model->_lattice;
 	npylm::NPYLM* npylm = model->_npylm;
 
-	for(int epoch = 0;epoch < 2;epoch++){
-		trainer->gibbs();
-		for(Sentence* sentence: dataset->_sentence_sequences_train){
-			double prob_n = compute_forward_probability(lattice, sentence, true);
-			double prob_u = compute_forward_probability(lattice, sentence, false);
-			assert(std::abs(prob_n - prob_u) < 1e-16);
-		}
-	}
+	double prob_n = compute_forward_probability(lattice, sentence, true);
+	double prob_u = compute_forward_probability(lattice, sentence, false);
+	assert(std::abs(prob_n - prob_u) < 1e-16);
+
+	delete[] character_ids;
+	delete sentence;
+	delete model;
+	delete py_npylm;
+	delete py_crf;
 }
 
 void test_compute_backward_probability(){
-	std::string filename = "../../../dataset/test.txt";
-	Corpus* corpus = new Corpus();
-	corpus->add_textfile(filename);
-	int seed = 0;
-	Dataset* dataset = new Dataset(corpus, 1, seed);
-
-	double lambda_0 = 1;
-	int max_word_length = 12;
-	int max_sentence_length = dataset->get_max_sentence_length();
-	double g0 = 1.0 / (double)dataset->_dict->get_num_characters();
-	double initial_lambda_a = 4;
-	double initial_lambda_b = 1;
-	double vpylm_beta_stop = 4;
-	double vpylm_beta_pass = 1;
-	python::model::NPYLM* py_npylm = new python::model::NPYLM(max_word_length, max_sentence_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
-
-	int num_character_ids = dataset->_dict->get_num_characters();
-	int num_character_types = 281;
-	int feature_x_unigram_start = -2;
-	int feature_x_unigram_end = 2;
-	int feature_x_bigram_start = -2;
-	int feature_x_bigram_end = 1;
-	int feature_x_identical_1_start = -2;
-	int feature_x_identical_1_end = 1;
-	int feature_x_identical_2_start = -3;
-	int feature_x_identical_2_end = 1;
-	python::model::CRF* py_crf = new python::model::CRF(num_character_ids,
-														num_character_types,
-														feature_x_unigram_start,
-														feature_x_unigram_end,
-														feature_x_bigram_start,
-														feature_x_bigram_end,
-														feature_x_identical_1_start,
-														feature_x_identical_1_end,
-														feature_x_identical_2_start,
-														feature_x_identical_2_end);
-
-	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
-	Dictionary* dictionary = dataset->_dict;
-
-	Trainer* trainer = new Trainer(dataset, model, false);
-	Lattice* lattice = model->_lattice;
-	npylm::NPYLM* npylm = model->_npylm;
-
-	for(int epoch = 0;epoch < 2;epoch++){
-		trainer->gibbs();
-		for(Sentence* sentence: dataset->_sentence_sequences_train){
-			double prob_n = compute_backward_probability(lattice, sentence, true);
-			double prob_u = compute_backward_probability(lattice, sentence, false);
-			assert(std::abs(prob_n - prob_u) < 1e-16);
+	std::unordered_map<wchar_t, int> _token_ids;
+	std::wstring sentence_str = L"ああいいいううううえええおお";
+	for(wchar_t character: sentence_str){
+		auto itr = _token_ids.find(character);
+		if(itr == _token_ids.end()){
+			_token_ids[character] = _token_ids.size();
 		}
 	}
-}
-
-void test_enumerate_forward_probabilities(){
-	std::string filename = "../../../dataset/test.txt";
-	Corpus* corpus = new Corpus();
-	corpus->add_textfile(filename);
-	int seed = 0;
-	Dataset* dataset = new Dataset(corpus, 1, seed);
+	int* character_ids = new int[sentence_str.size()];
+	for(int i = 0;i < sentence_str.size();i++){
+		character_ids[i] = _token_ids[sentence_str[i]];
+	}
+	Sentence* sentence = new Sentence(sentence_str, character_ids);
+	std::vector<int> segments {2, 3, 4, 3, 2};
+	sentence->split(segments);
 
 	double lambda_0 = 1;
-	int max_word_length = 12;
-	int max_sentence_length = dataset->get_max_sentence_length();
-	double g0 = 1.0 / (double)dataset->_dict->get_num_characters();
+	int max_word_length = 4;
+	int max_sentence_length = sentence->size();
+	double g0 = 1.0 / (double)_token_ids.size();
 	double initial_lambda_a = 4;
 	double initial_lambda_b = 1;
 	double vpylm_beta_stop = 4;
 	double vpylm_beta_pass = 1;
 	python::model::NPYLM* py_npylm = new python::model::NPYLM(max_word_length, max_sentence_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
 
-	int num_character_ids = dataset->_dict->get_num_characters();
+	int num_character_ids = _token_ids.size();
 	int num_character_types = 281;
 	int feature_x_unigram_start = -2;
 	int feature_x_unigram_end = 2;
@@ -226,176 +195,31 @@ void test_enumerate_forward_probabilities(){
 														feature_x_identical_2_start,
 														feature_x_identical_2_end);
 
-	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
-	Dictionary* dictionary = dataset->_dict;
-
-	Trainer* trainer = new Trainer(dataset, model, false);
+	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, sentence->size());
 	Lattice* lattice = model->_lattice;
 	npylm::NPYLM* npylm = model->_npylm;
+	
+	double prob_n = compute_backward_probability(lattice, sentence, true);
+	double prob_u = compute_backward_probability(lattice, sentence, false);
+	assert(std::abs(prob_n - prob_u) < 1e-16);
 
-	for(int epoch = 0;epoch < 2;epoch++){
-		trainer->gibbs();
-		for(Sentence* sentence: dataset->_sentence_sequences_train){
-			double prob_n = compute_forward_probability(lattice, sentence, true);
-			lattice->enumerate_forward_probabilities(sentence, lattice->_alpha, true);
-			assert(std::abs(prob_n - prob_u) < 1e-16);
-		}
-	}
-}
-// void test_compute_z_x(){
-// 	std::string filename = "../../../dataset/test.txt";
-// 	Corpus* corpus = new Corpus();
-// 	corpus->add_textfile(filename);
-// 	int seed = 0;
-// 	Dataset* dataset = new Dataset(corpus, 1, seed);
-
-// 	double lambda_0 = 1;
-// 	int max_word_length = 12;
-// 	int max_sentence_length = dataset->get_max_sentence_length();
-// 	double g0 = 1.0 / (double)dataset->_dict->get_num_characters();
-// 	double initial_lambda_a = 4;
-// 	double initial_lambda_b = 1;
-// 	double vpylm_beta_stop = 4;
-// 	double vpylm_beta_pass = 1;
-// 	python::model::NPYLM* py_npylm = new python::model::NPYLM(max_word_length, max_sentence_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
-
-// 	int num_character_ids = dataset->_dict->get_num_characters();
-// 	int num_character_types = 281;
-// 	int feature_x_unigram_start = -2;
-// 	int feature_x_unigram_end = 2;
-// 	int feature_x_bigram_start = -2;
-// 	int feature_x_bigram_end = 1;
-// 	int feature_x_identical_1_start = -2;
-// 	int feature_x_identical_1_end = 1;
-// 	int feature_x_identical_2_start = -3;
-// 	int feature_x_identical_2_end = 1;
-// 	python::model::CRF* py_crf = new python::model::CRF(num_character_ids,
-// 														num_character_types,
-// 														feature_x_unigram_start,
-// 														feature_x_unigram_end,
-// 														feature_x_bigram_start,
-// 														feature_x_bigram_end,
-// 														feature_x_identical_1_start,
-// 														feature_x_identical_1_end,
-// 														feature_x_identical_2_start,
-// 														feature_x_identical_2_end);
-
-// 	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
-// 	Dictionary* dictionary = dataset->_dict;
-
-// 	Trainer* trainer = new Trainer(dataset, model, false);
-// 	Lattice* lattice = model->_lattice;
-// 	npylm::NPYLM* npylm = model->_npylm;
-
-// 	for(int epoch = 0;epoch < 2;epoch++){
-// 		trainer->gibbs();
-// 		for(Sentence* sentence: dataset->_sentence_sequences_train){
-// 			double prob_f = lattice->compute_z_x(sentence, false);
-// 			double prob_b = lattice->compute_z_x_backward(sentence, false);
-// 			assert(std::abs(prob_f - prob_b) / prob_b < 1e-14);
-// 			// lattice->compute_forward_probability(sentence, false);
-// 			// lattice->compute_backward_probability(sentence, false);
-// 			// cout << sentence->size() << endl;
-// 			// for(int t = 0;t <= sentence->size();t++){
-// 			// 	double prob_sum = 0;
-// 			// 	for(int k = 1;k <= std::min(sentence->size() - t, max_word_length);k++){
-// 			// 		int _t = k + t;
-// 			// 		if(_t - k == 0){
-// 			// 			cout << "[" << _t << "][" << k << "][" << 0 << "]" << endl;
-// 			// 			prob_sum += lattice->_alpha[_t][k][0] * lattice->_beta[_t][k][0];
-// 			// 		}
-// 			// 		for(int j = 1;j <= std::min(t, max_word_length);j++){
-// 			// 			cout << "[" << _t << "][" << k << "][" << j << "]" << endl;
-// 			// 			prob_sum += lattice->_alpha[_t][k][j] * lattice->_beta[_t][k][j];
-// 			// 		}
-// 			// 	}
-// 			// 	// assert(std::abs(prob_t - prob_sum) / prob_sum < 1e-16);
-// 			// 	cout << "t = " << t << ", " << prob_f << " == " << prob_sum << ", " << (std::abs(prob_f - prob_sum) / prob_sum) << endl;
-// 			// }
-// 		}
-// 	}
-// }
-
-void test_sgd(){
-	std::string filename = "../../../dataset/test.txt";
-	Corpus* corpus = new Corpus();
-	corpus->add_textfile(filename);
-	int seed = 0;
-	Dataset* dataset = new Dataset(corpus, 1, seed);
-
-	double lambda_0 = 1;
-	int max_word_length = 12;
-	int max_sentence_length = dataset->get_max_sentence_length();
-	double g0 = 1.0 / (double)dataset->_dict->get_num_characters();
-	double initial_lambda_a = 4;
-	double initial_lambda_b = 1;
-	double vpylm_beta_stop = 4;
-	double vpylm_beta_pass = 1;
-	python::model::NPYLM* py_npylm = new python::model::NPYLM(max_word_length, max_sentence_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
-
-	int num_character_ids = dataset->_dict->get_num_characters();
-	int num_character_types = 281;
-	int feature_x_unigram_start = -2;
-	int feature_x_unigram_end = 2;
-	int feature_x_bigram_start = -2;
-	int feature_x_bigram_end = 1;
-	int feature_x_identical_1_start = -2;
-	int feature_x_identical_1_end = 1;
-	int feature_x_identical_2_start = -3;
-	int feature_x_identical_2_end = 1;
-	python::model::CRF* py_crf = new python::model::CRF(num_character_ids,
-														num_character_types,
-														feature_x_unigram_start,
-														feature_x_unigram_end,
-														feature_x_bigram_start,
-														feature_x_bigram_end,
-														feature_x_identical_1_start,
-														feature_x_identical_1_end,
-														feature_x_identical_2_start,
-														feature_x_identical_2_end);
-
-	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
-	Dictionary* dictionary = dataset->_dict;
-
-	Trainer* trainer = new Trainer(dataset, model, false);
-	Lattice* lattice = model->_lattice;
-	crf::CRF* crf = model->_crf;
-	npylm::NPYLM* npylm = model->_npylm;
-
-	for(int epoch = 0;epoch < 2;epoch++){
-		cout << epoch << endl;
-		trainer->gibbs();
-	}
-	// for(int i = 0;i < crf->_w_size_label_u + crf->_w_size_label_b;i++){
-	// 	crf->_w_label[i] = 0.001;
-	// }
-	// for(int i = 0;i < crf->_w_size_unigram_u + crf->_w_size_unigram_b;i++){
-	// 	crf->_w_unigram[i] = 0.001;
-	// }
-	// for(int i = 0;i < crf->_w_size_bigram_u + crf->_w_size_bigram_b;i++){
-	// 	crf->_w_bigram[i] = 0.001;
-	// }
-	// for(int i = 0;i < crf->_w_size_identical_1_u + crf->_w_size_identical_1_b;i++){
-	// 	crf->_w_identical_1[i] = 0.001;
-	// }
-	// for(int i = 0;i < crf->_w_size_identical_2_u + crf->_w_size_identical_2_b;i++){
-	// 	crf->_w_identical_2[i] = 0.001;
-	// }
-	// for(int i = 0;i < crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b;i++){
-	// 	crf->_w_unigram_type[i] = 0.001;
-	// }
-	trainer->sgd(false, 1);
+	delete[] character_ids;
+	delete sentence;
+	delete model;
+	delete py_npylm;
+	delete py_crf;
 }
 
 int main(int argc, char *argv[]){
-	// test_sgd();
-	// cout << "OK" << endl;
-	test_enumerate_forward_probabilities();
+	setlocale(LC_CTYPE, "ja_JP.UTF-8");
+	std::ios_base::sync_with_stdio(false);
+	std::locale default_loc("ja_JP.UTF-8");
+	std::locale::global(default_loc);
+	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
+	std::wcout.imbue(ctype_default);
+	std::wcin.imbue(ctype_default);
+	test_compute_forward_probability();
 	cout << "OK" << endl;
 	test_compute_backward_probability();
-	cout << "OK" << endl;
-	// test_compute_z_x();
-	// cout << "OK" << endl;
-	test_compute_forward_probability();
 	cout << "OK" << endl;
 }

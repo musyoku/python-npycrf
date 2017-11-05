@@ -46,13 +46,14 @@ namespace npycrf {
 		double compute_marginal_p_x_backward(Sentence* sentence, bool normalize = true);
 		double compute_forward_probability(Sentence* sentence, bool normalize = true);
 		double compute_backward_probability(Sentence* sentence, bool normalize = true);
-		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** &alpha, double**** &pw_h_tkji);
-		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** &beta, double**** &pw_h_tkji);
-		void _forward_filtering(Sentence* sentence, double*** &alpha, double**** &pw_h_tkji, bool normalize = true);
-		void _backward_sampling(Sentence* sentence, double*** &alpha, std::vector<int> &segments);
-		void _enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** &alpha, double*** &beta, double** &pc_s);
-		void _enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** &alpha, double*** &beta, double* &log_z, double** &pc_s);
-		void _enumerate_forward_probabilities(Sentence* sentence, double*** &alpha, bool normalize = true);
-		void _enumerate_backward_probabilities(Sentence* sentence, double*** &beta, bool normalize = true);
+		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji);
+		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** pw_h_tkji);
+		void _forward_filtering(Sentence* sentence, double*** alpha, double**** pw_h_tkji, bool normalize = true);
+		void _backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments);
+		void _enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** pc_s);
+		void _enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z, double** pc_s);
+		void _enumerate_forward_probabilities(Sentence* sentence, double*** alpha, bool normalize = true);
+		void _enumerate_backward_probabilities(Sentence* sentence, double*** beta, bool normalize = true);
+		void _clear_pw_h_tkji(double**** pw_h_tkji);
 	};
 } // namespace npylm

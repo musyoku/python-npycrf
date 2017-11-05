@@ -206,14 +206,6 @@ void test_compute_path_cost(){
 }
 
 void test_grads(){
-	setlocale(LC_CTYPE, "ja_JP.UTF-8");
-	std::ios_base::sync_with_stdio(false);
-	std::locale default_loc("ja_JP.UTF-8");
-	std::locale::global(default_loc);
-	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
-	std::wcout.imbue(ctype_default);
-	std::wcin.imbue(ctype_default);
-
 	std::unordered_map<wchar_t, int> _token_ids;
 	std::wstring sentence_str = L"あああいいいいうううううええええおおお";
 	for(wchar_t character: sentence_str){
@@ -258,6 +250,13 @@ void test_grads(){
 }
 
 int main(){
+	setlocale(LC_CTYPE, "ja_JP.UTF-8");
+	std::ios_base::sync_with_stdio(false);
+	std::locale default_loc("ja_JP.UTF-8");
+	std::locale::global(default_loc);
+	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
+	std::wcout.imbue(ctype_default);
+	std::wcin.imbue(ctype_default);
 	test_grads();
 	cout << "OK" << endl;
 	test_init();
