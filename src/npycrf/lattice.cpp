@@ -178,7 +178,7 @@ namespace npycrf {
 	// alpha[t-k][j][i]自体は正規化されている場合があるが、alpha[t][k][j]の正規化はここでは行わない
 	// NPYLMによる確率計算の結果をpw_h_tkjiにキャッシュする
 	// このキャッシュは後向き確率の計算時に使う
-	void Lattice::sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** &alpha, double**** &pw_h_tkji){
+	void Lattice::_sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** &alpha, double**** &pw_h_tkji){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
 		int const* character_ids = sentence->_character_ids;
@@ -250,20 +250,20 @@ namespace npycrf {
 		assert(sum > 0);
 		alpha[t][k][j] = sum;
 	}
-	void forward_filtering(Sentence* sentence, bool normalize){
-		_forward_filtering(sentence, _alpha, normalize);
+	void Lattice::forward_filtering(Sentence* sentence, bool normalize){
+		_forward_filtering(sentence, _alpha, _pw_h, normalize);
 	}
-	void backward_sampling(Sentence* sentence, std::vector<int> &segments){
-		_backward_sampling(sentence, _alpha, normalize);
+	void Lattice::backward_sampling(Sentence* sentence, std::vector<int> &segments){
+		_backward_sampling(sentence, _alpha, segments);
 	}
-	void Lattice::_forward_filtering(Sentence* sentence, double*** alpha, bool normalize){
+	void Lattice::_forward_filtering(Sentence* sentence, double*** &alpha, double**** &pw_h_tkji, bool normalize){
 		for(int t = 1;t <= sentence->size();t++){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				if(t - k == 0){
-					sum_alpha_t_k_j(sentence, t, k, 0, alpha);
+					_sum_alpha_t_k_j(sentence, t, k, 0, alpha, pw_h_tkji);
 				}
 				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-					sum_alpha_t_k_j(sentence, t, k, j, alpha);
+					_sum_alpha_t_k_j(sentence, t, k, j, alpha, pw_h_tkji);
 				}
 			}
 			// 正規化
@@ -321,7 +321,7 @@ namespace npycrf {
 			}
 		}
 	}
-	void Lattice::_backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments){
+	void Lattice::_backward_sampling(Sentence* sentence, double*** &alpha, std::vector<int> &segments){
 		segments.clear();
 		int k = 0;
 		int j = 0;
@@ -795,7 +795,7 @@ namespace npycrf {
 	}
 	// 文の部分文字列が単語になる確率
 	// 確率値は全て比例のまま
-	void Lattice::_enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** &pc_s){
+	void Lattice::_enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** &alpha, double*** &beta, double** &pc_s){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		#ifdef __DEBUG__
@@ -825,7 +825,7 @@ namespace npycrf {
 	// 確率値は全て比例のまま
 	// アンダーフローを抑えるためにlogで計算
 	// log_zは各時刻の正規化定数
-	void Lattice::_enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z, double** &pc_s){
+	void Lattice::_enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** &alpha, double*** &beta, double* &log_z, double** &pc_s){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		#ifdef __DEBUG__
@@ -872,7 +872,7 @@ namespace npycrf {
 		}
 		forward_filtering(sentence, normalize);
 	}
-	void Lattice::enumerate_backward_probabilities(Sentence* sentence, double*** &beta, bool normalize){
+	void Lattice::_enumerate_backward_probabilities(Sentence* sentence, double*** &beta, bool normalize){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		#ifdef __DEBUG__
@@ -964,11 +964,11 @@ namespace npycrf {
 		for(int t = sentence->size();t >= 1;t--){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				if(t - k == 0){
-					sum_beta_t_k_j(sentence, t, k, 0);
+					_sum_beta_t_k_j(sentence, t, k, 0, _beta, _pw_h);
 					continue;
 				}
 				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-					sum_beta_t_k_j(sentence, t, k, j);
+					_sum_beta_t_k_j(sentence, t, k, j, _beta, _pw_h);
 				}
 			}
 			// 正規化
@@ -1028,7 +1028,7 @@ namespace npycrf {
 	// 後ろ向き確率を計算
 	// 正規化定数をここでは掛けないことに注意
 	// pw_h_tkjiは前向き確率計算時にキャッシュされている（-1が入っている場合再計算する）
-	void Lattice::sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** &beta, double**** pw_h_tkji){
+	void Lattice::_sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** &beta, double**** &pw_h_tkji){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
 		int const* character_ids = sentence->_character_ids;
@@ -1046,7 +1046,7 @@ namespace npycrf {
 				id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
 				_word_ids[0] = word_j_id;
 			}
-			double pw_h = (pw_h_tkji > 0) ? pw_h_tkji[t][k][0][0] : _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+			double pw_h = (pw_h_tkji[t][k][0][0] > 0) ? pw_h_tkji[t][k][0][0] : _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
 			#ifdef __DEBUG__
 				double _pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
 				assert(_pw_h == pw_h_tkji[t][k][0][0]);
