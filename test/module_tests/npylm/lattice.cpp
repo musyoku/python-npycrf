@@ -21,14 +21,14 @@ double compute_forward_probability(Lattice* lattice, Sentence* sentence, bool no
 	assert(sentence->size() <= lattice->_max_sentence_length);
 	int size = sentence->size() + 1;
 	lattice->_alpha[0][0][0] = 1;
-	lattice->_log_z[0] = 0;
+	lattice->_log_z_alpha[0] = 0;
 	for(int i = 0;i < size;i++){
 		for(int j = 0;j < lattice->_max_word_length + 1;j++){
 			lattice->_substring_word_id_cache[i][j] = 0;
 		}
 	}
 	for(int t = 0;t < size;t++){
-		lattice->_log_z[t] = 0;
+		lattice->_log_z_alpha[t] = 0;
 		for(int k = 0;k < lattice->_max_word_length + 1;k++){
 			for(int j = 0;j < lattice->_max_word_length + 1;j++){
 				lattice->_alpha[t][k][j] = -1;
@@ -41,7 +41,7 @@ double compute_forward_probability(Lattice* lattice, Sentence* sentence, bool no
 	for(int k = 1;k <= std::min(t, lattice->_max_word_length);k++){
 		for(int j = 1;j <= std::min(t - k, lattice->_max_word_length);j++){
 			if(normalize){
-				sum_probability += lattice->_alpha[t][k][j] * exp(lattice->_log_z[t]);
+				sum_probability += lattice->_alpha[t][k][j] * exp(lattice->_log_z_alpha[t]);
 			}else{
 				sum_probability += lattice->_alpha[t][k][j];
 			}
@@ -54,7 +54,7 @@ double compute_backward_probability(Lattice* lattice, Sentence* sentence, bool n
 		assert(sentence->size() <= lattice->_max_sentence_length);
 		int size = sentence->size() + 1;
 		lattice->_beta[0][0][0] = 1;
-		lattice->_log_z[0] = 0;
+		lattice->_log_z_beta[0] = 0;
 		for(int i = 0;i < size;i++){
 			for(int j = 0;j < lattice->_max_word_length + 1;j++){
 				lattice->_substring_word_id_cache[i][j] = 0;
@@ -69,13 +69,13 @@ double compute_backward_probability(Lattice* lattice, Sentence* sentence, bool n
 				}
 			}
 		#endif 
-		lattice->backward_filtering(sentence, normalize);
+		lattice->_enumerate_backward_probabilities(sentence, lattice->_beta, lattice->_pw_h, lattice->_log_z_beta, normalize);
 		double sum_probability = 0;
 		int t = sentence->size();
 		for(int k = 1;k <= std::min(t, lattice->_max_word_length);k++){
 			for(int j = 1;j <= std::min(t - k, lattice->_max_word_length);j++){
 				if(normalize){
-					sum_probability += lattice->_beta[t][k][j] * exp(lattice->_log_z[t]);
+					sum_probability += lattice->_beta[t][k][j] * exp(lattice->_log_z_beta[t]);
 				}else{
 					sum_probability += lattice->_beta[t][k][j];
 				}
@@ -198,10 +198,69 @@ void test_compute_backward_probability(){
 	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, sentence->size());
 	Lattice* lattice = model->_lattice;
 	npylm::NPYLM* npylm = model->_npylm;
-	
+
 	double prob_n = compute_backward_probability(lattice, sentence, true);
 	double prob_u = compute_backward_probability(lattice, sentence, false);
 	assert(std::abs(prob_n - prob_u) < 1e-16);
+
+	delete[] character_ids;
+	delete sentence;
+	delete model;
+	delete py_npylm;
+	delete py_crf;
+}
+
+void test_enumerate_proportional_log_p_substring_given_sentence(){
+	std::unordered_map<wchar_t, int> _token_ids;
+	std::wstring sentence_str = L"ああいいいううううえええおおああいいいううううえええおおああいいいううううえええおおああいいいううううえええおおああいいいううううえええおお";
+	for(wchar_t character: sentence_str){
+		auto itr = _token_ids.find(character);
+		if(itr == _token_ids.end()){
+			_token_ids[character] = _token_ids.size();
+		}
+	}
+	int* character_ids = new int[sentence_str.size()];
+	for(int i = 0;i < sentence_str.size();i++){
+		character_ids[i] = _token_ids[sentence_str[i]];
+	}
+	Sentence* sentence = new Sentence(sentence_str, character_ids);
+	std::vector<int> segments {2, 3, 4, 3, 2, 2, 3, 4, 3, 2, 2, 3, 4, 3, 2, 2, 3, 4, 3, 2, 2, 3, 4, 3, 2};
+	sentence->split(segments);
+
+	double lambda_0 = 1;
+	int max_word_length = 4;
+	int max_sentence_length = sentence->size();
+	double g0 = 1.0 / (double)_token_ids.size();
+	double initial_lambda_a = 4;
+	double initial_lambda_b = 1;
+	double vpylm_beta_stop = 4;
+	double vpylm_beta_pass = 1;
+	python::model::NPYLM* py_npylm = new python::model::NPYLM(max_word_length, max_sentence_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
+
+	int num_character_ids = _token_ids.size();
+	int num_character_types = 281;
+	int feature_x_unigram_start = -2;
+	int feature_x_unigram_end = 2;
+	int feature_x_bigram_start = -2;
+	int feature_x_bigram_end = 1;
+	int feature_x_identical_1_start = -2;
+	int feature_x_identical_1_end = 1;
+	int feature_x_identical_2_start = -3;
+	int feature_x_identical_2_end = 1;
+	python::model::CRF* py_crf = new python::model::CRF(num_character_ids,
+														num_character_types,
+														feature_x_unigram_start,
+														feature_x_unigram_end,
+														feature_x_bigram_start,
+														feature_x_bigram_end,
+														feature_x_identical_1_start,
+														feature_x_identical_1_end,
+														feature_x_identical_2_start,
+														feature_x_identical_2_end);
+
+	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, sentence->size());
+	Lattice* lattice = model->_lattice;
+	npylm::NPYLM* npylm = model->_npylm;
 
 	delete[] character_ids;
 	delete sentence;
@@ -221,5 +280,7 @@ int main(int argc, char *argv[]){
 	test_compute_forward_probability();
 	cout << "OK" << endl;
 	test_compute_backward_probability();
+	cout << "OK" << endl;
+	test_enumerate_proportional_log_p_substring_given_sentence();
 	cout << "OK" << endl;
 }

@@ -279,10 +279,10 @@ namespace npycrf {
 			double log_py_x = _model->compute_log_proportional_p_y_given_x(sentence) - log(px);
 			std::cout << "log_py_x = " << log_py_x << std::endl;
 
-			lattice->compute_forward_probability(sentence, false);
-			lattice->compute_backward_probability(sentence, false);
 			double*** alpha = lattice->_alpha;
 			double*** beta = lattice->_beta;
+			lattice->_enumerate_forward_probabilities(sentence, alpha, lattice->_pw_h, lattice->_log_z_alpha, false);
+			lattice->_enumerate_backward_probabilities(sentence, beta, lattice->_pw_h, lattice->_log_z_beta, false);
 			double grad = 0;
 			int t = 0, k, j, i;
 			for(int word_t = 2;word_t < sentence->get_num_segments();word_t++){
