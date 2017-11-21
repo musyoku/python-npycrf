@@ -8,6 +8,14 @@ namespace npycrf {
 	namespace lattice {
 		void _init_table(double*** &table, int size, int max_word_length);
 		void _delete_table(double*** &table, int size, int max_word_length);
+		void _init_array(double* &array, int size_i);
+		void _init_array(double** &array, int size_i, int size_j);
+		void _init_array(double*** &array, int size_i, int size_j, int size_k);
+		void _init_array(double**** &array, int size_i, int size_j, int size_k, int size_l);
+		void _delete_array(double* &array, int size_i);
+		void _delete_array(double** &array, int size_i, int size_j);
+		void _delete_array(double*** &array, int size_i, int size_j, int size_k);
+		void _delete_array(double**** &array, int size_i, int size_j, int size_k, int size_l);
 	}
 	class Lattice {
 	private:
@@ -20,16 +28,11 @@ namespace npycrf {
 		id** _substring_word_id_cache;
 		double*** _alpha;		// 前向き確率
 		double*** _beta;		// 後向き確率
-		double**** _pw_h;		// キャッシュ
-		double* _log_z_alpha;	// 正規化定数
-		double* _log_z_beta;	// 正規化定数
+		double**** _pw_h;		// n-gram確率のキャッシュ
+		double* _scaling;		// スケーリング係数
 		double** _pc_s;			// 文の部分文字列が単語になる条件付き確率
 		double* _backward_sampling_table;
 		int*** _viterbi_backward;
-		// 以下はlogsumexp用の対数計算結果のキャッシュ
-		double* _log_alpha_beta_j;
-		double** _log_alpha_k_j;
-		double** _log_beta_k_j;
 		int _max_word_length;
 		int _max_sentence_length;
 		double _lambda_0;
@@ -53,8 +56,8 @@ namespace npycrf {
 		void _backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments);
 		void _enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** pc_s);
 		void _enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z_alpha, double* log_z_beta, double** pc_s);
-		void _enumerate_forward_probabilities(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* log_z, bool normalize = true);
-		void _enumerate_backward_probabilities(Sentence* sentence, double*** beta, double**** pw_h_tkji, double* log_z, bool normalize = true);
+		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* log_z, bool normalize = true);
+		void _enumerate_backward_variables(Sentence* sentence, double*** beta, double**** pw_h_tkji, double* log_z, bool normalize = true);
 		void _clear_pw_h_tkji(double**** pw_h_tkji);
 	};
 } // namespace npylm

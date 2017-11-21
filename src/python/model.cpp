@@ -50,8 +50,7 @@ namespace npycrf {
 			_lattice->_lambda_0 = lambda_0;
 		}
 		// 分配関数の計算
-		// normalize=trueならアンダーフローを防ぐ
-		double Model::compute_marginal_p_x(Sentence* sentence, bool normalize){
+		double Model::compute_marginal_p_x(Sentence* sentence){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());

@@ -76,8 +76,10 @@ double compute_backward_probability(Lattice* lattice, Sentence* sentence, bool n
 			int t = k;
 			if(normalize){
 				assert(lattice->_log_z_beta[t] < 0);
+				cout << "beta = " << lattice->_beta[t][k][0] << ", beta = " << lattice->_beta[t][k][0] * exp(lattice->_log_z_beta[t]) << endl;
 				sum_probability += lattice->_beta[t][k][0] * exp(lattice->_log_z_beta[t]);
 			}else{
+				cout << "beta = " << lattice->_beta[t][k][0] << endl;
 				sum_probability += lattice->_beta[t][k][0];
 			}
 		}
@@ -86,7 +88,7 @@ double compute_backward_probability(Lattice* lattice, Sentence* sentence, bool n
 
 void test_compute_forward_probability(){
 	std::unordered_map<wchar_t, int> _token_ids;
-	std::wstring sentence_str = L"ああいいいううううえええおお";
+	std::wstring sentence_str = L"ああいいいううううえええおおああいいいううううえええおおああいいいううううえええおおああいいいううううえええおおああいいいううううえええおお";
 	for(wchar_t character: sentence_str){
 		auto itr = _token_ids.find(character);
 		if(itr == _token_ids.end()){
@@ -98,7 +100,7 @@ void test_compute_forward_probability(){
 		character_ids[i] = _token_ids[sentence_str[i]];
 	}
 	Sentence* sentence = new Sentence(sentence_str, character_ids);
-	std::vector<int> segments {2, 3, 4, 3, 2};
+	std::vector<int> segments {2, 3, 4, 3, 2, 2, 3, 4, 3, 2, 2, 3, 4, 3, 2, 2, 3, 4, 3, 2, 2, 3, 4, 3, 2};
 	sentence->split(segments);
 
 	double lambda_0 = 1;

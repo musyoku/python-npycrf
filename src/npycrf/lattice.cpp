@@ -11,6 +11,60 @@
 namespace npycrf {
 	using namespace npylm;
 	namespace lattice {
+		void _init_array(double* &array, int size_i){
+			array = new double[size_i];
+			assert(array != NULL);
+		}
+		void _init_array(double** &array, int size_i, int size_j){
+			array = new double*[size_i];
+			assert(array != NULL);
+			for(int i = 0;i < size_i;i++){
+				array[i] = new double[size_j];
+				assert(array[i] != NULL);
+			}
+		}
+		void _init_array(double*** &array, int size_i, int size_j, int size_k){
+			array = new double**[size_i];
+			assert(array != NULL);
+			for(int i = 0;i < size_i;i++){
+				array[i] = new double*[size_j];
+				assert(array[i] != NULL);
+				for(int j = 0;j < size_j;j++){
+					array[i][j] = new double[size_k];
+					assert(array[i][j] != NULL);
+				}
+			}
+		}
+		void _init_array(double**** &array, int size_i, int size_j, int size_k, int size_l){
+			array = new double***[size_i];
+			assert(array != NULL);
+			for(int i = 0;i < size_i;i++){
+				array[i] = new double**[size_j];
+				assert(array[i] != NULL);
+				for(int j = 0;j < size_j;j++){
+					array[i][j] = new double*[size_k];
+					assert(array[i][j] != NULL);
+					for(int k = 0;k < size_k;k++){
+						array[i][j][k] = new double[size_l];
+						assert(array[i][j][k] != NULL);
+					}
+				}
+			}
+		}
+		void _delete_array(double* &array, int size_i){
+			if(array == NULL){
+				return;
+			}
+		}
+		void _delete_array(double** &array, int size_i, int size_j){
+
+		}
+		void _delete_array(double*** &array, int size_i, int size_j, int size_k){
+
+		}
+		void _delete_array(double**** &array, int size_i, int size_j, int size_k, int size_l){
+
+		}
 		void _init_table(double*** &table, int size, int max_word_length){
 			table = new double**[size];
 			assert(table != NULL);
@@ -47,8 +101,7 @@ namespace npycrf {
 		_alpha = NULL;
 		_beta = NULL;
 		_pw_h = NULL;
-		_log_z_alpha = NULL;
-		_log_z_beta = NULL;
+		_scaling = NULL;
 		_pc_s = NULL;
 		_backward_sampling_table = NULL;
 		_viterbi_backward = NULL;
@@ -61,6 +114,7 @@ namespace npycrf {
 		delete[] _word_ids;
 		_delete_capacity();
 	}
+	// 必要ならキャッシュの再確保
 	void Lattice::reserve(int max_word_length, int max_sentence_length){
 		if(max_word_length <= _max_word_length && max_sentence_length <= _max_sentence_length){
 			return;
@@ -75,11 +129,9 @@ namespace npycrf {
 		_max_sentence_length = max_sentence_length;
 		// 必要な配列の初期化
 		int size = max_sentence_length + 1;
-		// 前向き確率の正規化定数
-		_log_z_alpha = new double[size];
-		assert(_log_z_alpha != NULL);
-		_log_z_beta = new double[size];
-		assert(_log_z_beta != NULL);
+		// 前向き確率のスケーリング係数
+		_scaling = new double[size + 1];
+		assert(_scaling != NULL);
 		// ビタビアルゴリズム用
 		_viterbi_backward = new int**[size];
 		assert(_viterbi_backward != NULL);
@@ -144,7 +196,7 @@ namespace npycrf {
 		_log_beta_k_j = _log_alpha_k_j;
 	}
 	void Lattice::_delete_capacity(){
-		delete[] _log_z_alpha;
+		delete[] _scaling;
 		delete[] _log_z_beta;
 		int size = _max_sentence_length + 1;
 		lattice::_delete_table(_alpha, size, _max_word_length);
@@ -268,7 +320,7 @@ namespace npycrf {
 		alpha[t][k][j] = sum;
 	}
 	void Lattice::forward_filtering(Sentence* sentence, bool normalize){
-		_enumerate_forward_probabilities(sentence, _alpha, _pw_h, _log_z_alpha, normalize);
+		_enumerate_forward_probabilities(sentence, _alpha, _pw_h, _scaling, normalize);
 	}
 	void Lattice::backward_sampling(Sentence* sentence, std::vector<int> &segments){
 		_backward_sampling(sentence, _alpha, segments);
@@ -442,7 +494,7 @@ namespace npycrf {
 
 		#ifdef __DEBUG__
 			for(int t = 0;t < size;t++){
-				_log_z_alpha[t] = 0;
+				_scaling[t] = 0;
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
 						_alpha[t][k][j] = -1;
@@ -457,7 +509,7 @@ namespace npycrf {
 		#endif
 
 		_alpha[0][0][0] = 1;
-		_log_z_alpha[0] = 0;
+		_scaling[0] = 0;
 		for(int i = 0;i < size;i++){
 			for(int j = 0;j < _max_word_length + 1;j++){
 				_substring_word_id_cache[i][j] = 0;
@@ -651,7 +703,7 @@ namespace npycrf {
 		#endif
 
 		_alpha[0][0][0] = 0;
-		_log_z_alpha[0] = 0;
+		_scaling[0] = 0;
 		for(int t = 0;t < size;t++){
 			for(int k = 0;k < _max_word_length + 1;k++){
 				_substring_word_id_cache[t][k] = 0;
@@ -675,7 +727,7 @@ namespace npycrf {
 			}
 		#endif 
 		_alpha[0][0][0] = 1;
-		_log_z_alpha[0] = 0;
+		_scaling[0] = 0;
 		for(int i = 0;i < size;i++){
 			for(int j = 0;j < _max_word_length + 1;j++){
 				_substring_word_id_cache[i][j] = 0;
@@ -747,7 +799,7 @@ namespace npycrf {
 	}
 	// 文の部分文字列が単語になる確率
 	// 確率値は全て比例のまま
-	// alphaとbetaは計算時に正規化を行なってはいけない
+	// alphaとbetaは計算時に正規化を行なってはいけない（重要）
 	void Lattice::_enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** pc_s){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
@@ -778,7 +830,7 @@ namespace npycrf {
 	// 確率値は全て比例のまま
 	// アンダーフローを抑えるためにlogで計算
 	// log_zは各時刻の正規化定数
-	// alphaとbetaは計算時に正規化を行う必要がある
+	// alphaとbetaは計算時に正規化を行う必要がある（重要）
 	void Lattice::_enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z_alpha, double* log_z_beta, double** pc_s){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
@@ -935,7 +987,7 @@ namespace npycrf {
 			}
 			// 正規化
 			if(normalize){
-				if(t == sentence->size()){
+				if(t == sentence->size()){	// アンダーフローするはずがない
 					double z_t = 0;
 					for(int k = 1;k <= std::min(t, _max_word_length);k++){
 						if(t - k == 0){

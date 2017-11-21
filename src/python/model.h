@@ -26,7 +26,7 @@ namespace npycrf {
 			double get_lambda_0();
 			void set_lambda_0(double lambda_0);
 			double compute_log_proportional_p_y_given_x(Sentence* sentence);
-			double compute_marginal_p_x(Sentence* sentence, bool normalize = true);
+			double compute_marginal_p_x(Sentence* sentence);
 			void parse(Sentence* sentence);
 			boost::python::list python_parse(std::wstring sentence_str, Dictionary* dictionary);
 		};
