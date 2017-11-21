@@ -54,12 +54,32 @@ namespace npycrf {
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
-			double px = _lattice->compute_marginal_p_x(sentence, normalize);
+			double px = _lattice->compute_marginal_p_x(sentence, true);
 			#ifdef __DEBUG__
-				double _px = _lattice->compute_marginal_p_x_backward(sentence, normalize);
+				double _px = _lattice->compute_marginal_p_x(sentence, false);
+				double __px = _lattice->_compute_marginal_p_x_backward(sentence, _lattice->_beta, _lattice->_pw_h, _lattice->_scaling, false);
 				assert(abs(px - _px) < 1e-16);
+				assert(abs(px - __px) < 1e-16);
 			#endif 
 			return px;
+		}
+		double Model::python_compute_marginal_p_x(std::wstring sentence_str, Dictionary* dictionary){
+			// キャッシュの再確保
+			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
+			_npylm->reserve(sentence_str.size());
+			std::vector<int> segments;		// 分割の一時保存用
+			// 構成文字を文字IDに変換
+			int* character_ids = new int[sentence_str.size()];
+			for(int i = 0;i < sentence_str.size();i++){
+				wchar_t character = sentence_str[i];
+				int character_id = dictionary->get_character_id(character);
+				character_ids[i] = character_id;
+			}
+			Sentence* sentence = new Sentence(sentence_str, character_ids);
+			double ret = compute_marginal_p_x(sentence);
+			delete[] character_ids;
+			delete sentence;
+			return ret;
 		}
 		// sentenceは分割済みの必要がある
 		// 比例のままの確率を返す
@@ -83,7 +103,7 @@ namespace npycrf {
 			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
 			_npylm->reserve(sentence_str.size());
 			std::vector<int> segments;		// 分割の一時保存用
-			// 構成文字を辞書に追加し、文字IDに変換
+			// 構成文字を文字IDに変換
 			int* character_ids = new int[sentence_str.size()];
 			for(int i = 0;i < sentence_str.size();i++){
 				wchar_t character = sentence_str[i];

@@ -274,15 +274,17 @@ namespace npycrf {
 
 			_model->parse(sentence);	// debug
 			sentence->dump_words();
-			double px = _model->compute_marginal_p_x(sentence, false);
+			double px = _model->compute_marginal_p_x(sentence);
 			std::cout << "px = " << px << std::endl;
 			double log_py_x = _model->compute_log_proportional_p_y_given_x(sentence) - log(px);
 			std::cout << "log_py_x = " << log_py_x << std::endl;
 
 			double*** alpha = lattice->_alpha;
 			double*** beta = lattice->_beta;
-			lattice->_enumerate_forward_probabilities(sentence, alpha, lattice->_pw_h, lattice->_log_z_alpha, false);
-			lattice->_enumerate_backward_probabilities(sentence, beta, lattice->_pw_h, lattice->_log_z_beta, false);
+			double**** pw_h_tkji = lattice->_pw_h;
+			double* scaling = lattice->_scaling;
+			lattice->_enumerate_forward_variables(sentence, alpha, pw_h_tkji, scaling, false);
+			lattice->_enumerate_backward_variables(sentence, beta, pw_h_tkji, scaling, false);
 			double grad = 0;
 			int t = 0, k, j, i;
 			for(int word_t = 2;word_t < sentence->get_num_segments();word_t++){
@@ -313,7 +315,7 @@ namespace npycrf {
 			}
 			std::cout << "grad = " << grad << std::endl;
 			_model->set_lambda_0(_model->get_lambda_0() + 1e-8);
-			double _px = _model->compute_marginal_p_x(sentence, false);
+			double _px = _model->compute_marginal_p_x(sentence);
 			double _log_py_x = _model->compute_log_proportional_p_y_given_x(sentence) - log(_px);
 			std::cout << "_log_py_x = " << _log_py_x << std::endl;
 			std::cout << "_px = " << _px << std::endl;
