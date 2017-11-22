@@ -179,7 +179,10 @@ namespace npycrf {
 				prev_depth_t++;
 			}
 		}
-		Node<id>* NPYLM::find_node_by_tracing_back_context_from_time_t(id const* word_ids, int word_ids_length, int word_t_index, bool generate_node_if_needed, bool return_middle_node){
+		Node<id>* NPYLM::find_node_by_tracing_back_context_from_time_t(
+				id const* word_ids, int word_ids_length, int word_t_index, 
+				bool generate_node_if_needed, bool return_middle_node)
+		{
 			assert(word_t_index >= 2);
 			assert(word_t_index < word_ids_length);
 			Node<id>* node = _hpylm->_root;
@@ -201,7 +204,10 @@ namespace npycrf {
 			return node;
 		}
 		// add_customer用
-		Node<id>* NPYLM::find_node_by_tracing_back_context_from_time_t(Sentence* sentence, int word_t_index, double* parent_pw_cache, int generate_node_if_needed, bool return_middle_node){
+		Node<id>* NPYLM::find_node_by_tracing_back_context_from_time_t(
+				Sentence* sentence, int word_t_index, double* parent_pw_cache, 
+				bool generate_node_if_needed, bool return_middle_node)
+		{
 			assert(word_t_index >= 2);
 			assert(word_t_index < sentence->get_num_segments());
 			assert(sentence->_segments[word_t_index] > 0);
@@ -218,14 +224,21 @@ namespace npycrf {
 				wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
 				int word_t_index, int substr_char_t_start, int substr_char_t_end, 
-				double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node){
+				double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node)
+		{
 			assert(word_t_index >= 2);
 			assert(word_t_index < word_ids_length);
-			assert(substr_char_t_start >= 0);
-			assert(substr_char_t_end >= substr_char_t_start);
 			Node<id>* node = _hpylm->_root;
 			id word_t_id = word_ids[word_t_index];
-			double parent_pw = compute_g0_substring_at_time_t(characters, character_ids_length, substr_char_t_start, substr_char_t_end, word_t_id);
+			double parent_pw = -1;
+			if(word_t_id == ID_EOS){
+				parent_pw = _vpylm->_g0;
+			}else{
+				assert(0 <= substr_char_t_start && substr_char_t_start <= substr_char_t_end);
+				assert(substr_char_t_start <= substr_char_t_end);
+				parent_pw = compute_g0_substring_at_time_t(characters, character_ids_length, substr_char_t_start, substr_char_t_end, word_t_id);
+			}
+			assert(parent_pw > 0);
 			parent_pw_cache[0] = parent_pw;
 			for(int depth = 1;depth <= 2;depth++){
 				id context_id = ID_BOS;
@@ -247,7 +260,10 @@ namespace npycrf {
 			return node;
 		}
 		// word_idは既知なので再計算を防ぐ
-		double NPYLM::compute_g0_substring_at_time_t(wchar_t const* characters, int character_ids_length, int substr_char_t_start, int substr_char_t_end, id word_t_id){
+		double NPYLM::compute_g0_substring_at_time_t(
+				wchar_t const* characters, int character_ids_length, 
+				int substr_char_t_start, int substr_char_t_end, id word_t_id)
+		{
 			assert(_characters != NULL);
 			if(word_t_id == ID_EOS){
 				return _vpylm->_g0;
@@ -346,13 +362,20 @@ namespace npycrf {
 		// word_t_index, substr_char_t_start, substr_char_t_endはインデックス
 		double NPYLM::compute_p_w_given_h(
 				wchar_t const* characters, int character_ids_length, 
+				id const* word_ids, int word_ids_length, int word_t_index)
+		{
+			return compute_p_w_given_h(characters, character_ids_length, word_ids, word_ids_length, word_t_index, -1, -1);
+		}
+		double NPYLM::compute_p_w_given_h(
+				wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
-				int word_t_index, int substr_char_t_start, int substr_char_t_end){
+				int word_t_index, int substr_char_t_start, int substr_char_t_end)
+		{
 			assert(0 <= word_t_index && word_t_index < word_ids_length);
-			assert(substr_char_t_start >= 0);
 			id word_id = word_ids[word_t_index];
 
 			if(word_id != ID_EOS){
+				assert(0 <= substr_char_t_start && substr_char_t_start <= substr_char_t_end);
 				assert(0 <= substr_char_t_end && substr_char_t_end < character_ids_length);
 				#ifdef __DEBUG__
 					id a = hash_substring_ptr(characters, substr_char_t_start, substr_char_t_end);

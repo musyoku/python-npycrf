@@ -303,12 +303,13 @@ namespace npycrf {
 		double CRF::compute_trigram_potential(int const* character_ids, wchar_t const* characters, int character_ids_length, int t, int k, int j){
 			assert(1 <= t && t <= character_ids_length + 1); // tは<eos>を指すこともある
 			assert(1 <= k && k <= character_ids_length);
-			assert(0 <= j && j < character_ids_length);
+			assert(0 <= j && j <= character_ids_length);
 			assert(0 < t);
-			if(j == 0){
+			if(j == 0){	// <bos>からの遷移
 				return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
 			}
-			if(t == character_ids_length + 1){
+			if(t == character_ids_length + 1){	// <eos>への接続
+				assert(k == 1);	// <eos>がそれ以前の文字列と連結することはない
 				return compute_gamma(character_ids, characters, character_ids_length, t - k - j + 1, t - k + 1);
 			}
 			return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1) + compute_gamma(character_ids, characters, character_ids_length, t - k - j + 1, t - k + 1);

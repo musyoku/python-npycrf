@@ -59,8 +59,8 @@ namespace npycrf {
 			void vpylm_add_customers(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, wchar_t* wrapped_character_ids, std::vector<int> &prev_depths);
 			bool remove_customer_at_time_t(Sentence* sentence, int t);
 			void vpylm_remove_customers(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, wchar_t* wrapped_character_ids, std::vector<int> &prev_depths);
+			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(Sentence* sentence, int word_t_index, double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(id const* word_ids, int word_ids_length, int word_t_index, bool generate_node_if_needed, bool return_middle_node);
-			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(Sentence* sentence, int word_t_index, double* parent_pw_cache, int generate_node_if_needed, bool return_middle_node);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(
 				wchar_t const* character_ids, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
@@ -74,6 +74,9 @@ namespace npycrf {
 			double compute_log_p_s(Sentence* sentence);
 			double compute_p_s(Sentence* sentence);
 			double compute_p_w_given_h(Sentence* sentence, int word_t_index);
+			double compute_p_w_given_h(
+				wchar_t const* character_ids, int character_ids_length, 
+				id const* word_ids, int word_ids_length, int word_t_index);
 			double compute_p_w_given_h(
 				wchar_t const* character_ids, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 

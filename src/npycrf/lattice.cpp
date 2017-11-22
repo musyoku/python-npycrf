@@ -923,7 +923,7 @@ namespace npycrf {
 					id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
 					_word_ids[0] = word_j_id;
 				}
-				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2);
 				assert(pw_h > 0);
 				double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t + 1, 1, k);
 				double p = exp(_lambda_0 * log(pw_h) + potential);
