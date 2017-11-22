@@ -32,7 +32,7 @@ namespace npycrf {
 		void _allocate_capacity(int max_word_length, int max_sentence_length);
 		void _delete_capacity();
 		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double prod_scaling);
-		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** pw_h_tkji);
+		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** pw_h_tkji, double* scaling);
 		void _backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments);
 		void _clear_pw_h_tkji(double**** pw_h_tkji);
 	public:
