@@ -56,8 +56,11 @@ namespace npycrf {
 			_npylm->reserve(sentence->size());
 			double px = _lattice->compute_marginal_p_x(sentence, true);
 			#ifdef __DEBUG__
-				double _px = _lattice->compute_marginal_p_x(sentence, false);
-				double __px = _lattice->_compute_marginal_p_x_backward(sentence, _lattice->_beta, _lattice->_pw_h, _lattice->_scaling, false);
+				double _px = _lattice->_compute_marginal_p_x_backward(sentence, _lattice->_beta, _lattice->_pw_h, _lattice->_scaling, false);
+				double __px = _lattice->compute_marginal_p_x(sentence, false);
+				std::cout << px << std::endl;
+				std::cout << _px << std::endl;
+				std::cout << __px << std::endl;
 				assert(abs(px - _px) < 1e-16);
 				assert(abs(px - __px) < 1e-16);
 			#endif 

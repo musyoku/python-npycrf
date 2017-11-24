@@ -200,6 +200,9 @@ namespace npycrf {
 		assert(t < _max_sentence_length + 1);
 		assert(k < _max_sentence_length + 1);
 		assert(t - k >= 0);
+		if(t == 0){
+			return ID_BOS;
+		}
 		id word_id = _substring_word_id_cache[t][k];
 		if(word_id == 0){
 			word_id = sentence->get_substr_word_id(t - k, t - 1);	// 引数はインデックスなので注意
@@ -685,7 +688,9 @@ namespace npycrf {
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		#ifdef __DEBUG__
+			// 変な値を入れる
 			for(int t = 0;t < size;t++){
+				_scaling[t] = -1;
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
 						_alpha[t][k][j] = -1;
@@ -700,28 +705,24 @@ namespace npycrf {
 				_substring_word_id_cache[i][j] = 0;
 			}
 		}
+		// 前向き確率を求める
 		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);
-		double sum_probability = 0;
-		int t = sentence->size();
-		wchar_t const* characters = sentence->_characters;
-		int const* character_ids = sentence->_character_ids;
-		int character_ids_length = sentence->size();
-		for(int k = 1;k <= std::min(t, _max_word_length);k++){
-			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-				id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-				id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
-				_word_ids[0] = word_j_id;
-				_word_ids[1] = word_k_id;
-				_word_ids[2] = ID_EOS;
-				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
-				assert(_alpha[t][k][j] > 0);
-				double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t + 1, 1, k);
-				double p = exp(_lambda_0 * log(pw_h) + potential);
-				assert(p > 0);
-				sum_probability += _alpha[t][k][j] * p;
+		// <eos>へ到達する確率を全部足す
+		int t = sentence->size() + 1;	// <eos>
+		int k = 1;	// <eos>の長さは1
+		if(use_scaling){
+			// スケーリング係数を使う場合は逆数の積がそのまま文の確率になる
+			double px = 1;
+			for(int m = 1;m <= t;m++){
+				px /= _scaling[m];
 			}
+			return px;
 		}
-		return sum_probability;
+		double px = 0;
+		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+			px += _alpha[t][k][j];
+		}
+		return px;
 	}
 	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// use_scaling=trueならアンダーフローを防ぐ
@@ -748,7 +749,7 @@ namespace npycrf {
 		wchar_t const* characters = sentence->_characters;
 		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
-		for(int k = 1;k <= _max_word_length;k++){
+		for(int k = 1;k <= std::min(sentence->size(), _max_word_length);k++){
 			int t = k;
 			id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 			_word_ids[0] = ID_BOS;
@@ -916,13 +917,9 @@ namespace npycrf {
 		for(int k = 1;k <= std::min(t, _max_word_length);k++){
 			id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-				_word_ids[0] = ID_BOS;
+				_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k, j);
 				_word_ids[1] = word_k_id;
 				_word_ids[2] = ID_EOS;
-				if(j > 0){
-					id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-					_word_ids[0] = word_j_id;
-				}
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2);
 				assert(pw_h > 0);
 				double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t + 1, 1, k);
@@ -940,6 +937,24 @@ namespace npycrf {
 				}
 			}
 		}
+		// t=0, k=1, j=1
+		// <bos>2つが文脈になる
+		double beta_0_1_1 = 0;
+		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
+		int character_ids_length = sentence->size();
+		for(int i = 1;i <= std::min(sentence->size(), _max_word_length);i++){
+			_word_ids[0] = ID_BOS;
+			_word_ids[1] = ID_BOS;
+			_word_ids[2] = get_substring_word_id_at_t_k(sentence, i, i);
+			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, 0, i - 1);
+			assert(pw_h > 0);
+			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, i, i, 0);
+			double p = exp(_lambda_0 * log(pw_h) + potential);
+			assert(p > 0);
+			beta_0_1_1 += _beta[i][i][0] * p;
+		}
+		_beta[0][1][1] = beta_0_1_1;
 	}
 	// 後ろ向き確率を計算
 	// 正規化定数をここでは掛けないことに注意
@@ -978,7 +993,9 @@ namespace npycrf {
 					double _pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
 					assert(_pw_h == pw_h_tkji[t + i][i][k][j]);
 				}
-				if(value == 0){
+				if(value <= 0){
+					std::cout << value << std::endl;
+					std::cout << prod_scaling << std::endl;
 					std::cout << pw_h << std::endl;
 					std::cout << beta[t + i][i][k] << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
