@@ -314,7 +314,8 @@ namespace npycrf {
 			}
 			return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1) + compute_gamma(character_ids, characters, character_ids_length, t - k - j + 1, t - k + 1);
 		}
-		// γ(s, t)
+		// γ(s, t) ∝ log{P(c_s^{t - 1}|・)}
+		// s、tはともに番号なので1から始まる
 		// あるノードから別のノードを辿るV字型のパスのコストの合計
 		double CRF::compute_gamma(int const* character_ids, wchar_t const* characters, int character_ids_length, int s, int t){
 			assert(s <= character_ids_length);

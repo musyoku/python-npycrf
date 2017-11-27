@@ -231,7 +231,7 @@ namespace npycrf {
 			_word_ids[2] = word_k_id;
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 			assert(pw_h > 0);
-			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
 			alpha[t][k][0] = p * prod_scaling;
@@ -247,7 +247,7 @@ namespace npycrf {
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 			assert(pw_h > 0);
 			assert(alpha[t - k][j][0] > 0);
-			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
 			alpha[t][k][j] = p * alpha[t - k][j][0] * prod_scaling;
@@ -267,7 +267,7 @@ namespace npycrf {
 			assert(pw_h > 0);
 			assert(i <= _max_word_length);
 			assert(alpha[t - k][j][i] > 0);
-			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
 			double value = p * alpha[t - k][j][i];
@@ -824,7 +824,7 @@ namespace npycrf {
 				_word_ids[2] = ID_EOS;
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2);
 				assert(pw_h > 0);
-				double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+				double potential = 0; // P(<eos>|・)に相当するポテンシャルは0
 				double p = exp(_lambda_0 * log(pw_h) + potential);
 				assert(p > 0);
 				sum_prob += p * alpha[t - k][j][i];
@@ -864,7 +864,7 @@ namespace npycrf {
 				_word_ids[2] = ID_EOS;
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2);
 				assert(pw_h > 0);
-				double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t + 1, 1, k);
+				double potential = 0;
 				double p = exp(_lambda_0 * log(pw_h) + potential);
 				assert(p > 0);
 				beta[t][k][j] = p;
@@ -888,7 +888,7 @@ namespace npycrf {
 			_word_ids[2] = get_substring_word_id_at_t_k(sentence, i, i);
 			double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, 0, i - 1);
 			assert(pw_h > 0);
-			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, i, i, 0);
+			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, 1, i + 1);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
 			beta_0_1_1 += _beta[i][i][0] * p;
@@ -923,7 +923,7 @@ namespace npycrf {
 			_word_ids[2] = word_i_id;
 			double pw_h = (pw_h_tkji[t + i][i][k][j] > 0) ? pw_h_tkji[t + i][i][k][j] : _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
 			assert(pw_h > 0);
-			double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
+			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t + 1, t + i + 1);
 			double p = exp(_lambda_0 * log(pw_h) + potential);
 			assert(p > 0);
 			assert(beta[t + i][i][k] > 0);
@@ -960,7 +960,6 @@ namespace npycrf {
 		// 	_word_ids[2] = word_k_id;
 		// 	double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 		// 	assert(pw_h > 0);
-		// 	double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 		// 	double p = exp(_lambda_0 * log(pw_h) + potential);
 		// 	assert(p > 0);
 		// 	_alpha[t][k][0] = p;
@@ -975,7 +974,6 @@ namespace npycrf {
 		// 	_word_ids[2] = word_k_id;
 		// 	double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 		// 	assert(pw_h > 0);
-		// 	double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 		// 	double p = exp(_lambda_0 * log(pw_h) + potential);
 		// 	assert(p > 0);
 		// 	assert(_alpha[t - k][j][0] > 0);
@@ -994,7 +992,6 @@ namespace npycrf {
 		// 	_word_ids[2] = word_k_id;
 		// 	double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 		// 	assert(i <= _max_word_length);
-		// 	double potential = _crf->compute_trigram_potential(character_ids, characters, character_ids_length, t, k, j);
 		// 	double p = exp(_lambda_0 * log(pw_h) + potential);
 		// 	assert(p > 0);
 		// 	assert(_alpha[t - k][j][i] > 0);
@@ -1029,11 +1026,12 @@ namespace npycrf {
 			}
 		}
 	}
-	void Lattice::_clear_word_id_cache(id** substring_word_id_cache){
+	void Lattice::_clear_word_id_cache(id** substring_word_id_cache, int size){
 		for(int t = 0;t < size;t++){
 			for(int k = 0;k < _max_word_length + 1;k++){
 				substring_word_id_cache[t][k] = 0;
 			}
+		}
 	}
 	
 } // namespace npylm
