@@ -32,9 +32,10 @@ namespace npycrf {
 		void _allocate_capacity(int max_word_length, int max_sentence_length);
 		void _delete_capacity();
 		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double prod_scaling);
-		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** pw_h_tkji, double* scaling);
+		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** pw_h_tkji, double* scaling, bool use_scaling);
 		void _backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments);
 		void _clear_pw_h_tkji(double**** pw_h_tkji);
+		void _clear_word_id_cache(id** substring_word_id_cache, int size);
 	public:
 		npylm::NPYLM* _npylm;
 		crf::CRF* _crf;
@@ -64,7 +65,7 @@ namespace npycrf {
 		void viterbi_backward(Sentence* sentence, std::vector<int> &segments);
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
 		double compute_marginal_p_x(Sentence* sentence, bool use_scaling = true);
-		double _compute_marginal_p_x_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji, double* scaling, bool use_scaling = true);
+		double _compute_marginal_p_x_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji);
 		void _enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** pc_s);
 		void _enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z_alpha, double* log_z_beta, double** pc_s);
 		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* scaling, bool use_scaling = true);
