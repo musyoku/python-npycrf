@@ -52,15 +52,26 @@ void run_training_loop(){
 	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
 	Dictionary* dictionary = dataset->_dict;
 	dictionary->save("npylm.dict");
-	Trainer* trainer = new Trainer(dataset, model, false);
+	Trainer* trainer = new Trainer(dataset, model);
 
-	for(int epoch = 0;epoch < 20;epoch++){
-		// auto start_time = std::chrono::system_clock::now();
-		// trainer->gibbs();
-		// auto diff = std::chrono::system_clock::now() - start_time;
-		// cout << (std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0) << endl;
-		// trainer->sample_hpylm_vpylm_hyperparameters();
-		// trainer->sample_lambda();
+	for(int epoch = 1;epoch < 200;epoch++){
+	    auto start_time = std::chrono::system_clock::now();
+		trainer->gibbs();
+	    auto diff = std::chrono::system_clock::now() - start_time;
+	    cout << (std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0) << endl;
+		trainer->sample_hpylm_vpylm_hyperparameters();
+		trainer->sample_npylm_lambda();
+		if(epoch > 3){
+			trainer->update_p_k_given_vpylm();
+		}
+		if(epoch % 10 == 0){
+			trainer->print_segmentation_train(10);
+			cout << "ppl: " << trainer->compute_perplexity_train() << endl;
+			trainer->print_segmentation_dev(10);
+			cout << "ppl: " << trainer->compute_perplexity_dev() << endl;
+			cout << "log_likelihood: " << trainer->compute_log_likelihood_train() << endl;
+			cout << "log_likelihood: " << trainer->compute_log_likelihood_dev() << endl;
+		}
 	}
 }
 

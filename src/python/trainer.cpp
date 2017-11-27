@@ -7,7 +7,7 @@
 
 namespace npycrf {
 	namespace python {
-		Trainer::Trainer(Dataset* dataset, Model* model, bool always_accept_new_segmentation){
+		Trainer::Trainer(Dataset* dataset, Model* model){
 			_dataset = dataset;
 			_model = model;
 			_dict = dataset->_dict;
@@ -21,7 +21,6 @@ namespace npycrf {
 			for(int data_index = 0;data_index < dataset->_sentence_sequences_dev.size();data_index++){
 				_rand_indices_dev.push_back(data_index);
 			}
-			_always_accept_new_segmentation = always_accept_new_segmentation;
 			_num_segmentation_rejection = 0;
 			_num_segmentation_acceptance = 0;
 		}
@@ -201,17 +200,6 @@ namespace npycrf {
 					for(int t = 2;t < sentence->get_num_segments();t++){
 						_model->_npylm->remove_customer_at_time_t(sentence, t);
 					}
-					// 新しい分割の棄却判定をするかどうか
-					if(_always_accept_new_segmentation == false){
-						// 古い分割を一時保存
-						// <bos>と<eos>は無視
-						for(int i = 0;i < sentence->get_num_segments_without_special_tokens();i++){
-							old_segments[i] = sentence->_segments[i + 2];	// <bos>は2つ
-						}
-						num_old_segments = sentence->get_num_segments_without_special_tokens();
-						// 古い分割での文の確率を計算
-						old_log_ps = _model->_npylm->compute_log_p_s(sentence);
-					}
 					
 					#ifdef __DEBUG__
 						// 正規化しない場合の結果と比較するためシードを合わせる
@@ -234,22 +222,6 @@ namespace npycrf {
 							assert(a[i] == b[i]);
 						}
 					#endif
-
-					// 以前の分割結果と現在の分割結果の確率を求める
-					// 本来は分割を一定数サンプリングして平均をとるべき
-					if(_always_accept_new_segmentation == false){
-						new_log_ps = _model->_npylm->compute_log_p_s(sentence);
-						// 新しい分割の方が確率が低い場合、比率のベルヌーイ試行でどちらを採用するか決める.
-						double bernoulli = std::min(1.0, exp(new_log_ps - old_log_ps));
-						double r = sampler::uniform(0, 1);
-						if(bernoulli < r){
-							// 新しい分割を捨てて古いものに差し替える
-							sentence->split(old_segments, num_old_segments);
-							_num_segmentation_rejection++;
-						}else{
-							_num_segmentation_acceptance++;
-						}
-					}
 				}
 				// 新しい分割結果をモデルに追加
 				for(int t = 2;t < sentence->get_num_segments();t++){
@@ -346,6 +318,32 @@ namespace npycrf {
 			}
 			ppl = exp(-ppl / num_sentences);
 			return ppl;
+		}
+		double Trainer::compute_log_likelihood_train(){
+			return _compute_log_likelihood(_dataset->_sentence_sequences_train);
+		}
+		double Trainer::compute_log_likelihood_dev(){
+			return _compute_log_likelihood(_dataset->_sentence_sequences_dev);
+		}
+		double Trainer::_compute_log_likelihood(std::vector<Sentence*> &dataset){
+			if(dataset.size() == 0){
+				return 0;
+			}
+			double sum_log_likelihood = 0;
+			int num_sentences = dataset.size();
+			for(int data_index = 0;data_index < num_sentences;data_index++){
+				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+					return 0;		
+				}
+				Sentence* sentence = dataset[data_index];
+				double log_px = _model->_lattice->compute_marginal_log_p_x(sentence, true);
+				#ifdef __DEBUG__
+					double _log_px = _model->_lattice->compute_marginal_log_p_x(sentence, false);
+					assert(abs(log_px - _log_px) < 1e-8);
+				#endif
+				sum_log_likelihood += log_px;
+			}
+			return sum_log_likelihood;
 		}
 		// デバッグ用
 		void Trainer::remove_all_data(){

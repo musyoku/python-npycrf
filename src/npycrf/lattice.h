@@ -66,6 +66,7 @@ namespace npycrf {
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
 		double compute_marginal_p_x(Sentence* sentence, bool use_scaling = true);
 		double _compute_marginal_p_x_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji);
+		double compute_marginal_log_p_x(Sentence* sentence, bool use_scaling = true);
 		void _enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** pc_s);
 		void _enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z_alpha, double* log_z_beta, double** pc_s);
 		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* scaling, bool use_scaling = true);

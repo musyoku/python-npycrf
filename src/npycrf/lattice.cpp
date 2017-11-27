@@ -711,6 +711,31 @@ namespace npycrf {
 		assert(px > 0);
 		return px;
 	}
+	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
+	// use_scaling=trueならアンダーフローを防ぐ
+	double Lattice::compute_marginal_log_p_x(Sentence* sentence, bool use_scaling){
+		assert(sentence->size() <= _max_sentence_length);
+		int size = sentence->size() + 1;
+		_clear_word_id_cache(_substring_word_id_cache, size);
+		// 前向き確率を求める
+		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);
+		// <eos>へ到達する確率を全部足す
+		int t = sentence->size() + 1;	// <eos>
+		int k = 1;	// <eos>の長さは1
+		if(use_scaling){
+			// スケーリング係数を使う場合は逆数の積がそのまま文の確率になる
+			double log_px = 0;
+			for(int m = 1;m <= t;m++){
+				log_px += log(1.0 / _scaling[m]);
+			}
+			return log_px;
+		}
+		double px = 0;
+		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+			px += _alpha[t][k][j];
+		}
+		return log(px);
+	}
 	// 文の部分文字列が単語になる確率
 	// 確率値は全て比例のまま
 	// alphaとbetaは計算時に正規化を行なってはいけない（重要）
@@ -739,7 +764,6 @@ namespace npycrf {
 	}
 	// 文の部分文字列が単語になる確率
 	// 確率値は全て比例のまま
-	// アンダーフローを抑えるためにlogで計算
 	// log_zは各時刻の正規化定数
 	// alphaとbetaは計算時に正規化を行っている必要がある（重要）
 	void Lattice::_enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z_alpha, double* log_z_beta, double** pc_s){
@@ -951,67 +975,6 @@ namespace npycrf {
 		assert(sum > 0);
 		beta[t][k][j] = sum;
 		return;
-
-
-
-		// if(j == 0){
-		// 	_word_ids[0] = ID_BOS;
-		// 	_word_ids[1] = ID_BOS;
-		// 	_word_ids[2] = word_k_id;
-		// 	double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
-		// 	assert(pw_h > 0);
-		// 	double p = exp(_lambda_0 * log(pw_h) + potential);
-		// 	assert(p > 0);
-		// 	_alpha[t][k][0] = p;
-		// 	_pw_h[t][k][0][0] = p;
-		// 	return;
-		// }
-		// // i=0に相当
-		// if(t - k - j == 0){
-		// 	id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-		// 	_word_ids[0] = ID_BOS;
-		// 	_word_ids[1] = word_j_id;
-		// 	_word_ids[2] = word_k_id;
-		// 	double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
-		// 	assert(pw_h > 0);
-		// 	double p = exp(_lambda_0 * log(pw_h) + potential);
-		// 	assert(p > 0);
-		// 	assert(_alpha[t - k][j][0] > 0);
-		// 	_alpha[t][k][j] = p * _alpha[t - k][j][0];
-		// 	assert(_alpha[t][k][j] > 0);
-		// 	_pw_h[t][k][j][0] = p;
-		// 	return;
-		// }
-		// // それ以外の場合は周辺化
-		// double sum = 0;
-		// for(int i = 1;i <= std::min(t - k - j, _max_word_length);i++){
-		// 	id word_i_id = get_substring_word_id_at_t_k(sentence, t - k - j, i);
-		// 	id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-		// 	_word_ids[0] = word_i_id;
-		// 	_word_ids[1] = word_j_id;
-		// 	_word_ids[2] = word_k_id;
-		// 	double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
-		// 	assert(i <= _max_word_length);
-		// 	double p = exp(_lambda_0 * log(pw_h) + potential);
-		// 	assert(p > 0);
-		// 	assert(_alpha[t - k][j][i] > 0);
-		// 	double value = p * _alpha[t - k][j][i];
-		// 	assert(p > 0);
-
-		// 	#ifdef __DEBUG__
-		// 		if(value == 0){
-		// 			std::cout << pw_h << std::endl;
-		// 			std::cout << _alpha[t - k][j][i] << std::endl;
-		// 			std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
-		// 		}
-		// 	#endif
-
-		// 	assert(value > 0);
-		// 	sum += value;
-		// 	_pw_h[t][k][j][i] = p;
-		// }
-		// assert(sum > 0);
-		// _alpha[t][k][j] = sum;
 	}
 	void Lattice::_clear_pw_h_tkji(double**** pw_h_tkji){
 		int size = _max_sentence_length + 1;
