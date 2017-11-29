@@ -53,12 +53,12 @@ int main(int argc, char *argv[]){
 	Dictionary* dictionary = dataset->_dict;
 	dictionary->save("npylm.dict");
 
-	double likelihood_1 = model->python_compute_marginal_p_x(L"こんにちは", dictionary);
+	double likelihood_1 = model->python_compute_marginal_p_x(L"あのイーハトーヴォのすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られたモリーオ市、郊外のぎらぎらひかる草の波。", dictionary);
 	cout << likelihood_1 << endl;
 	crf::CRF* crf = py_crf->_crf;
 	for(int i = 0;i < crf->_w_size_unigram_type_u;i++){
 		crf->_w_unigram_type[i] = 1;
 	}
-	double likelihood_2 = model->python_compute_marginal_p_x(L"こんにちは", dictionary);
+	double likelihood_2 = model->python_compute_marginal_p_x(L"あのイーハトーヴォのすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られたモリーオ市、郊外のぎらぎらひかる草の波。", dictionary);
 	cout << likelihood_2 << endl;
 }

@@ -699,7 +699,7 @@ namespace npycrf {
 		}
 		return px;
 	}
-	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
+	// 可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// スケーリング係数は前向き時のみ計算可能なので注意
 	double Lattice::_compute_marginal_p_x_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji){
 		assert(sentence->size() <= _max_sentence_length);
@@ -711,7 +711,7 @@ namespace npycrf {
 		assert(px > 0);
 		return px;
 	}
-	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
+	// 可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// use_scaling=trueならアンダーフローを防ぐ
 	double Lattice::compute_marginal_log_p_x(Sentence* sentence, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
@@ -737,8 +737,9 @@ namespace npycrf {
 		return log(px);
 	}
 	// 文の部分文字列が単語になる確率
-	// 確率値は全て比例のまま
-	// alphaとbetaは計算時に正規化を行なってはいけない（重要）
+	// P_{CONC}(c_{t-k}^t|x)
+	// alphaとbetaがスケーリング係数による正規化がされている場合、この関数は正確な確率値を計算する
+	// alphaとbetaが正規化されていない場合、この関数は比例のままの確率値を計算するため、Z(x)で割る必要がある
 	void Lattice::_enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** pc_s){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
@@ -759,34 +760,6 @@ namespace npycrf {
 					sum_probability += alpha[t][k][j] * beta[t][k][j];
 				}
 				pc_s[t][k] = sum_probability;
-			}
-		}
-	}
-	// 文の部分文字列が単語になる確率
-	// 確率値は全て比例のまま
-	// log_zは各時刻の正規化定数
-	// alphaとbetaは計算時に正規化を行っている必要がある（重要）
-	void Lattice::_enumerate_proportional_log_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double* log_z_alpha, double* log_z_beta, double** pc_s){
-		assert(sentence->size() <= _max_sentence_length);
-		int size = sentence->size() + 1;
-		#ifdef __DEBUG__
-			for(int t = 0;t < size;t++){
-				for(int k = 0;k < _max_word_length + 1;k++){
-						pc_s[t][k] = -1;
-				}
-			}
-		#endif 
-		wchar_t const* characters = sentence->_characters;
-		int const* character_ids = sentence->_character_ids;
-		int character_ids_length = sentence->size();
-		for(int t = 1;t <= sentence->size();t++){
-			for(int k = 1;k <= std::min(t, _max_word_length);k++){
-				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-					assert(alpha[t][k][j] > 0);
-					assert(beta[t][k][j] > 0);
-					assert(log_z_alpha[t] < 0);
-					assert(log_z_beta[t] < 0);
-				}
 			}
 		}
 	}
@@ -975,6 +948,12 @@ namespace npycrf {
 		assert(sum > 0);
 		beta[t][k][j] = sum;
 		return;
+	}
+	// p(z_t, z_{t+1}|s)の計算
+	double compute_p_z(int zt, int zt1, double*** alpha, double*** beta, double Zs){
+		assert(zt == 0 || zt == 1);
+		assert(zt1 == 0 || zt1 == 1);
+		return 0;
 	}
 	void Lattice::_clear_pw_h_tkji(double**** pw_h_tkji){
 		int size = _max_sentence_length + 1;
