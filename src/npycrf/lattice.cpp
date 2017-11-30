@@ -769,7 +769,10 @@ namespace npycrf {
 		#ifdef __DEBUG__
 			// 変な値を入れる
 			for(int t = 0;t < size;t++){
-				scaling[t] = -1;
+				if(use_scaling){
+					assert(scaling != NULL);
+					scaling[t] = -1;
+				}
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
 						alpha[t][k][j] = -1;
