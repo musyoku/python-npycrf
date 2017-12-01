@@ -199,14 +199,12 @@ int main(int argc, char *argv[]){
 	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
 	std::wcout.imbue(ctype_default);
 	std::wcin.imbue(ctype_default);
-	for(int i = 0;i < 1000;i++){
-		test_compute_marginal_p_x();
-		cout << "OK" << endl;
-		test_viterbi_decode();
-		cout << "OK" << endl;
-		test_scaling();
-		cout << "OK" << endl;
-		test_enumerate_proportional_p_substring_given_sentence();
-		cout << "OK" << endl;
-	}
+	test_compute_marginal_p_x();
+	cout << "OK" << endl;
+	test_viterbi_decode();
+	cout << "OK" << endl;
+	test_scaling();
+	cout << "OK" << endl;
+	test_enumerate_proportional_p_substring_given_sentence();
+	cout << "OK" << endl;
 }

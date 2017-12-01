@@ -179,6 +179,8 @@ namespace npycrf {
 		lattice::_init_array(_beta, seq_capacity + 1, word_capacity, word_capacity);
 		// 部分文字列が単語になる条件付き確率テーブル
 		lattice::_init_array(_pc_s, seq_capacity, word_capacity);
+		// Markov-CRFの周辺確率テーブル
+		lattice::_init_array(_pz_s, seq_capacity + 1, 2, 2);
 		// 3-gram確率のキャッシュ
 		lattice::_init_array(_pw_h, seq_capacity, word_capacity, word_capacity, word_capacity);
 		// 部分文字列のIDのキャッシュ
@@ -193,6 +195,7 @@ namespace npycrf {
 		lattice::_delete_array(_alpha, seq_capacity + 1, word_capacity, word_capacity);
 		lattice::_delete_array(_beta, seq_capacity + 1, word_capacity, word_capacity);
 		lattice::_delete_array(_pc_s, seq_capacity, word_capacity);
+		lattice::_delete_array(_pz_s, seq_capacity + 1, 2, 2);
 		lattice::_delete_array(_pw_h, seq_capacity, word_capacity, word_capacity, word_capacity);
 		lattice::_delete_array(_substring_word_id_cache, seq_capacity, word_capacity);
 	}
@@ -955,10 +958,54 @@ namespace npycrf {
 		return;
 	}
 	// p(z_t, z_{t+1}|s)の計算
-	double compute_p_z(int zt, int zt1, double*** alpha, double*** beta, double Zs){
-		assert(zt == 0 || zt == 1);
-		assert(zt1 == 0 || zt1 == 1);
-		return 0;
+	// Zsは統合モデル上での文の確率
+	void Lattice::_enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s, double Zs){
+		assert(sentence->size() <= _max_sentence_length);
+		assert(0 < Zs && Zs < 1);
+		assert(pz_s != NULL);
+		for(int t = 1;t <= sentence->size();t++){
+			pz_s[t][1][1] = _compute_p_z_case_1_1(t, pz_s, Zs);
+			pz_s[t][1][0] = _compute_p_z_case_1_0(t, pz_s, Zs);
+			pz_s[t][0][1] = _compute_p_z_case_0_1(t, pz_s, Zs);
+			pz_s[t][0][0] = 1 - pz_s[t][1][1] - pz_s[t][1][0] - pz_s[t][0][1];
+			#ifdef __DEBUG__
+				double p_0_0 = _compute_p_z_case_0_0(t, pz_s, Zs);
+				assert(std::abs(p_0_0 - pz_s[t][0][0]) < 1e-16);
+			#endif
+		}
+	}
+	double Lattice::_compute_p_z_case_1_1(Sentence* sentence, int t, double** pc_s, double Zs){
+		assert(t <= sentence->size());
+		return pc_s[t][1];
+	}
+	double Lattice::_compute_p_z_case_1_0(Sentence* sentence, int t, double** pc_s, double Zs){
+		if(t == sentence->size()){
+			return 0;
+		}
+		double p_1_0 = 0;
+		for(int j = 2;j <= sentence->size() - t + 1;j++){
+			assert(pc_s[t + j - 1][j] > 0);
+			p_1_0 += pc_s[t + j - 1][j];
+		}
+		return p_1_0;
+	}
+	double Lattice::_compute_p_z_case_0_1(Sentence* sentence, int t, double** pc_s, double Zs){
+		double p_0_1 = 0;
+		for(int j = 1;j <= t;j++){
+			assert(pc_s[t][j] > 0);
+			p_0_1 += pc_s[t][j];
+		}
+		return p_0_1;
+	}
+	double Lattice::_compute_p_z_case_0_0(Sentence* sentence, int t, double** pc_s, double Zs){
+		double p_0_0 = 0;
+		for(int k = 1;k <= sentence->size() - t - 1;k++){
+			for(int j = 1;j <= t;j++){
+				assert(pc_s[t + k][j] > 0);
+				p_0_0 += pc_s[t + k][j];
+			}
+		}
+		return p_0_0;
 	}
 	void Lattice::_clear_pw_h_tkji(double**** pw_h_tkji){
 		int size = _max_sentence_length + 1;
