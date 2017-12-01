@@ -159,7 +159,7 @@ void test_enumerate_proportional_p_substring_given_sentence(){
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double Zx = 1;
-	for(int m = 1;m <= sentence->size();m++){
+	for(int m = 1;m <= sentence->size() + 1;m++){
 		Zx /= lattice->_scaling[m];
 	}
 	// cout << Zx << " == " << _Zx << endl;
@@ -177,7 +177,8 @@ void test_enumerate_proportional_p_substring_given_sentence(){
 				_sum_probability += lattice->_alpha[t][k][j] * lattice->_beta[t][k][j];
 			}
 			assert(sum_probability <= Zx);
-			_sum_probability = _sum_probability * Zx;
+			_sum_probability *= lattice->_scaling[sentence->size() + 1];
+			sum_probability /= Zx;
 			cout << sum_probability << ", " << _sum_probability << endl;
 		}
 	}
