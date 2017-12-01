@@ -786,6 +786,7 @@ namespace npycrf {
 			double prod_scaling = 1;
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				if(use_scaling == true && k > 1){
+					assert(scaling != NULL);
 					prod_scaling *= scaling[t - k + 1];
 				}
 				for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
@@ -802,6 +803,7 @@ namespace npycrf {
 					}
 				}
 				assert(sum_alpha > 0);
+				assert(scaling != NULL);
 				scaling[t] = 1.0 / sum_alpha;
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
 					for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){

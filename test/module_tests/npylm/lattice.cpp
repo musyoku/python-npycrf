@@ -86,8 +86,8 @@ void test_compute_marginal_p_x(){
 	double px_u = lattice->compute_marginal_p_x(sentence, true);
 	double px_n = lattice->compute_marginal_p_x(sentence, false);
 	double px_b = lattice->_compute_marginal_p_x_backward(sentence, lattice->_beta, lattice->_pw_h);
-	assert(std::abs(px_u - px_n) < 1e-16);
-	assert(std::abs(px_u - px_b) < 1e-16);
+	assert(std::abs(px_u - px_n) < 1e-12);
+	assert(std::abs(px_u - px_b) < 1e-12);
 
 	delete var;
 }
@@ -115,6 +115,8 @@ void test_scaling(){
 	int word_capacity = lattice->_max_word_length + 1;
 	lattice::_init_array(alpha, seq_capacity + 1, word_capacity, word_capacity);
 	lattice::_init_array(beta, seq_capacity + 1, word_capacity, word_capacity);
+	lattice->_clear_pw_h_tkji(lattice->_pw_h);
+	lattice->_clear_word_id_cache(lattice->_substring_word_id_cache, sentence->size() + 1);
 	lattice->_enumerate_forward_variables(sentence, alpha, lattice->_pw_h, NULL, false);
 	lattice->_enumerate_backward_variables(sentence, beta, lattice->_pw_h, NULL, false);
 
@@ -132,7 +134,7 @@ void test_scaling(){
 				assert(beta[t][k][j] > 0);
 				assert(lattice->_alpha[t][k][j] > 0);
 				assert(lattice->_beta[t][k][j] > 0);
-				assert(std::abs(alpha[t][k][j] - scaling * lattice->_alpha[t][k][j]) < 1e-16);
+				assert(std::abs(alpha[t][k][j] - scaling * lattice->_alpha[t][k][j]) < 1e-12);
 			}
 		}
 	}
@@ -150,19 +152,20 @@ void test_enumerate_proportional_p_substring_given_sentence(){
 	double*** beta;
 	int seq_capacity = lattice->_max_sentence_length + 1;
 	int word_capacity = lattice->_max_word_length + 1;
+	lattice->_clear_pw_h_tkji(lattice->_pw_h);
+	lattice->_clear_word_id_cache(lattice->_substring_word_id_cache, sentence->size() + 1);
 	lattice::_init_array(alpha, seq_capacity + 1, word_capacity, word_capacity);
 	lattice::_init_array(beta, seq_capacity + 1, word_capacity, word_capacity);
 	lattice->_enumerate_forward_variables(sentence, alpha, lattice->_pw_h, NULL, false);
 	lattice->_enumerate_backward_variables(sentence, beta, lattice->_pw_h, NULL, false);
-	// double Zx = lattice->compute_marginal_p_x(sentence, true);
+	double Zx = lattice->compute_marginal_p_x(sentence, true);
 
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
-	double Zx = 1;
-	for(int m = 1;m <= sentence->size() + 1;m++){
-		Zx /= lattice->_scaling[m];
-	}
-	// cout << Zx << " == " << _Zx << endl;
+	// double Zx = 1;
+	// for(int m = 1;m <= sentence->size() + 1;m++){
+	// 	Zx /= lattice->_scaling[m];
+	// }
 
 	for(int t = 1;t <= sentence->size();t++){
 		for(int k = 1;k <= std::min(t, lattice->_max_word_length);k++){
@@ -179,7 +182,7 @@ void test_enumerate_proportional_p_substring_given_sentence(){
 			assert(sum_probability <= Zx);
 			_sum_probability *= lattice->_scaling[sentence->size() + 1];
 			sum_probability /= Zx;
-			cout << sum_probability << ", " << _sum_probability << endl;
+			assert(std::abs(sum_probability - _sum_probability) < 1e-12);
 		}
 	}
 
@@ -196,12 +199,14 @@ int main(int argc, char *argv[]){
 	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
 	std::wcout.imbue(ctype_default);
 	std::wcin.imbue(ctype_default);
-	test_compute_marginal_p_x();
-	cout << "OK" << endl;
-	test_viterbi_decode();
-	cout << "OK" << endl;
-	test_scaling();
-	cout << "OK" << endl;
-	test_enumerate_proportional_p_substring_given_sentence();
-	cout << "OK" << endl;
+	for(int i = 0;i < 1000;i++){
+		test_compute_marginal_p_x();
+		cout << "OK" << endl;
+		test_viterbi_decode();
+		cout << "OK" << endl;
+		test_scaling();
+		cout << "OK" << endl;
+		test_enumerate_proportional_p_substring_given_sentence();
+		cout << "OK" << endl;
+	}
 }
