@@ -739,33 +739,6 @@ namespace npycrf {
 		}
 		return log(px);
 	}
-	// 文の部分文字列が単語になる確率
-	// P_{CONC}(c_{t-k}^t|x)
-	// alphaとbetaがスケーリング係数による正規化がされている場合、この関数は正確な確率値を計算する
-	// alphaとbetaが正規化されていない場合、この関数は比例のままの確率値を計算するため、Z(x)で割る必要がある
-	void Lattice::_enumerate_proportional_p_substring_given_sentence(Sentence* sentence, double*** alpha, double*** beta, double** pc_s){
-		assert(sentence->size() <= _max_sentence_length);
-		int size = sentence->size() + 1;
-		#ifdef __DEBUG__
-			for(int t = 0;t < size;t++){
-				for(int k = 0;k < _max_word_length + 1;k++){
-						pc_s[t][k] = -1;
-				}
-			}
-		#endif 
-		for(int t = 1;t <= sentence->size();t++){
-			for(int k = 1;k <= std::min(t, _max_word_length);k++){
-				// jを網羅する
-				double sum_probability = 0;
-				for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-					assert(alpha[t][k][j] > 0);
-					assert(beta[t][k][j] > 0);
-					sum_probability += alpha[t][k][j] * beta[t][k][j];
-				}
-				pc_s[t][k] = sum_probability;
-			}
-		}
-	}
 	void Lattice::_enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* scaling, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
@@ -957,50 +930,96 @@ namespace npycrf {
 		beta[t][k][j] = sum;
 		return;
 	}
-	// p(z_t, z_{t+1}|s)の計算
-	// Zsは統合モデル上での文の確率
-	void Lattice::_enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s, double Zs){
-		assert(sentence->size() <= _max_sentence_length);
+	// 文の部分文字列が単語になる確率
+	// P_{CONC}(c_{t-k}^t|x)
+	void Lattice::_enumerate_proportional_p_substring_given_sentence(int sentence_length, double*** alpha, double*** beta, double** pc_s, double Zs){
 		assert(0 < Zs && Zs < 1);
-		assert(pz_s != NULL);
-		for(int t = 1;t <= sentence->size();t++){
-			pz_s[t][1][1] = _compute_p_z_case_1_1(t, pz_s, Zs);
-			pz_s[t][1][0] = _compute_p_z_case_1_0(t, pz_s, Zs);
-			pz_s[t][0][1] = _compute_p_z_case_0_1(t, pz_s, Zs);
-			pz_s[t][0][0] = 1 - pz_s[t][1][1] - pz_s[t][1][0] - pz_s[t][0][1];
-			#ifdef __DEBUG__
-				double p_0_0 = _compute_p_z_case_0_0(t, pz_s, Zs);
-				assert(std::abs(p_0_0 - pz_s[t][0][0]) < 1e-16);
-			#endif
+		assert(sentence_length <= _max_sentence_length);
+		int size = sentence_length + 1;
+		#ifdef __DEBUG__
+			for(int t = 0;t < size;t++){
+				for(int k = 0;k < _max_word_length + 1;k++){
+						pc_s[t][k] = -1;
+				}
+			}
+		#endif 
+		for(int t = 1;t <= sentence_length;t++){
+			for(int k = 1;k <= std::min(t, _max_word_length);k++){
+				// jを網羅する
+				double sum_probability = 0;
+				for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
+					assert(alpha[t][k][j] > 0);
+					assert(beta[t][k][j] > 0);
+					sum_probability += alpha[t][k][j] * beta[t][k][j];
+				}
+				assert(sum_probability > 0);
+				pc_s[t][k] = sum_probability / Zs;
+			}
 		}
 	}
-	double Lattice::_compute_p_z_case_1_1(Sentence* sentence, int t, double** pc_s, double Zs){
-		assert(t <= sentence->size());
+	// p(z_t, z_{t+1}|s)の計算
+	// Zsは統合モデル上での文の確率
+	void Lattice::_enumerate_marginal_p_path_given_sentence(int sentence_length, double*** pz_s, double** pc_s){
+		assert(sentence_length <= _max_sentence_length);
+		assert(pz_s != NULL);
+		for(int t = 1;t <= sentence_length;t++){
+			std::cout << "z" << t << ", z" << (t + 1) << std::endl;
+			pz_s[t][1][1] = _compute_p_z_case_1_1(sentence_length, t, pc_s);
+			pz_s[t][1][0] = _compute_p_z_case_1_0(sentence_length, t, pc_s);
+			pz_s[t][0][1] = _compute_p_z_case_0_1(sentence_length, t, pc_s);
+			pz_s[t][0][0] = 1 - pz_s[t][1][1] - pz_s[t][1][0] - pz_s[t][0][1];
+			#ifdef __DEBUG__
+				std::cout << pz_s[t][1][1] << std::endl;
+				std::cout << pz_s[t][1][0] << std::endl;
+				std::cout << pz_s[t][0][1] << std::endl;
+				std::cout << pz_s[t][0][0] << std::endl;
+				std::cout << pz_s[t][1][1] + pz_s[t][1][0] + pz_s[t][0][1] << std::endl;
+				double p_0_0 = _compute_p_z_case_0_0(sentence_length, t, pc_s);
+				std::cout << p_0_0 << std::endl;
+				assert(std::abs(p_0_0 - pz_s[t][0][0]) < 1e-16);
+			#endif
+			if(t > 1){
+				assert(pz_s[t][0][0] > 0);
+			}
+		}
+	}
+	double Lattice::_compute_p_z_case_1_1(int sentence_length, int t, double** pc_s){
+		assert(t <= sentence_length);
+		std::cout << "		pc_s[" << t << "][1] = " << pc_s[t][1] << std::endl;
 		return pc_s[t][1];
 	}
-	double Lattice::_compute_p_z_case_1_0(Sentence* sentence, int t, double** pc_s, double Zs){
-		if(t == sentence->size()){
+	double Lattice::_compute_p_z_case_1_0(int sentence_length, int t, double** pc_s){
+		if(t == sentence_length){
 			return 0;
 		}
 		double p_1_0 = 0;
-		for(int j = 2;j <= sentence->size() - t + 1;j++){
+		std::cout << "	case 1-0:" << std::endl;
+		for(int j = 2;j <= std::min(sentence_length - t + 1, _max_word_length);j++){
+			std::cout << "		pc_s[" << (t + j - 1) << "][" << j << "] = " << pc_s[t + j - 1][j] << std::endl;
 			assert(pc_s[t + j - 1][j] > 0);
 			p_1_0 += pc_s[t + j - 1][j];
 		}
 		return p_1_0;
 	}
-	double Lattice::_compute_p_z_case_0_1(Sentence* sentence, int t, double** pc_s, double Zs){
+	double Lattice::_compute_p_z_case_0_1(int sentence_length, int t, double** pc_s){
 		double p_0_1 = 0;
-		for(int j = 1;j <= t;j++){
+		std::cout << "	case 0-1:" << std::endl;
+		for(int j = 2;j <= std::min(t, _max_word_length);j++){
+			std::cout << "		pc_s[" << t << "][" << j << "] = " << pc_s[t][j] << std::endl;
 			assert(pc_s[t][j] > 0);
 			p_0_1 += pc_s[t][j];
 		}
 		return p_0_1;
 	}
-	double Lattice::_compute_p_z_case_0_0(Sentence* sentence, int t, double** pc_s, double Zs){
+	double Lattice::_compute_p_z_case_0_0(int sentence_length, int t, double** pc_s){
+		if(t == 1){
+			return 0;
+		}
 		double p_0_0 = 0;
-		for(int k = 1;k <= sentence->size() - t - 1;k++){
-			for(int j = 1;j <= t;j++){
+		std::cout << "	case 0-0:" << std::endl;
+		for(int k = 1;k <= sentence_length - t - 1;k++){
+			for(int j = 3;j <= std::min(t + k, _max_word_length);j++){
+				std::cout << "		pc_s[" << (t + k) << "][" << j << "] = " << pc_s[t + k][j] << std::endl;
 				assert(pc_s[t + k][j] > 0);
 				p_0_0 += pc_s[t + k][j];
 			}
