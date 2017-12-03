@@ -963,29 +963,29 @@ namespace npycrf {
 		assert(sentence_length <= _max_sentence_length);
 		assert(pz_s != NULL);
 		for(int t = 1;t <= sentence_length;t++){
-			std::cout << "z" << t << ", z" << (t + 1) << std::endl;
+			// std::cout << "z" << t << ", z" << (t + 1) << std::endl;
 			pz_s[t][1][1] = _compute_p_z_case_1_1(sentence_length, t, pc_s);
 			pz_s[t][1][0] = _compute_p_z_case_1_0(sentence_length, t, pc_s);
 			pz_s[t][0][1] = _compute_p_z_case_0_1(sentence_length, t, pc_s);
 			pz_s[t][0][0] = 1 - pz_s[t][1][1] - pz_s[t][1][0] - pz_s[t][0][1];
 			#ifdef __DEBUG__
-				std::cout << pz_s[t][1][1] << std::endl;
-				std::cout << pz_s[t][1][0] << std::endl;
-				std::cout << pz_s[t][0][1] << std::endl;
-				std::cout << pz_s[t][0][0] << std::endl;
-				std::cout << pz_s[t][1][1] + pz_s[t][1][0] + pz_s[t][0][1] << std::endl;
+				// std::cout << "1-1: " << pz_s[t][1][1] << std::endl;
+				// std::cout << "1-0: " << pz_s[t][1][0] << std::endl;
+				// std::cout << "0-1: " << pz_s[t][0][1] << std::endl;
+				// std::cout << "0-0: " << pz_s[t][0][0] << std::endl;
+				// std::cout << "*-* - 0-0: " << pz_s[t][1][1] + pz_s[t][1][0] + pz_s[t][0][1] << std::endl;
 				double p_0_0 = _compute_p_z_case_0_0(sentence_length, t, pc_s);
-				std::cout << p_0_0 << std::endl;
-				assert(std::abs(p_0_0 - pz_s[t][0][0]) < 1e-16);
+				// std::cout << "0-0*: " << p_0_0 << std::endl;
+				assert(std::abs(p_0_0 - pz_s[t][0][0]) < 1e-12);
 			#endif
-			if(t > 1){
+			if(1 < t && t < sentence_length){
 				assert(pz_s[t][0][0] > 0);
 			}
 		}
 	}
 	double Lattice::_compute_p_z_case_1_1(int sentence_length, int t, double** pc_s){
 		assert(t <= sentence_length);
-		std::cout << "		pc_s[" << t << "][1] = " << pc_s[t][1] << std::endl;
+		// std::cout << "		pc_s[" << t << "][1] = " << pc_s[t][1] << std::endl;
 		return pc_s[t][1];
 	}
 	double Lattice::_compute_p_z_case_1_0(int sentence_length, int t, double** pc_s){
@@ -993,9 +993,9 @@ namespace npycrf {
 			return 0;
 		}
 		double p_1_0 = 0;
-		std::cout << "	case 1-0:" << std::endl;
+		// std::cout << "	case 1-0:" << std::endl;
 		for(int j = 2;j <= std::min(sentence_length - t + 1, _max_word_length);j++){
-			std::cout << "		pc_s[" << (t + j - 1) << "][" << j << "] = " << pc_s[t + j - 1][j] << std::endl;
+			// std::cout << "		pc_s[" << (t + j - 1) << "][" << j << "] = " << pc_s[t + j - 1][j] << std::endl;
 			assert(pc_s[t + j - 1][j] > 0);
 			p_1_0 += pc_s[t + j - 1][j];
 		}
@@ -1003,9 +1003,9 @@ namespace npycrf {
 	}
 	double Lattice::_compute_p_z_case_0_1(int sentence_length, int t, double** pc_s){
 		double p_0_1 = 0;
-		std::cout << "	case 0-1:" << std::endl;
+		// std::cout << "	case 0-1:" << std::endl;
 		for(int j = 2;j <= std::min(t, _max_word_length);j++){
-			std::cout << "		pc_s[" << t << "][" << j << "] = " << pc_s[t][j] << std::endl;
+			// std::cout << "		pc_s[" << t << "][" << j << "] = " << pc_s[t][j] << std::endl;
 			assert(pc_s[t][j] > 0);
 			p_0_1 += pc_s[t][j];
 		}
@@ -1016,10 +1016,10 @@ namespace npycrf {
 			return 0;
 		}
 		double p_0_0 = 0;
-		std::cout << "	case 0-0:" << std::endl;
-		for(int k = 1;k <= sentence_length - t - 1;k++){
-			for(int j = 3;j <= std::min(t + k, _max_word_length);j++){
-				std::cout << "		pc_s[" << (t + k) << "][" << j << "] = " << pc_s[t + k][j] << std::endl;
+		// std::cout << "	case 0-0:" << std::endl;
+		for(int k = 1;k <= std::min(sentence_length - t, _max_word_length - 2);k++){
+			for(int j = k + 2;j <= std::min(t + k, _max_word_length);j++){
+				// std::cout << "		pc_s[" << (t + k) << "][" << j << "] = " << pc_s[t + k][j] << std::endl;
 				assert(pc_s[t + k][j] > 0);
 				p_0_0 += pc_s[t + k][j];
 			}

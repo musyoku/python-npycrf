@@ -268,7 +268,10 @@ void test_enumerate_marginal_p_path_given_sentence(){
 	lattice->_enumerate_marginal_p_path_given_sentence(sentence->size(), lattice->_pz_s, lattice->_pc_s);
 
 	for(int t = 1;t <= sentence->size();t++){
-		cout << pz_s[t][0][0] << ", " << lattice->_pz_s[t][0][0] << endl;
+		assert(std::abs(pz_s[t][0][0] - lattice->_pz_s[t][0][0]) < 1e-12);
+		assert(std::abs(pz_s[t][0][1] - lattice->_pz_s[t][0][1]) < 1e-12);
+		assert(std::abs(pz_s[t][1][0] - lattice->_pz_s[t][1][0]) < 1e-12);
+		assert(std::abs(pz_s[t][1][1] - lattice->_pz_s[t][1][1]) < 1e-12);
 	}
 
 	lattice::_delete_array(alpha, seq_capacity + 1, word_capacity, word_capacity);
