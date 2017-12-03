@@ -8,8 +8,8 @@ namespace npycrf {
 			hashmap<wchar_t, int> _map_character_ids;	// すべての文字
 			Dictionary(){
 				_map_character_ids[CHARACTER_ID_UNK] = CHARACTER_ID_UNK;	// <unk>
-				_map_character_ids[CHARACTER_ID_BOW] = CHARACTER_ID_BOW;	// <s>
-				_map_character_ids[CHARACTER_ID_EOW] = CHARACTER_ID_EOW;	// </s>
+				_map_character_ids[CHARACTER_ID_BOS] = CHARACTER_ID_BOS;	// <s>
+				_map_character_ids[CHARACTER_ID_EOS] = CHARACTER_ID_EOS;	// </s>
 			}
 			int add_character(wchar_t character);
 			int get_character_id(wchar_t character);

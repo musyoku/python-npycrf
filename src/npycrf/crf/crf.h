@@ -3,6 +3,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include "../common.h"
+#include "../sentence.h"
 
 // [1] A discriminative latent variable chinese segmenter with hybrid word/character information
 //     https://pdfs.semanticscholar.org/0bd3/a662e19467aa21c1e1e0a51db397e9936b70.pdf
@@ -13,20 +14,6 @@ namespace npycrf {
 		private:
 			int _num_character_ids;
 			int _num_character_types;
-			double _index_w_label_u(int y_i);
-			double _index_w_label_b(int y_i_1, int y_i);
-			double _index_w_unigram_u(int y_i, int i, int x_i);
-			double _index_w_unigram_b(int y_i_1, int y_i, int i, int x_i);
-			double _index_w_bigram_u(int y_i, int i, int x_i_1, int x_i);
-			double _index_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i);
-			double _index_w_identical_1_u(int y_i, int i);
-			double _index_w_identical_1_b(int y_i_1, int y_i, int i);
-			double _index_w_identical_2_u(int y_i, int i);
-			double _index_w_identical_2_b(int y_i_1, int y_i, int i);
-			double _index_w_unigram_type_u(int y_i, int type_i);
-			double _index_w_unigram_type_b(int y_i_1, int y_i, int type_i);
-			double _index_w_bigram_type_u(int y_i, int type_i_1, int type_i);
-			double _index_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i);
 			friend class boost::serialization::access;
 			template <class Archive>
 			void serialize(Archive &archive, unsigned int version);
@@ -82,6 +69,20 @@ namespace npycrf {
 			);
 			CRF(){};
 			~CRF();
+			int _index_w_label_u(int y_i);
+			int _index_w_label_b(int y_i_1, int y_i);
+			int _index_w_unigram_u(int y_i, int i, int x_i);
+			int _index_w_unigram_b(int y_i_1, int y_i, int i, int x_i);
+			int _index_w_bigram_u(int y_i, int i, int x_i_1, int x_i);
+			int _index_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i);
+			int _index_w_identical_1_u(int y_i, int i);
+			int _index_w_identical_1_b(int y_i_1, int y_i, int i);
+			int _index_w_identical_2_u(int y_i, int i);
+			int _index_w_identical_2_b(int y_i_1, int y_i, int i);
+			int _index_w_unigram_type_u(int y_i, int type_i);
+			int _index_w_unigram_type_b(int y_i_1, int y_i, int type_i);
+			int _index_w_bigram_type_u(int y_i, int type_i_1, int type_i);
+			int _index_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i);
 			double bias();
 			// 以下のiは全て番号なので1スタート
 			double w_label_u(int y_i);
@@ -112,7 +113,6 @@ namespace npycrf {
 			void set_w_unigram_type_b(int y_i_1, int y_i, int type_i, double value);
 			void set_w_bigram_type_u(int y_i, int type_i_1, int type_i, double value);
 			void set_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i, double value);
-			double compute_trigram_potential(int const* character_ids, wchar_t const* characters, int character_ids_length, int t, int k, int j);
 			double compute_gamma(int const* character_ids, wchar_t const* characters, int character_ids_length, int s, int t);
 			double compute_path_cost(int const* character_ids, wchar_t const* characters, int character_ids_length, int i_1, int i, int y_i_1, int y_i);
 			double _compute_cost_unigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
@@ -120,6 +120,7 @@ namespace npycrf {
 			double _compute_cost_identical_1_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
 			double _compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
 			double _compute_cost_unigram_and_bigram_type_features(int const* character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i);
+			double compute_log_p_y_given_sentence(Sentence* sentence);
 		};
 	}
 }

@@ -31,5 +31,5 @@ using id = size_t;
 #define ID_EOS 1
 #define ID_EOW 2
 #define CHARACTER_ID_UNK 0
-#define CHARACTER_ID_BOW 1	// beginning of word
-#define CHARACTER_ID_EOW 2	// end of word
+#define CHARACTER_ID_BOS 1
+#define CHARACTER_ID_EOS 2

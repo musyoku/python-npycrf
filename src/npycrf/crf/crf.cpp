@@ -85,31 +85,31 @@ namespace npycrf {
 		double CRF::bias(){
 			return _bias;
 		}
-		double CRF::_index_w_label_u(int y_i){
+		int CRF::_index_w_label_u(int y_i){
 			int index = y_i;
 			assert(index < _w_size_label_u);
 			return index;
 		}
-		double CRF::_index_w_label_b(int y_i_1, int y_i){
+		int CRF::_index_w_label_b(int y_i_1, int y_i){
 			int index =  y_i_1 * 2 + y_i + _w_size_label_u;
 			assert(index < _w_size_label_u + _w_size_label_b);
 			return index;
 		}
-		double CRF::_index_w_unigram_u(int y_i, int i, int x_i){
+		int CRF::_index_w_unigram_u(int y_i, int i, int x_i){
 			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_unigram);
 			int index = x_i * _x_range_unigram * 2 + (i - 1) * 2 + y_i;
 			assert(index < _w_size_unigram_u);
 			return index;
 		}
-		double CRF::_index_w_unigram_b(int y_i_1, int y_i, int i, int x_i){
+		int CRF::_index_w_unigram_b(int y_i_1, int y_i, int i, int x_i){
 			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_unigram);
 			int index = x_i * _x_range_unigram * 2 * 2 + (i - 1) * 2 * 2 + y_i * 2 + y_i_1 + _w_size_unigram_u;
 			assert(_w_size_unigram_u <= index && index < _w_size_unigram_u + _w_size_unigram_b);
 			return index;
 		}
-		double CRF::_index_w_bigram_u(int y_i, int i, int x_i_1, int x_i){
+		int CRF::_index_w_bigram_u(int y_i, int i, int x_i_1, int x_i){
 			assert(x_i_1 < _num_character_ids);
 			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_bigram);
@@ -117,7 +117,7 @@ namespace npycrf {
 			assert(index < _w_size_bigram_u);
 			return index;
 		}
-		double CRF::_index_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
+		int CRF::_index_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
 			assert(x_i_1 < _num_character_ids);
 			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_bigram);
@@ -125,49 +125,49 @@ namespace npycrf {
 			assert(_w_size_bigram_u <= index && index < _w_size_bigram_u + _w_size_bigram_b);
 			return index;
 		}
-		double CRF::_index_w_identical_1_u(int y_i, int i){
+		int CRF::_index_w_identical_1_u(int y_i, int i){
 			assert(1 <= i && i <= _x_range_identical_1);
 			int index = (i - 1) * 2 + y_i;
 			assert(index < _w_size_identical_1_u);
 			return index;
 		}
-		double CRF::_index_w_identical_1_b(int y_i_1, int y_i, int i){
+		int CRF::_index_w_identical_1_b(int y_i_1, int y_i, int i){
 			assert(1 <= i && i <= _x_range_identical_1);
 			int index = (i - 1) * 2 * 2 + y_i * 2 + y_i_1 + _w_size_identical_1_u;
 			assert(_w_size_identical_1_u <= index && index < _w_size_identical_1_u + _w_size_identical_1_b);
 			return index;
 		}
-		double CRF::_index_w_identical_2_u(int y_i, int i){
+		int CRF::_index_w_identical_2_u(int y_i, int i){
 			assert(1 <= i && i <= _x_range_identical_2);
 			int index = (i - 1) * 2 + y_i;
 			assert(index < _w_size_identical_2_u);
 			return index;
 		}
-		double CRF::_index_w_identical_2_b(int y_i_1, int y_i, int i){
+		int CRF::_index_w_identical_2_b(int y_i_1, int y_i, int i){
 			assert(1 <= i && i <= _x_range_identical_2);
 			int index = (i - 1) * 2 * 2 + y_i * 2 + y_i_1 + _w_size_identical_2_u;
 			assert(_w_size_identical_2_u <= index && index < _w_size_identical_2_u + _w_size_identical_2_b);
 			return index;
 		}
-		double CRF::_index_w_unigram_type_u(int y_i, int type_i){
+		int CRF::_index_w_unigram_type_u(int y_i, int type_i){
 			int index = type_i * 2 + y_i;
 			assert(index < _w_size_unigram_type_u);
 			return index;
 		}
-		double CRF::_index_w_unigram_type_b(int y_i_1, int y_i, int type_i){
+		int CRF::_index_w_unigram_type_b(int y_i_1, int y_i, int type_i){
 			assert(type_i < _num_character_types);
 			int index = type_i * 2 * 2 + y_i * 2 + y_i_1 + _w_size_unigram_type_u;
 			assert(_w_size_unigram_type_u <= index && index < _w_size_unigram_type_u + _w_size_unigram_type_b);
 			return index;
 		}
-		double CRF::_index_w_bigram_type_u(int y_i, int type_i_1, int type_i){
+		int CRF::_index_w_bigram_type_u(int y_i, int type_i_1, int type_i){
 			assert(type_i_1 < _num_character_types);
 			assert(type_i < _num_character_types);
 			int index = type_i * _num_character_types * 2 + type_i_1 * 2 + y_i;
 			assert(index < _w_size_bigram_type_u);
 			return index;
 		}
-		double CRF::_index_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
+		int CRF::_index_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
 			assert(type_i_1 < _num_character_types);
 			assert(type_i < _num_character_types);
 			int index = type_i * _num_character_types * 2 * 2 + type_i_1 * 2 * 2 + y_i * 2 + y_i_1 + _w_size_bigram_type_u;
@@ -298,22 +298,6 @@ namespace npycrf {
 			int index = _index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 			_w_bigram_type[index] = value;
 		}
-		// V(t, k, j) = γ(t - k + 1, t + 1) + γ(t - k - j + 1, t - k + 1)
-		// tは1スタートであることに注意
-		double CRF::compute_trigram_potential(int const* character_ids, wchar_t const* characters, int character_ids_length, int t, int k, int j){
-			assert(1 <= t && t <= character_ids_length + 1); // tは<eos>を指すこともある
-			assert(1 <= k && k <= character_ids_length);
-			assert(0 <= j && j <= character_ids_length);
-			assert(0 < t);
-			if(j == 0){	// <bos>からの遷移
-				return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
-			}
-			if(t == character_ids_length + 1){	// <eos>への接続
-				assert(k == 1);	// <eos>がそれ以前の文字列と連結することはない
-				return compute_gamma(character_ids, characters, character_ids_length, t - k - j + 1, t - k + 1);
-			}
-			return compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1) + compute_gamma(character_ids, characters, character_ids_length, t - k - j + 1, t - k + 1);
-		}
 		// γ(s, t) ∝ log{P(c_s^{t - 1}|・)}
 		// s、tはともに番号なので1から始まる
 		// あるノードから別のノードを辿るV字型のパスのコストの合計
@@ -364,7 +348,7 @@ namespace npycrf {
 			int r_end = std::max(0, i - _x_range_unigram);
 			for(int r = i;r > r_end;r--){
 				int pos = i - r + 1;	// [1, _x_range_unigram]
-				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOW;
+				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
 				cost += w_unigram_u(y_i, pos, x_i);
 				cost += w_unigram_b(y_i_1, y_i, pos, x_i);
 			}
@@ -375,7 +359,7 @@ namespace npycrf {
 			int r_end = std::max(1, i - _x_range_bigram);
 			for(int r = i;r > r_end;r--){
 				int pos = i - r + 1;	// [1, _x_range_bigram]
-				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOW;
+				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
 				int x_i_1 = character_ids[r - 2];
 				cost += w_bigram_u(y_i, pos, x_i_1, x_i);
 				cost += w_bigram_b(y_i_1, y_i, pos, x_i_1, x_i);
@@ -387,7 +371,7 @@ namespace npycrf {
 			int pos = 1;	// [1, _x_range_identical_1]
 			int r_end = std::max(1, i - _x_range_identical_1);
 			for(int r = i;r > r_end;r--){
-				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOW;
+				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
 				int x_i_1 = character_ids[r - 2];
 				if(x_i == x_i_1){
 					cost += w_identical_1_u(y_i, pos);
@@ -402,7 +386,7 @@ namespace npycrf {
 			int pos = 1;	// [1, _x_range_identical_2]
 			int r_end = std::max(2, i - _x_range_identical_2);
 			for(int r = i;r > r_end;r--){
-				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOW;
+				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
 				int x_i_2 = character_ids[r - 3];
 				if(x_i == x_i_2){
 					cost += w_identical_2_u(y_i, pos);
@@ -423,6 +407,16 @@ namespace npycrf {
 			cost += w_bigram_type_u(y_i, type_i_1, type_i);
 			cost += w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 			return cost;
+		}
+		double CRF::compute_log_p_y_given_sentence(Sentence* sentence){
+			double log_py_s = 0;
+			for(int i = 2;i < sentence->get_num_segments();i++){
+				int s = sentence->_start[i] + 1; // インデックスから番号へ
+				int t = s + sentence->_segments[i];
+				double gamma = compute_gamma(sentence->_character_ids, sentence->_characters, sentence->size(), s, t);
+				log_py_s += gamma;
+			}
+			return log_py_s;
 		}
 		template <class Archive>
 		void CRF::serialize(Archive &archive, unsigned int version)

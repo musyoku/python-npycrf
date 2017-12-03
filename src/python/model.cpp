@@ -50,23 +50,20 @@ namespace npycrf {
 			_lattice->_lambda_0 = lambda_0;
 		}
 		// 分配関数の計算
-		double Model::compute_marginal_p_x(Sentence* sentence){
+		double Model::compute_marginal_p_sentence(Sentence* sentence){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
-			double px = _lattice->compute_marginal_p_x(sentence, true);
+			double px = _lattice->compute_marginal_p_sentence(sentence, true);
 			#ifdef __DEBUG__
-				double __px = _lattice->_compute_marginal_p_x_backward(sentence, _lattice->_beta, _lattice->_pw_h);
-				double ___px = _lattice->compute_marginal_p_x(sentence, false);
-				std::cout << px << std::endl;
-				std::cout << __px << std::endl;
-				std::cout << ___px << std::endl;
+				double __px = _lattice->_compute_marginal_p_sentence_backward(sentence, _lattice->_beta, _lattice->_pw_h);
+				double ___px = _lattice->compute_marginal_p_sentence(sentence, false);
 				assert(abs(px - __px) < 1e-16);
 				assert(abs(px - ___px) < 1e-16);
 			#endif 
 			return px;
 		}
-		double Model::python_compute_marginal_p_x(std::wstring sentence_str, Dictionary* dictionary){
+		double Model::python_compute_marginal_p_sentence(std::wstring sentence_str, Dictionary* dictionary){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
 			_npylm->reserve(sentence_str.size());
@@ -79,17 +76,17 @@ namespace npycrf {
 				character_ids[i] = character_id;
 			}
 			Sentence* sentence = new Sentence(sentence_str, character_ids);
-			double ret = compute_marginal_p_x(sentence);
+			double ret = compute_marginal_p_sentence(sentence);
 			delete[] character_ids;
 			delete sentence;
 			return ret;
 		}
 		// sentenceは分割済みの必要がある
 		// 比例のままの確率を返す
-		double Model::compute_log_proportional_p_y_given_x(Sentence* sentence){
+		double Model::compute_log_proportional_p_y_given_sentence(Sentence* sentence){
 			_npylm->reserve(sentence->size());	// キャッシュの再確保
-			double log_crf = 0;
-			double log_npylm = _npylm->compute_log_p_s(sentence);
+			double log_crf = _crf->compute_log_p_y_given_sentence(sentence);
+			double log_npylm = _npylm->compute_log_p_y_given_sentence(sentence);
 			double log_py_x = log_crf + get_lambda_0() * log_npylm;
 			return log_py_x;
 		}

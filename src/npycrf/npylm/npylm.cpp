@@ -337,14 +337,14 @@ namespace npycrf {
 			_hpylm->sample_hyperparams();
 			_vpylm->sample_hyperparams();
 		}
-		double NPYLM::compute_log_p_s(Sentence* sentence){
+		double NPYLM::compute_log_p_y_given_sentence(Sentence* sentence){
 			double pw = 0;
 			for(int t = 2;t < sentence->get_num_segments();t++){
 				pw += log(compute_p_w_given_h(sentence, t));
 			}
 			return pw;
 		}
-		double NPYLM::compute_p_s(Sentence* sentence){
+		double NPYLM::compute_p_y_given_sentence(Sentence* sentence){
 			double pw = 1;
 			for(int t = 2;t < sentence->get_num_segments();t++){
 				pw *= compute_p_w_given_h(sentence, t);

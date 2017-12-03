@@ -71,8 +71,8 @@ namespace npycrf {
 			double compute_poisson_k_lambda(unsigned int k, double lambda);
 			double compute_p_k_given_vpylm(int k);
 			void sample_hpylm_vpylm_hyperparameters();
-			double compute_log_p_s(Sentence* sentence);
-			double compute_p_s(Sentence* sentence);
+			double compute_log_p_y_given_sentence(Sentence* sentence);
+			double compute_p_y_given_sentence(Sentence* sentence);
 			double compute_p_w_given_h(Sentence* sentence, int word_t_index);
 			double compute_p_w_given_h(
 				wchar_t const* character_ids, int character_ids_length, 

@@ -112,14 +112,14 @@ public:
 	}
 };
 
-void test_compute_marginal_p_x(){
+void test_compute_marginal_p_sentence(){
 	Variables* var = new Variables();
 	Lattice* lattice = var->model->_lattice;
 	Sentence* sentence = generate_sentence_1();
 
-	double px_u = lattice->compute_marginal_p_x(sentence, true);
-	double px_n = lattice->compute_marginal_p_x(sentence, false);
-	double px_b = lattice->_compute_marginal_p_x_backward(sentence, lattice->_beta, lattice->_pw_h);
+	double px_u = lattice->compute_marginal_p_sentence(sentence, true);
+	double px_n = lattice->compute_marginal_p_sentence(sentence, false);
+	double px_b = lattice->_compute_marginal_p_sentence_backward(sentence, lattice->_beta, lattice->_pw_h);
 	assert(std::abs(px_u - px_n) < 1e-12);
 	assert(std::abs(px_u - px_b) < 1e-12);
 
@@ -194,7 +194,7 @@ void test_enumerate_proportional_p_substring_given_sentence(){
 	lattice::_init_array(beta, seq_capacity + 1, word_capacity, word_capacity);
 	lattice->_enumerate_forward_variables(sentence, alpha, lattice->_pw_h, NULL, false);
 	lattice->_enumerate_backward_variables(sentence, beta, lattice->_pw_h, NULL, false);
-	double Zs = lattice->compute_marginal_p_x(sentence, true);
+	double Zs = lattice->compute_marginal_p_sentence(sentence, true);
 
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
@@ -248,13 +248,13 @@ void test_enumerate_marginal_p_path_given_sentence(){
 
 	lattice->_enumerate_forward_variables(sentence, alpha, lattice->_pw_h, NULL, false);
 	lattice->_enumerate_backward_variables(sentence, beta, lattice->_pw_h, NULL, false);
-	double Zs = lattice->compute_marginal_p_x(sentence, true);
+	double Zs = lattice->compute_marginal_p_sentence(sentence, true);
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
 
-	lattice->_enumerate_proportional_p_substring_given_sentence(sentence->size(), alpha, beta, pc_s, Zs);
-	lattice->_enumerate_proportional_p_substring_given_sentence(sentence->size(), lattice->_alpha, lattice->_beta, lattice->_pc_s, _Zs);
+	lattice->_enumerate_proportional_p_substring_given_sentence(pc_s, sentence->size(), alpha, beta, Zs);
+	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
 
 	for(int t = 1;t <= sentence->size();t++){
 		for(int k = 1;k <= std::min(t, lattice->_max_word_length);k++){
@@ -264,8 +264,8 @@ void test_enumerate_marginal_p_path_given_sentence(){
 		}
 	}
 
-	lattice->_enumerate_marginal_p_path_given_sentence(sentence->size(), pz_s, pc_s);
-	lattice->_enumerate_marginal_p_path_given_sentence(sentence->size(), lattice->_pz_s, lattice->_pc_s);
+	lattice->_enumerate_marginal_p_path_given_sentence(pz_s, sentence->size(), pc_s);
+	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	for(int t = 1;t <= sentence->size();t++){
 		assert(std::abs(pz_s[t][0][0] - lattice->_pz_s[t][0][0]) < 1e-12);
@@ -283,6 +283,65 @@ void test_enumerate_marginal_p_path_given_sentence(){
 	delete var;
 }
 
+void test_grad(){
+	Variables* var = new Variables();
+	Model* model = var->model;
+	Lattice* lattice = model->_lattice;
+	Sentence* sentence = generate_sentence_4();
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
+	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+
+	crf::CRF* crf = var->py_crf->_crf;
+	int const* character_ids = sentence->_character_ids;
+	wchar_t const* characters = sentence->_characters;
+	int character_ids_length = sentence->size();
+
+	// unigram
+	for(int k = 0;k < crf->_w_size_unigram_type_u;k++){
+		for(int pos = 1; pos <= crf->_x_range_unigram;pos++){
+			double grad = 0;
+			int yt = 1;
+			int yt1 = 1;
+			int i = 2;
+			for(int t = 0;t <= sentence->size();t++){
+				yt = yt1;
+				yt1 = 0;
+				int s = sentence->_start[i] + 1;
+				if(t + 1 == s){
+					i++;
+					yt1 = 1;
+				}
+				int pos = 1;
+				int x_i = (t + 1 <= character_ids_length) ? character_ids[t] : CHARACTER_ID_EOS;
+				int feature_index = crf->_index_w_unigram_u(yt1, pos, x_i);
+				double pi_k = (k == feature_index);
+				double sum_expectation = 0;
+				sum_expectation += lattice->_pz_s[t][0][0] * (crf->_index_w_unigram_u(0, pos, x_i) == k);
+				sum_expectation += lattice->_pz_s[t][0][1] * (crf->_index_w_unigram_u(1, pos, x_i) == k);
+				sum_expectation += lattice->_pz_s[t][1][0] * (crf->_index_w_unigram_u(0, pos, x_i) == k);
+				sum_expectation += lattice->_pz_s[t][1][1] * (crf->_index_w_unigram_u(1, pos, x_i) == k);
+				grad += pi_k - sum_expectation;
+			}
+			double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log(model->compute_marginal_p_sentence(sentence));
+			crf->_w_unigram_type[k] = 1e-12;
+			if(k > 0){
+				crf->_w_unigram_type[k - 1] = 0;
+			}
+			double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log(model->compute_marginal_p_sentence(sentence));
+			double true_grad = (_log_py - log_py) / 1e-12;
+			if(true_grad == 0 && grad == 0){
+				continue;
+			}
+			cout << grad << ", " << true_grad << endl;
+		}
+	}
+	delete sentence;
+	delete var;
+}
+
 int main(int argc, char *argv[]){
 	setlocale(LC_CTYPE, "ja_JP.UTF-8");
 	std::ios_base::sync_with_stdio(false);
@@ -291,7 +350,7 @@ int main(int argc, char *argv[]){
 	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
 	std::wcout.imbue(ctype_default);
 	std::wcin.imbue(ctype_default);
-	test_compute_marginal_p_x();
+	test_compute_marginal_p_sentence();
 	cout << "OK" << endl;
 	test_viterbi_decode();
 	cout << "OK" << endl;
@@ -300,5 +359,7 @@ int main(int argc, char *argv[]){
 	test_enumerate_proportional_p_substring_given_sentence();
 	cout << "OK" << endl;
 	test_enumerate_marginal_p_path_given_sentence();
+	cout << "OK" << endl;
+	test_grad();
 	cout << "OK" << endl;
 }

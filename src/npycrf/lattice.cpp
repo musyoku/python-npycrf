@@ -679,7 +679,7 @@ namespace npycrf {
 	}
 	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// use_scaling=trueならアンダーフローを防ぐ
-	double Lattice::compute_marginal_p_x(Sentence* sentence, bool use_scaling){
+	double Lattice::compute_marginal_p_sentence(Sentence* sentence, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		_clear_word_id_cache(_substring_word_id_cache, size);
@@ -704,7 +704,7 @@ namespace npycrf {
 	}
 	// 可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// スケーリング係数は前向き時のみ計算可能なので注意
-	double Lattice::_compute_marginal_p_x_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji){
+	double Lattice::_compute_marginal_p_sentence_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		_clear_word_id_cache(_substring_word_id_cache, size);
@@ -716,7 +716,7 @@ namespace npycrf {
 	}
 	// 可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// use_scaling=trueならアンダーフローを防ぐ
-	double Lattice::compute_marginal_log_p_x(Sentence* sentence, bool use_scaling){
+	double Lattice::compute_marginal_log_p_sentence(Sentence* sentence, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		_clear_word_id_cache(_substring_word_id_cache, size);
@@ -932,7 +932,7 @@ namespace npycrf {
 	}
 	// 文の部分文字列が単語になる確率
 	// P_{CONC}(c_{t-k}^t|x)
-	void Lattice::_enumerate_proportional_p_substring_given_sentence(int sentence_length, double*** alpha, double*** beta, double** pc_s, double Zs){
+	void Lattice::_enumerate_proportional_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta, double Zs){
 		assert(0 < Zs && Zs < 1);
 		assert(sentence_length <= _max_sentence_length);
 		int size = sentence_length + 1;
@@ -959,7 +959,7 @@ namespace npycrf {
 	}
 	// p(z_t, z_{t+1}|s)の計算
 	// Zsは統合モデル上での文の確率
-	void Lattice::_enumerate_marginal_p_path_given_sentence(int sentence_length, double*** pz_s, double** pc_s){
+	void Lattice::_enumerate_marginal_p_path_given_sentence(double*** pz_s, int sentence_length, double** pc_s){
 		assert(sentence_length <= _max_sentence_length);
 		assert(pz_s != NULL);
 		for(int t = 1;t <= sentence_length;t++){
