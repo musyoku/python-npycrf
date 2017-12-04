@@ -21,6 +21,7 @@ void test_init(){
 	int feature_x_identical_1_end = 1;
 	int feature_x_identical_2_start = -3;
 	int feature_x_identical_2_end = 1;
+	double sigma = 1;
 	CRF* crf = new CRF(num_character_ids,
 					   num_character_types,
 					   feature_x_unigram_start,
@@ -30,7 +31,8 @@ void test_init(){
 					   feature_x_identical_1_start,
 					   feature_x_identical_1_end,
 					   feature_x_identical_2_start,
-					   feature_x_identical_2_end
+					   feature_x_identical_2_end,
+					   sigma
 	);
 
 	double value = 1.5;
@@ -119,6 +121,7 @@ void test_compute_path_cost(){
 	int feature_x_identical_1_end = 1;
 	int feature_x_identical_2_start = -3;
 	int feature_x_identical_2_end = 2;
+	double sigma = 1;
 	CRF* crf = new CRF(num_character_ids,
 					   num_character_types,
 					   feature_x_unigram_start,
@@ -128,7 +131,8 @@ void test_compute_path_cost(){
 					   feature_x_identical_1_start,
 					   feature_x_identical_1_end,
 					   feature_x_identical_2_start,
-					   feature_x_identical_2_end
+					   feature_x_identical_2_end,
+					   sigma
 	);
 	int* character_ids = new int[sentence_str.size()];
 	for(int i = 0;i < sentence_str.size();i++){
@@ -225,6 +229,7 @@ void test_grads(){
 	int feature_x_identical_1_end = 1;
 	int feature_x_identical_2_start = -3;
 	int feature_x_identical_2_end = 2;
+	double sigma = 1;
 	CRF* crf = new CRF(num_character_ids,
 					   num_character_types,
 					   feature_x_unigram_start,
@@ -234,7 +239,8 @@ void test_grads(){
 					   feature_x_identical_1_start,
 					   feature_x_identical_1_end,
 					   feature_x_identical_2_start,
-					   feature_x_identical_2_end
+					   feature_x_identical_2_end,
+					   sigma
 	);
 	int* character_ids = new int[sentence_str.size()];
 	for(int i = 0;i < sentence_str.size();i++){

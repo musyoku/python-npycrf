@@ -971,7 +971,7 @@ namespace npycrf {
 			pz_s[t][1][1] = _compute_p_z_case_1_1(sentence_length, t, pc_s);
 			pz_s[t][1][0] = _compute_p_z_case_1_0(sentence_length, t, pc_s);
 			pz_s[t][0][1] = _compute_p_z_case_0_1(sentence_length, t, pc_s);
-			pz_s[t][0][0] = 1 - pz_s[t][1][1] - pz_s[t][1][0] - pz_s[t][0][1];
+			pz_s[t][0][0] = std::max(0.0, 1.0 - pz_s[t][1][1] - pz_s[t][1][0] - pz_s[t][0][1]);
 			#ifdef __DEBUG__
 				// std::cout << "1-1: " << pz_s[t][1][1] << std::endl;
 				// std::cout << "1-0: " << pz_s[t][1][0] << std::endl;
@@ -993,6 +993,14 @@ namespace npycrf {
 				assert(pz_s[t][0][0] > 0);
 			}
 		}
+		// std::cout << "1-1: " << pz_s[sentence_length][1][1] << std::endl;
+		// std::cout << "1-0: " << pz_s[sentence_length][1][0] << std::endl;
+		// std::cout << "0-1: " << pz_s[sentence_length][0][1] << std::endl;
+		// std::cout << "0-0: " << pz_s[sentence_length][0][0] << std::endl;
+		assert(pz_s[sentence_length][0][0] < 1e-12);
+		assert(pz_s[sentence_length][1][0] < 1e-12);
+		assert(pz_s[sentence_length][0][1] > 0);
+		assert(pz_s[sentence_length][1][1] > 0);
 	}
 	double Lattice::_compute_p_z_case_1_1(int sentence_length, int t, double** pc_s){
 		assert(t <= sentence_length);
