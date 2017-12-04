@@ -15,7 +15,8 @@ namespace npycrf {
 					 int feature_x_identical_1_start,
 					 int feature_x_identical_1_end,
 					 int feature_x_identical_2_start,
-					 int feature_x_identical_2_end)
+					 int feature_x_identical_2_end,
+					 double sigma)
 			{
 				_crf = new crf::CRF(num_character_ids, 
 									num_character_types,
@@ -26,7 +27,8 @@ namespace npycrf {
 									feature_x_identical_1_start,
 									feature_x_identical_1_end,
 									feature_x_identical_2_start,
-									feature_x_identical_2_end);
+									feature_x_identical_2_end,
+									sigma);
 			}
 			CRF::CRF(std::string filename){
 				_crf = new crf::CRF();

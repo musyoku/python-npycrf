@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../ctype.h"
+#include "../sampler.h"
 #include "crf.h"
 
 namespace npycrf {
@@ -13,11 +14,27 @@ namespace npycrf {
 				 int feature_x_identical_1_start,
 				 int feature_x_identical_1_end,
 				 int feature_x_identical_2_start,
-				 int feature_x_identical_2_end)
+				 int feature_x_identical_2_end,
+				 double sigma)
 		{
 			_num_character_ids = num_character_ids;
 			_num_character_types = num_character_types;
 			_bias = 0;
+
+			assert(feature_x_unigram_start <= feature_x_unigram_end);
+			assert(feature_x_bigram_start <= feature_x_bigram_end);
+			assert(feature_x_identical_1_start <= feature_x_identical_1_end);
+			assert(feature_x_identical_2_start <= feature_x_identical_2_end);
+
+			 _x_unigram_start = feature_x_unigram_start;
+			 _x_unigram_end = feature_x_unigram_end;
+			 _x_bigram_start = feature_x_bigram_start;
+			 _x_bigram_end = feature_x_bigram_end;
+			 _x_identical_1_start = feature_x_identical_1_start;
+			 _x_identical_1_end = feature_x_identical_1_end;
+			 _x_identical_2_start = feature_x_identical_2_start;
+			 _x_identical_2_end = feature_x_identical_2_end;
+
 			_x_range_unigram = feature_x_unigram_end - feature_x_unigram_start + 1;
 			_x_range_bigram = feature_x_bigram_end - feature_x_bigram_start + 1;
 			_x_range_identical_1 = feature_x_identical_1_end - feature_x_identical_1_start + 1;
@@ -28,49 +45,49 @@ namespace npycrf {
 			_w_size_label_b = 2 * 2;
 			_w_label = new double[_w_size_label_u + _w_size_label_b];
 			for(int i = 0;i < _w_size_label_u + _w_size_label_b;i++){
-				_w_label[i] = 0;
+				_w_label[i] = sampler::normal(0, sigma);
 			}
 			// (y_i, i, x_i), (y_{i-1}, y_i, i, x_i)
 			_w_size_unigram_u = 2 * _x_range_unigram * num_character_ids;
 			_w_size_unigram_b = 2 * 2 * _x_range_unigram * num_character_ids;
 			_w_unigram = new double[_w_size_unigram_u + _w_size_unigram_b];
 			for(int i = 0;i < _w_size_unigram_u + _w_size_unigram_b;i++){
-				_w_unigram[i] = 0;
+				_w_unigram[i] = sampler::normal(0, sigma);
 			}
 			// (y_i, i, x_{i-1}, x_i), (y_{i-1}, y_i, i, x_{i-1}, x_i)
 			_w_size_bigram_u = 2 * _x_range_bigram * num_character_ids * num_character_ids;
 			_w_size_bigram_b = 2 * 2 * _x_range_bigram * num_character_ids * num_character_ids;
 			_w_bigram = new double[_w_size_bigram_u + _w_size_bigram_b];
 			for(int i = 0;i < _w_size_bigram_u + _w_size_bigram_b;i++){
-				_w_bigram[i] = 0;
+				_w_bigram[i] = sampler::normal(0, sigma);
 			}
 			// (y_i, i), (y_{i-1}, y_i, i)
 			_w_size_identical_1_u = 2 * _x_range_identical_1;
 			_w_size_identical_1_b = 2 * 2 * _x_range_identical_1;
 			_w_identical_1 = new double[_w_size_identical_1_u + _w_size_identical_1_b];
 			for(int i = 0;i < _w_size_identical_1_u + _w_size_identical_1_b;i++){
-				_w_identical_1[i] = 0;
+				_w_identical_1[i] = sampler::normal(0, sigma);
 			}
 			// (y_i, i), (y_{i-1}, y_i, i)
 			_w_size_identical_2_u = 2 * _x_range_identical_2;
 			_w_size_identical_2_b = 2 * 2 * _x_range_identical_2;
 			_w_identical_2 = new double[_w_size_identical_2_u + _w_size_identical_2_b];
 			for(int i = 0;i < _w_size_identical_2_u + _w_size_identical_2_b;i++){
-				_w_identical_2[i] = 0;
+				_w_identical_2[i] = sampler::normal(0, sigma);
 			}
 			// (y_i, type)
 			_w_size_unigram_type_u = 2 * num_character_types;
 			_w_size_unigram_type_b = 2 * 2 * num_character_types;
 			_w_unigram_type = new double[_w_size_unigram_type_u + _w_size_unigram_type_b];
 			for(int i = 0;i < _w_size_unigram_type_u + _w_size_unigram_type_b;i++){
-				_w_unigram_type[i] = 0;
+				_w_unigram_type[i] = sampler::normal(0, sigma);
 			}
 			// (y_i, type, type), (y_{i-1}, y_i, type, type)
 			_w_size_bigram_type_u = 2 * num_character_types * num_character_types;
 			_w_size_bigram_type_b = 2 * 2 * num_character_types * num_character_types;
 			_w_bigram_type = new double[_w_size_bigram_type_u + _w_size_bigram_type_b];
 			for(int i = 0;i < _w_size_bigram_type_u + _w_size_bigram_type_b;i++){
-				_w_bigram_type[i] = 0;
+				_w_bigram_type[i] = sampler::normal(0, sigma);
 			}
 		}
 		CRF::~CRF(){
@@ -322,7 +339,7 @@ namespace npycrf {
 			}
 			return sum_cost;
 		}
-		// 隣接するノード間のパスのコストを計算
+		// 隣接するノード間[i-1,i]のパスのコストを計算
 		// yはクラス（0か1）
 		// iはノードの位置（1スタートなので注意。インデックスではない.ただし実際は隣接ノードが取れるi>=2のみ可）
 		// i_1は本来引数にする必要はないがわかりやすさのため
@@ -345,9 +362,10 @@ namespace npycrf {
 		}
 		double CRF::_compute_cost_unigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			int r_end = std::max(0, i - _x_range_unigram);
-			for(int r = i;r > r_end;r--){
-				int pos = i - r + 1;	// [1, _x_range_unigram]
+			int r_start = std::max(1, i + _x_unigram_start);
+			int r_end = std::min(character_ids_length, i + _x_unigram_end);
+			for(int r = r_start;r <= r_end;r++){
+				int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_unigram]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
 				cost += w_unigram_u(y_i, pos, x_i);
 				cost += w_unigram_b(y_i_1, y_i, pos, x_i);
@@ -356,9 +374,10 @@ namespace npycrf {
 		}
 		double CRF::_compute_cost_bigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			int r_end = std::max(1, i - _x_range_bigram);
-			for(int r = i;r > r_end;r--){
-				int pos = i - r + 1;	// [1, _x_range_bigram]
+			int r_start = std::max(2, i + _x_bigram_start);
+			int r_end = std::min(character_ids_length, i + _x_bigram_end);
+			for(int r = r_start;r <= r_end;r++){
+				int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_bigram]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
 				int x_i_1 = character_ids[r - 2];
 				cost += w_bigram_u(y_i, pos, x_i_1, x_i);
@@ -368,31 +387,31 @@ namespace npycrf {
 		}
 		double CRF::_compute_cost_identical_1_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			int pos = 1;	// [1, _x_range_identical_1]
-			int r_end = std::max(1, i - _x_range_identical_1);
-			for(int r = i;r > r_end;r--){
+			int r_start = std::max(2, i + _x_identical_1_start);
+			int r_end = std::min(character_ids_length, i + _x_identical_1_end);
+			for(int r = r_start;r <= r_end;r++){
+				int pos = r - i - _x_identical_1_start + 1;	// [1, _x_range_identical_1]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
 				int x_i_1 = character_ids[r - 2];
 				if(x_i == x_i_1){
 					cost += w_identical_1_u(y_i, pos);
 					cost += w_identical_1_b(y_i_1, y_i, pos);
 				}
-				pos++;
 			}
 			return cost;
 		}
 		double CRF::_compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
-			int pos = 1;	// [1, _x_range_identical_2]
-			int r_end = std::max(2, i - _x_range_identical_2);
-			for(int r = i;r > r_end;r--){
+			int r_start = std::max(3, i + _x_identical_2_start);
+			int r_end = std::min(character_ids_length, i + _x_identical_2_end);
+			for(int r = r_start;r <= r_end;r++){
+				int pos = r - i - _x_identical_2_start + 1;	// [1, _x_range_identical_2]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
 				int x_i_2 = character_ids[r - 3];
 				if(x_i == x_i_2){
 					cost += w_identical_2_u(y_i, pos);
 					cost += w_identical_2_b(y_i_1, y_i, pos);
 				}
-				pos++;
 			}
 			return cost;
 		}

@@ -85,7 +85,8 @@ public:
 		int feature_x_identical_1_end = 1;
 		int feature_x_identical_2_start = -3;
 		int feature_x_identical_2_end = 1;
-		py_crf = new python::model::CRF(num_character_ids, num_character_types, feature_x_unigram_start, feature_x_unigram_end, feature_x_bigram_start, feature_x_bigram_end, feature_x_identical_1_start, feature_x_identical_1_end, feature_x_identical_2_start, feature_x_identical_2_end);
+		double sigma = 1.0;
+		py_crf = new python::model::CRF(num_character_ids, num_character_types, feature_x_unigram_start, feature_x_unigram_end, feature_x_bigram_start, feature_x_bigram_end, feature_x_identical_1_start, feature_x_identical_1_end, feature_x_identical_2_start, feature_x_identical_2_end, sigma);
 
 		model = new Model(py_npylm, py_crf, lambda_0, max_word_length, 100);
 		Lattice* lattice = model->_lattice;
@@ -112,16 +113,21 @@ public:
 	}
 };
 
-void test_compute_marginal_p_sentence(){
+void test_compute_normalizing_constant(){
 	Variables* var = new Variables();
-	Lattice* lattice = var->model->_lattice;
+	Model* model = var->model;
+	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_1();
 
-	double px_u = lattice->compute_marginal_p_sentence(sentence, true);
-	double px_n = lattice->compute_marginal_p_sentence(sentence, false);
-	double px_b = lattice->_compute_marginal_p_sentence_backward(sentence, lattice->_beta, lattice->_pw_h);
-	assert(std::abs(px_u - px_n) < 1e-12);
-	assert(std::abs(px_u - px_b) < 1e-12);
+	double zs_u = lattice->compute_normalizing_constant(sentence, true);
+	double zs_n = lattice->compute_normalizing_constant(sentence, false);
+	double zs_b = lattice->_compute_normalizing_constant_backward(sentence, lattice->_beta, lattice->_pw_h);
+	double propotional_log_py_x = model->compute_log_proportional_p_y_given_sentence(sentence);
+	double log_py_x_u = propotional_log_py_x - log(zs_u);
+	double log_py_x_n = propotional_log_py_x - log(zs_n);
+	double log_py_x_b = propotional_log_py_x - log(zs_b);
+	assert(std::abs(log_py_x_u - log_py_x_n) < 1e-12);
+	assert(std::abs(log_py_x_u - log_py_x_b) < 1e-12);
 
 	delete sentence;
 	delete var;
@@ -169,7 +175,10 @@ void test_scaling(){
 				assert(beta[t][k][j] > 0);
 				assert(lattice->_alpha[t][k][j] > 0);
 				assert(lattice->_beta[t][k][j] > 0);
-				assert(std::abs(alpha[t][k][j] - scaling * lattice->_alpha[t][k][j]) < 1e-12);
+				if(std::abs(1 - alpha[t][k][j] / (scaling * lattice->_alpha[t][k][j])) >= 1e-12){
+					cout << alpha[t][k][j] << ", " << scaling * lattice->_alpha[t][k][j] << endl;
+				}
+				assert(std::abs(1 - alpha[t][k][j] / (scaling * lattice->_alpha[t][k][j])) < 1e-12);
 			}
 		}
 	}
@@ -194,7 +203,7 @@ void test_enumerate_proportional_p_substring_given_sentence(){
 	lattice::_init_array(beta, seq_capacity + 1, word_capacity, word_capacity);
 	lattice->_enumerate_forward_variables(sentence, alpha, lattice->_pw_h, NULL, false);
 	lattice->_enumerate_backward_variables(sentence, beta, lattice->_pw_h, NULL, false);
-	double Zs = lattice->compute_marginal_p_sentence(sentence, true);
+	double Zs = lattice->compute_normalizing_constant(sentence, true);
 
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
@@ -248,7 +257,7 @@ void test_enumerate_marginal_p_path_given_sentence(){
 
 	lattice->_enumerate_forward_variables(sentence, alpha, lattice->_pw_h, NULL, false);
 	lattice->_enumerate_backward_variables(sentence, beta, lattice->_pw_h, NULL, false);
-	double Zs = lattice->compute_marginal_p_sentence(sentence, true);
+	double Zs = lattice->compute_normalizing_constant(sentence, true);
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
@@ -299,45 +308,56 @@ void test_grad(){
 	wchar_t const* characters = sentence->_characters;
 	int character_ids_length = sentence->size();
 
-	// unigram
-	for(int k = 0;k < crf->_w_size_unigram_type_u;k++){
-		for(int pos = 1; pos <= crf->_x_range_unigram;pos++){
-			double grad = 0;
-			int yt = 1;
-			int yt1 = 1;
-			int i = 2;
-			for(int t = 0;t <= sentence->size();t++){
-				yt = yt1;
-				yt1 = 0;
-				int s = sentence->_start[i] + 1;
-				if(t + 1 == s){
-					i++;
-					yt1 = 1;
-				}
-				int pos = 1;
-				int x_i = (t + 1 <= character_ids_length) ? character_ids[t] : CHARACTER_ID_EOS;
-				int feature_index = crf->_index_w_unigram_u(yt1, pos, x_i);
-				double pi_k = (k == feature_index);
-				double sum_expectation = 0;
-				sum_expectation += lattice->_pz_s[t][0][0] * (crf->_index_w_unigram_u(0, pos, x_i) == k);
-				sum_expectation += lattice->_pz_s[t][0][1] * (crf->_index_w_unigram_u(1, pos, x_i) == k);
-				sum_expectation += lattice->_pz_s[t][1][0] * (crf->_index_w_unigram_u(0, pos, x_i) == k);
-				sum_expectation += lattice->_pz_s[t][1][1] * (crf->_index_w_unigram_u(1, pos, x_i) == k);
-				grad += pi_k - sum_expectation;
+	for(int k = 0;k < crf->_w_size_unigram_u;k++){
+		double grad = 0;
+		int yt_1 = 1;
+		int yt = 1;
+		int i = 2;
+		int pos = (k % (crf->_x_range_unigram * 2)) / 2 + 1;
+		int t_start = std::max(1, -(crf->_x_unigram_start + pos - 1) + 1);
+		for(int t = 1;t < t_start;t++){
+			int s = sentence->_start[i] + 1;
+			yt_1 = yt;
+			yt = 0;
+			if(t == s){
+				i++;
+				yt = 1;
 			}
-			double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log(model->compute_marginal_p_sentence(sentence));
-			crf->_w_unigram_type[k] = 1e-12;
-			if(k > 0){
-				crf->_w_unigram_type[k - 1] = 0;
-			}
-			double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log(model->compute_marginal_p_sentence(sentence));
-			double true_grad = (_log_py - log_py) / 1e-12;
-			if(true_grad == 0 && grad == 0){
-				continue;
-			}
-			cout << grad << ", " << true_grad << endl;
 		}
+		for(int t = t_start;t <= std::min(sentence->size() + 1, sentence->size() - (crf->_x_unigram_start + pos - 1));t++){
+			int s = sentence->_start[i] + 1;
+			yt_1 = yt;
+			yt = 0;
+			if(t == s){
+				i++;
+				yt = 1;
+			}
+			if(t > sentence->size()){
+				yt = 1;
+			}
+			int r = crf->_x_unigram_start + (pos - 1);
+			int index = t + r - 1;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", yt_1 = " << yt_1 << ", yt = " << yt << endl;
+			assert(0 <= index && index < character_ids_length);
+			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
+			double pi_k = (k == crf->_index_w_unigram_u(yt, pos, x_i)) ? 1 : 0;
+			double sum_expectation = 0;
+			sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
+			sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
+			sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
+			sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
+			grad += pi_k - sum_expectation;
+		}
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log(model->compute_normalizing_constant(sentence));
+		crf->_w_unigram[k] += 1e-8;
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log(model->compute_normalizing_constant(sentence));
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
 	}
+
 	delete sentence;
 	delete var;
 }
@@ -350,7 +370,7 @@ int main(int argc, char *argv[]){
 	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
 	std::wcout.imbue(ctype_default);
 	std::wcin.imbue(ctype_default);
-	test_compute_marginal_p_sentence();
+	test_compute_normalizing_constant();
 	cout << "OK" << endl;
 	test_viterbi_decode();
 	cout << "OK" << endl;

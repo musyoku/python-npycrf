@@ -326,24 +326,24 @@ namespace npycrf {
 			return _compute_log_likelihood(_dataset->_sentence_sequences_dev);
 		}
 		double Trainer::_compute_log_likelihood(std::vector<Sentence*> &dataset){
-			if(dataset.size() == 0){
-				return 0;
-			}
-			double sum_log_likelihood = 0;
-			int num_sentences = dataset.size();
-			for(int data_index = 0;data_index < num_sentences;data_index++){
-				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
-					return 0;		
-				}
-				Sentence* sentence = dataset[data_index];
-				double log_px = _model->_lattice->compute_marginal_log_p_sentence(sentence, true);
-				#ifdef __DEBUG__
-					double _log_px = _model->_lattice->compute_marginal_log_p_sentence(sentence, false);
-					assert(abs(log_px - _log_px) < 1e-8);
-				#endif
-				sum_log_likelihood += log_px;
-			}
-			return sum_log_likelihood;
+			// if(dataset.size() == 0){
+			// 	return 0;
+			// }
+			// double sum_log_likelihood = 0;
+			// int num_sentences = dataset.size();
+			// for(int data_index = 0;data_index < num_sentences;data_index++){
+			// 	if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+			// 		return 0;		
+			// 	}
+			// 	Sentence* sentence = dataset[data_index];
+			// 	double log_px = _model->_lattice->compute_marginal_log_p_sentence(sentence, true);
+			// 	#ifdef __DEBUG__
+			// 		double _log_px = _model->_lattice->compute_marginal_log_p_sentence(sentence, false);
+			// 		assert(abs(log_px - _log_px) < 1e-8);
+			// 	#endif
+			// 	sum_log_likelihood += log_px;
+			// }
+			// return sum_log_likelihood;
 		}
 		// デバッグ用
 		void Trainer::remove_all_data(){

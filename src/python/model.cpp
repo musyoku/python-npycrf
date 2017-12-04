@@ -50,20 +50,20 @@ namespace npycrf {
 			_lattice->_lambda_0 = lambda_0;
 		}
 		// 分配関数の計算
-		double Model::compute_marginal_p_sentence(Sentence* sentence){
+		double Model::compute_normalizing_constant(Sentence* sentence){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
-			double px = _lattice->compute_marginal_p_sentence(sentence, true);
+			double px = _lattice->compute_normalizing_constant(sentence, true);
 			#ifdef __DEBUG__
-				double __px = _lattice->_compute_marginal_p_sentence_backward(sentence, _lattice->_beta, _lattice->_pw_h);
-				double ___px = _lattice->compute_marginal_p_sentence(sentence, false);
-				assert(abs(px - __px) < 1e-16);
-				assert(abs(px - ___px) < 1e-16);
+				double __px = _lattice->_compute_normalizing_constant_backward(sentence, _lattice->_beta, _lattice->_pw_h);
+				double ___px = _lattice->compute_normalizing_constant(sentence, false);
+				assert(std::abs(1 - px / __px) < 1e-14);
+				assert(std::abs(1 - px / ___px) < 1e-14);
 			#endif 
 			return px;
 		}
-		double Model::python_compute_marginal_p_sentence(std::wstring sentence_str, Dictionary* dictionary){
+		double Model::python_compute_normalizing_constant(std::wstring sentence_str, Dictionary* dictionary){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
 			_npylm->reserve(sentence_str.size());
@@ -76,7 +76,7 @@ namespace npycrf {
 				character_ids[i] = character_id;
 			}
 			Sentence* sentence = new Sentence(sentence_str, character_ids);
-			double ret = compute_marginal_p_sentence(sentence);
+			double ret = compute_normalizing_constant(sentence);
 			delete[] character_ids;
 			delete sentence;
 			return ret;

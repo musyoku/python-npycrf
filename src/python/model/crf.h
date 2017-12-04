@@ -10,14 +10,15 @@ namespace npycrf {
 				crf::CRF* _crf;
 				CRF(int num_character_ids,		// 文字IDの総数
 					int num_character_types,	// 文字種の総数
-					int feature_x_unigram_start = -2,
-					int feature_x_unigram_end = 2,
-					int feature_x_bigram_start = -2,
-					int feature_x_bigram_end = 1,
-					int feature_x_identical_1_start = -2,
-					int feature_x_identical_1_end = 1,
-					int feature_x_identical_2_start = -3,
-					int feature_x_identical_2_end = 1);
+					int feature_x_unigram_start,
+					int feature_x_unigram_end,
+					int feature_x_bigram_start,
+					int feature_x_bigram_end,
+					int feature_x_identical_1_start,
+					int feature_x_identical_1_end,
+					int feature_x_identical_2_start,
+					int feature_x_identical_2_end,
+					double sigma);
 				CRF(std::string filename);
 				~CRF();
 				bool load(std::string filename);

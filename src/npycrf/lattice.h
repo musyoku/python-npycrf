@@ -63,9 +63,8 @@ namespace npycrf {
 		void viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j);
 		void viterbi_backward(Sentence* sentence, std::vector<int> &segments);
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
-		double compute_marginal_p_sentence(Sentence* sentence, bool use_scaling = true);
-		double _compute_marginal_p_sentence_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji);
-		double compute_marginal_log_p_sentence(Sentence* sentence, bool use_scaling = true);
+		double compute_normalizing_constant(Sentence* sentence, bool use_scaling = true);
+		double _compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji);
 		void _enumerate_marginal_p_path_given_sentence(double*** pz_s, int sentence_length, double** pc_s);
 		double _compute_p_z_case_1_1(int sentence_length, int t, double** pc_s);
 		double _compute_p_z_case_1_0(int sentence_length, int t, double** pc_s);

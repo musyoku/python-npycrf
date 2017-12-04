@@ -28,6 +28,14 @@ namespace npycrf {
 			int _x_range_bigram;
 			int _x_range_identical_1;
 			int _x_range_identical_2;
+			int _x_unigram_start;
+			int _x_unigram_end;
+			int _x_bigram_start;
+			int _x_bigram_end;
+			int _x_identical_1_start;
+			int _x_identical_1_end;
+			int _x_identical_2_start;
+			int _x_identical_2_end;
 			int _w_size_label_u;		// (y_i)
 			int _w_size_label_b;		// (y_{i-1}, y_i)
 			int _w_size_unigram_u;		// (y_i, i, x_i)
@@ -58,14 +66,15 @@ namespace npycrf {
 			// これらの素性を[y_i]と[y_{i-1}, y_i]に関連づける
 			CRF(int num_character_ids,		// 文字IDの総数
 				int num_character_types,	// 文字種の総数
-				int feature_x_unigram_start = -2,
-				int feature_x_unigram_end = 2,
-				int feature_x_bigram_start = -2,
-				int feature_x_bigram_end = 1,
-				int feature_x_identical_1_start = -2,
-				int feature_x_identical_1_end = 1,
-				int feature_x_identical_2_start = -3,
-				int feature_x_identical_2_end = 1
+				int feature_x_unigram_start,
+				int feature_x_unigram_end,
+				int feature_x_bigram_start,
+				int feature_x_bigram_end,
+				int feature_x_identical_1_start,
+				int feature_x_identical_1_end,
+				int feature_x_identical_2_start,
+				int feature_x_identical_2_end,
+				double sigma
 			);
 			CRF(){};
 			~CRF();

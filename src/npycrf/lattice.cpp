@@ -679,7 +679,7 @@ namespace npycrf {
 	}
 	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// use_scaling=trueならアンダーフローを防ぐ
-	double Lattice::compute_marginal_p_sentence(Sentence* sentence, bool use_scaling){
+	double Lattice::compute_normalizing_constant(Sentence* sentence, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		_clear_word_id_cache(_substring_word_id_cache, size);
@@ -704,7 +704,7 @@ namespace npycrf {
 	}
 	// 可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// スケーリング係数は前向き時のみ計算可能なので注意
-	double Lattice::_compute_marginal_p_sentence_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji){
+	double Lattice::_compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		_clear_word_id_cache(_substring_word_id_cache, size);
@@ -716,29 +716,29 @@ namespace npycrf {
 	}
 	// 可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// use_scaling=trueならアンダーフローを防ぐ
-	double Lattice::compute_marginal_log_p_sentence(Sentence* sentence, bool use_scaling){
-		assert(sentence->size() <= _max_sentence_length);
-		int size = sentence->size() + 1;
-		_clear_word_id_cache(_substring_word_id_cache, size);
-		// 前向き確率を求める
-		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);
-		// <eos>へ到達する確率を全部足す
-		int t = sentence->size() + 1;	// <eos>
-		int k = 1;	// <eos>の長さは1
-		if(use_scaling){
-			// スケーリング係数を使う場合は逆数の積がそのまま文の確率になる
-			double log_px = 0;
-			for(int m = 1;m <= t;m++){
-				log_px += log(1.0 / _scaling[m]);
-			}
-			return log_px;
-		}
-		double px = 0;
-		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-			px += _alpha[t][k][j];
-		}
-		return log(px);
-	}
+	// double Lattice::compute_marginal_log_p_sentence(Sentence* sentence, bool use_scaling){
+	// 	assert(sentence->size() <= _max_sentence_length);
+	// 	int size = sentence->size() + 1;
+	// 	_clear_word_id_cache(_substring_word_id_cache, size);
+	// 	// 前向き確率を求める
+	// 	_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);
+	// 	// <eos>へ到達する確率を全部足す
+	// 	int t = sentence->size() + 1;	// <eos>
+	// 	int k = 1;	// <eos>の長さは1
+	// 	if(use_scaling){
+	// 		// スケーリング係数を使う場合は逆数の積がそのまま文の確率になる
+	// 		double log_px = 0;
+	// 		for(int m = 1;m <= t;m++){
+	// 			log_px += log(1.0 / _scaling[m]);
+	// 		}
+	// 		return log_px;
+	// 	}
+	// 	double px = 0;
+	// 	for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+	// 		px += _alpha[t][k][j];
+	// 	}
+	// 	return log(px);
+	// }
 	void Lattice::_enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* scaling, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
@@ -933,7 +933,7 @@ namespace npycrf {
 	// 文の部分文字列が単語になる確率
 	// P_{CONC}(c_{t-k}^t|x)
 	void Lattice::_enumerate_proportional_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta, double Zs){
-		assert(0 < Zs && Zs < 1);
+		assert(Zs > 0);
 		assert(sentence_length <= _max_sentence_length);
 		int size = sentence_length + 1;
 		#ifdef __DEBUG__
@@ -962,6 +962,10 @@ namespace npycrf {
 	void Lattice::_enumerate_marginal_p_path_given_sentence(double*** pz_s, int sentence_length, double** pc_s){
 		assert(sentence_length <= _max_sentence_length);
 		assert(pz_s != NULL);
+		pz_s[0][0][0] = 0;
+		pz_s[0][0][1] = 0;
+		pz_s[0][1][0] = 0;
+		pz_s[0][1][1] = 1;
 		for(int t = 1;t <= sentence_length;t++){
 			// std::cout << "z" << t << ", z" << (t + 1) << std::endl;
 			pz_s[t][1][1] = _compute_p_z_case_1_1(sentence_length, t, pc_s);
@@ -979,6 +983,13 @@ namespace npycrf {
 				assert(std::abs(p_0_0 - pz_s[t][0][0]) < 1e-12);
 			#endif
 			if(1 < t && t < sentence_length){
+				if(pz_s[t][0][0] <= 0){
+					std::cout << "1-1: " << pz_s[t][1][1] << std::endl;
+					std::cout << "1-0: " << pz_s[t][1][0] << std::endl;
+					std::cout << "0-1: " << pz_s[t][0][1] << std::endl;
+					std::cout << "0-0: " << pz_s[t][0][0] << std::endl;
+					std::cout << "*-* - 0-0: " << pz_s[t][1][1] + pz_s[t][1][0] + pz_s[t][0][1] << std::endl;
+				}
 				assert(pz_s[t][0][0] > 0);
 			}
 		}
