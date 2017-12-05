@@ -793,7 +793,10 @@ namespace npycrf {
 		int t = sentence->size() + 1; // <eos>を指す
 		int k = 1;	// ここでは<eos>の長さを1と考える
 		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
+		double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t, t + 1);
+		// double potential = 0;
 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 			double sum_prob = 0;
 			for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, _max_word_length);i++){
@@ -802,7 +805,6 @@ namespace npycrf {
 				_word_ids[2] = ID_EOS;
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2);
 				assert(pw_h > 0);
-				double potential = 0; // P(<eos>|・)に相当するポテンシャルは0
 				double p = exp(_lambda_0 * log(pw_h) + potential);
 				assert(p > 0);
 				sum_prob += p * alpha[t - k][j][i];
@@ -834,6 +836,8 @@ namespace npycrf {
 		wchar_t const* characters = sentence->_characters;
 		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
+		double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t + 1, t + 2);
+		// double potential = 0;
 		for(int k = 1;k <= std::min(t, _max_word_length);k++){
 			id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
@@ -842,7 +846,6 @@ namespace npycrf {
 				_word_ids[2] = ID_EOS;
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2);
 				assert(pw_h > 0);
-				double potential = 0;
 				double p = exp(_lambda_0 * log(pw_h) + potential);
 				assert(p > 0);
 				beta[t][k][j] = p;
@@ -999,7 +1002,9 @@ namespace npycrf {
 		// std::cout << "0-0: " << pz_s[sentence_length][0][0] << std::endl;
 		assert(pz_s[sentence_length][0][0] < 1e-12);
 		assert(pz_s[sentence_length][1][0] < 1e-12);
-		assert(pz_s[sentence_length][0][1] > 0);
+		if(sentence_length > 1){
+			assert(pz_s[sentence_length][0][1] > 0);
+		}
 		assert(pz_s[sentence_length][1][1] > 0);
 	}
 	double Lattice::_compute_p_z_case_1_1(int sentence_length, int t, double** pc_s){

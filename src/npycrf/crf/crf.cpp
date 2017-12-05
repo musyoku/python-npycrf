@@ -319,12 +319,16 @@ namespace npycrf {
 		// s、tはともに番号なので1から始まる
 		// あるノードから別のノードを辿るV字型のパスのコストの合計
 		double CRF::compute_gamma(int const* character_ids, wchar_t const* characters, int character_ids_length, int s, int t){
-			assert(s <= character_ids_length);
-			assert(t <= character_ids_length + 1);
-			assert(s < t);
 			if(t <= 1){
 				return 0;
 			}
+			if(s == character_ids_length + 1){	// P(<eos>|・)に相当するポテンシャル
+				assert(t == s + 1);
+				return compute_path_cost(character_ids, characters, character_ids_length, s, t, 1, 1);
+			}
+			assert(s <= character_ids_length);
+			assert(t <= character_ids_length + 1);
+			assert(s < t);
 			int repeat = t - s;
 			if(repeat == 1){
 				return compute_path_cost(character_ids, characters, character_ids_length, s, t, 1, 1);
@@ -346,7 +350,7 @@ namespace npycrf {
 		double CRF::compute_path_cost(int const* character_ids, wchar_t const* characters, int character_ids_length, int i_1, int i, int y_i_1, int y_i){
 			assert(i_1 + 1 == i);
 			assert(2 <= i);
-			assert(i <= character_ids_length + 1);
+			assert(i <= character_ids_length + 2);
 			assert(y_i == 0 || y_i == 1);
 			assert(y_i_1 == 0 || y_i_1 == 1);
 			double cost = 0;
@@ -429,12 +433,14 @@ namespace npycrf {
 		}
 		double CRF::compute_log_p_y_given_sentence(Sentence* sentence){
 			double log_py_s = 0;
-			for(int i = 2;i < sentence->get_num_segments();i++){
+			for(int i = 2;i < sentence->get_num_segments() - 1;i++){
 				int s = sentence->_start[i] + 1; // インデックスから番号へ
 				int t = s + sentence->_segments[i];
 				double gamma = compute_gamma(sentence->_character_ids, sentence->_characters, sentence->size(), s, t);
 				log_py_s += gamma;
 			}
+			// <eos>
+			log_py_s += compute_gamma(sentence->_character_ids, sentence->_characters, sentence->size(), sentence->size() + 1, sentence->size() + 2);
 			return log_py_s;
 		}
 		template <class Archive>

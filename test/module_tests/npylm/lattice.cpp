@@ -42,8 +42,8 @@ Sentence* generate_sentence_1(){
 }
 
 Sentence* generate_sentence_2(){
-	std::vector<int> segments {3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3};
-	std::wstring sentence_str = L"あああいいうううええおおおあああいいうううええおおおあああいいうううええおおおあああいいうううええおおおあああいいうううええおおお";
+	std::vector<int> segments {3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 1};
+	std::wstring sentence_str = L"あああいいうううええおおおあああいいうううええおおおあああいいうううええおおおあああいいうううええおおおあああいいうううええおおおう";
 	return generate_sentence(sentence_str, segments);
 }
 
@@ -60,8 +60,8 @@ Sentence* generate_sentence_4(){
 }
 
 Sentence* generate_sentence_5(){
-	std::vector<int> segments {4};
-	std::wstring sentence_str = L"おおおお";
+	std::vector<int> segments {1};
+	std::wstring sentence_str = L"あ";
 	return generate_sentence(sentence_str, segments);
 }
 
@@ -119,12 +119,7 @@ public:
 	}
 };
 
-void test_compute_normalizing_constant(){
-	Variables* var = new Variables();
-	Model* model = var->model;
-	Lattice* lattice = model->_lattice;
-	Sentence* sentence = generate_sentence_1();
-
+void assert_test_compute_normalizing_constant(Sentence* sentence, Lattice* lattice, Model* model){
 	double zs_u = lattice->compute_normalizing_constant(sentence, true);
 	double zs_n = lattice->compute_normalizing_constant(sentence, false);
 	double zs_b = lattice->_compute_normalizing_constant_backward(sentence, lattice->_beta, lattice->_pw_h);
@@ -134,6 +129,25 @@ void test_compute_normalizing_constant(){
 	double log_py_x_b = propotional_log_py_x - log(zs_b);
 	assert(std::abs(log_py_x_u - log_py_x_n) < 1e-12);
 	assert(std::abs(log_py_x_u - log_py_x_b) < 1e-12);
+}
+
+void test_compute_normalizing_constant(){
+	Variables* var = new Variables();
+	Model* model = var->model;
+	Lattice* lattice = model->_lattice;
+
+	Sentence* sentence = generate_sentence_1();
+	assert_test_compute_normalizing_constant(sentence, lattice, model);
+	delete sentence;
+
+	sentence = generate_sentence_2();
+	assert_test_compute_normalizing_constant(sentence, lattice, model);
+	delete sentence;
+
+	sentence = generate_sentence_5();
+	double log_Zs = log(model->compute_normalizing_constant(sentence));
+	double log_py = model->compute_log_proportional_p_y_given_sentence(sentence);
+	assert(std::abs(log_Zs - log_py) < 1e-12);
 
 	delete sentence;
 	delete var;
@@ -342,6 +356,8 @@ void test_grad(){
 		int i = 2;
 		int pos = (k % (crf->_x_range_unigram * 2)) / 2 + 1;
 		int t_start = std::max(1, -(crf->_x_unigram_start + pos - 1) + 1);
+		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_unigram_start + pos - 1));
+		cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
 		for(int t = 1;t < t_start;t++){
 			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
 			yt_1 = yt;
@@ -352,35 +368,43 @@ void test_grad(){
 			}
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 		}
-		for(int t = t_start;t <= std::min(sentence->size() + 1, sentence->size() - (crf->_x_unigram_start + pos - 1));t++){
+		for(int t = t_start;t <= t_end;t++){
 			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
 			yt_1 = yt;
 			yt = 0;
-			if(t == s){
+			if(t == s || t == sentence->size() + 2){
 				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
 				yt = 1;
 			}
 			int r = crf->_x_unigram_start + (pos - 1);
 			int index = t + r - 1;
-			assert(0 <= index && index < character_ids_length);
+			assert(0 <= index);
 			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
 			double pi_k = (k == crf->_index_w_unigram_u(yt, pos, x_i)) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-			cout << "t = " << t << ", r = " << r << ", index = " << index << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << endl;
 			double sum_expectation = 0;
-			sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
-			sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
-			sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
-			sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
+			}
 			grad += pi_k - sum_expectation;
+			cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
 		}
 
 		if(k > 0){
 			crf->_w_unigram[k] -= 1e-8;
 		}
-		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log(model->compute_normalizing_constant(sentence));
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence);
+		cout << log_Zs << " == " << log_py << endl;
 		crf->_w_unigram[k] += 1e-8;
-		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log(model->compute_normalizing_constant(sentence));
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence);
+		cout << _log_Zs << " == " << _log_py << endl;
 		double true_grad = (_log_py - log_py) / 1e-8;
 		if(true_grad == 0 && grad == 0){
 			continue;
@@ -388,6 +412,7 @@ void test_grad(){
 		cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
 		cout << std::abs(true_grad - grad) << endl;
 		// assert(std::abs(true_grad - grad) < 1e-4);
+
 	}
 	crf->_w_unigram[crf->_w_size_unigram_u - 1] -= 1e-8;
 
@@ -407,16 +432,16 @@ int main(int argc, char *argv[]){
 	token_ids[CHARACTER_ID_BOS] = token_ids.size();
 	token_ids[CHARACTER_ID_EOS] = token_ids.size();
 
-	test_compute_normalizing_constant();
-	cout << "OK" << endl;
-	test_viterbi_decode();
-	cout << "OK" << endl;
-	test_scaling();
-	cout << "OK" << endl;
-	test_enumerate_proportional_p_substring_given_sentence();
-	cout << "OK" << endl;
-	test_enumerate_marginal_p_path_given_sentence();
-	cout << "OK" << endl;
+	// test_compute_normalizing_constant();
+	// cout << "OK" << endl;
+	// test_viterbi_decode();
+	// cout << "OK" << endl;
+	// test_scaling();
+	// cout << "OK" << endl;
+	// test_enumerate_proportional_p_substring_given_sentence();
+	// cout << "OK" << endl;
+	// test_enumerate_marginal_p_path_given_sentence();
+	// cout << "OK" << endl;
 	test_grad();
 	cout << "OK" << endl;
 }
