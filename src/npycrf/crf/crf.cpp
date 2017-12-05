@@ -367,7 +367,7 @@ namespace npycrf {
 		double CRF::_compute_cost_unigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
 			int r_start = std::max(1, i + _x_unigram_start);
-			int r_end = std::min(character_ids_length, i + _x_unigram_end);
+			int r_end = std::min(character_ids_length + 2, i + _x_unigram_end);	// <eos>2つを考慮
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_unigram]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
@@ -379,7 +379,7 @@ namespace npycrf {
 		double CRF::_compute_cost_bigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
 			int r_start = std::max(2, i + _x_bigram_start);
-			int r_end = std::min(character_ids_length, i + _x_bigram_end);
+			int r_end = std::min(character_ids_length + 2, i + _x_bigram_end);
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_bigram]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
@@ -392,7 +392,7 @@ namespace npycrf {
 		double CRF::_compute_cost_identical_1_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
 			int r_start = std::max(2, i + _x_identical_1_start);
-			int r_end = std::min(character_ids_length, i + _x_identical_1_end);
+			int r_end = std::min(character_ids_length + 2, i + _x_identical_1_end);
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_identical_1_start + 1;	// [1, _x_range_identical_1]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
@@ -407,7 +407,7 @@ namespace npycrf {
 		double CRF::_compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
 			int r_start = std::max(3, i + _x_identical_2_start);
-			int r_end = std::min(character_ids_length, i + _x_identical_2_end);
+			int r_end = std::min(character_ids_length + 2, i + _x_identical_2_end);
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_identical_2_start + 1;	// [1, _x_range_identical_2]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
