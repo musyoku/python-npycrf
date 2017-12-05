@@ -987,6 +987,7 @@ namespace npycrf {
 			#endif
 			if(1 < t && t < sentence_length){
 				if(pz_s[t][0][0] <= 0){
+					std::cout << "t: " << t << std::endl;
 					std::cout << "1-1: " << pz_s[t][1][1] << std::endl;
 					std::cout << "1-0: " << pz_s[t][1][0] << std::endl;
 					std::cout << "0-1: " << pz_s[t][0][1] << std::endl;

@@ -383,7 +383,7 @@ namespace npycrf {
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_bigram]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-				int x_i_1 = character_ids[r - 2];
+				int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
 				cost += w_bigram_u(y_i, pos, x_i_1, x_i);
 				cost += w_bigram_b(y_i_1, y_i, pos, x_i_1, x_i);
 			}
@@ -396,7 +396,7 @@ namespace npycrf {
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_identical_1_start + 1;	// [1, _x_range_identical_1]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-				int x_i_1 = character_ids[r - 2];
+				int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
 				if(x_i == x_i_1){
 					cost += w_identical_1_u(y_i, pos);
 					cost += w_identical_1_b(y_i_1, y_i, pos);
@@ -411,7 +411,7 @@ namespace npycrf {
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_identical_2_start + 1;	// [1, _x_range_identical_2]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-				int x_i_2 = character_ids[r - 3];
+				int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : CHARACTER_ID_EOS;
 				if(x_i == x_i_2){
 					cost += w_identical_2_u(y_i, pos);
 					cost += w_identical_2_b(y_i_1, y_i, pos);
