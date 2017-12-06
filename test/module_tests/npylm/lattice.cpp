@@ -161,13 +161,16 @@ void test_compute_normalizing_constant(bool pure_crf_mode){
 	delete var;
 }
 
-void test_viterbi_decode(bool pure_crf_mode){
+void test_viterbi_decode(){
 	Variables* var = new Variables();
 	Lattice* lattice = var->model->_lattice;
-	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_1();
 	std::vector<int> segments;
 	lattice->viterbi_decode(sentence, segments);
+	Sentence* _sentence = sentence->copy();
+	_sentence->split(segments);
+	_sentence->dump_words();
+	delete _sentence;
 	for(int i = 0;i < segments.size();i++){
 		assert(segments[i] == sentence->_segments[i + 2]);
 	}
@@ -1366,9 +1369,8 @@ int main(int argc, char *argv[]){
 	test_compute_normalizing_constant(true);
 	test_compute_normalizing_constant(false);
 	cout << "OK" << endl;
-	test_viterbi_decode(true);
-	test_viterbi_decode(false);
-	cout << "OK" << endl;
+	// test_viterbi_decode();
+	// cout << "OK" << endl;
 	test_scaling(true);
 	test_scaling(false);
 	cout << "OK" << endl;

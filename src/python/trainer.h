@@ -30,7 +30,7 @@ namespace npycrf {
 			Trainer(Dataset* dataset, Model* model);
 			void remove_all_data();
 			void gibbs();
-			void sgd(bool pure_crf, int batchsize);
+			void sgd(bool pure_crf);
 			void sample_hpylm_vpylm_hyperparameters();
 			void sample_npylm_lambda();
 			wchar_t sample_word_from_vpylm_given_context(wchar_t* context_ids, int context_length, int sample_t, bool skip_eow = false);

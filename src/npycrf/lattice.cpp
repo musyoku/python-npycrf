@@ -613,14 +613,14 @@ namespace npycrf {
 		int limit_k = std::min(t, _max_word_length);
 		for(int k = 1;k <= limit_k;k++){
 			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-				_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k, j);;
-				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t, k);;
-				_word_ids[2] = ID_EOS;
 				double p = 0;
 				double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t + 1, t + 2);
 				if(_pure_crf_mode){
 					p = exp(potential);
 				}else{
+					_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k, j);;
+					_word_ids[1] = get_substring_word_id_at_t_k(sentence, t, k);;
+					_word_ids[2] = ID_EOS;
 					double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
 					assert(pw_h > 0);
 					p = exp(_lambda_0 * log(pw_h) + potential);
@@ -635,14 +635,14 @@ namespace npycrf {
 				}
 			}
 			if(t - k == 0){
-				_word_ids[0] = ID_BOS;
-				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t, k);;
-				_word_ids[2] = ID_EOS;
 				double p = 0;
 				double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t + 1, t + 2);
 				if(_pure_crf_mode){
 					p = exp(potential);
 				}else{
+					_word_ids[0] = ID_BOS;
+					_word_ids[1] = get_substring_word_id_at_t_k(sentence, t, k);;
+					_word_ids[2] = ID_EOS;
 					double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
 					assert(pw_h > 0);
 					p = exp(_lambda_0 * log(pw_h) + potential);
