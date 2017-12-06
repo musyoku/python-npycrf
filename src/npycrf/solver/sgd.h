@@ -22,6 +22,7 @@ namespace npycrf {
 			~SGD();
 			void clear_grads();
 			void backward(Sentence* sentence);
+			void _backward_unigram(Sentence* sentence);
 		};
 	}
 }

@@ -997,6 +997,11 @@ namespace npycrf {
 				// assert(pz_s[t][0][0] > 0);
 			}
 		}
+		// 2つめの<eos>への遷移
+		pz_s[sentence_length + 1][0][0] = 0;
+		pz_s[sentence_length + 1][0][1] = 0;
+		pz_s[sentence_length + 1][1][0] = 0;
+		pz_s[sentence_length + 1][1][1] = 1;
 		// std::cout << "1-1: " << pz_s[sentence_length][1][1] << std::endl;
 		// std::cout << "1-0: " << pz_s[sentence_length][1][0] << std::endl;
 		// std::cout << "0-1: " << pz_s[sentence_length][0][1] << std::endl;

@@ -15,6 +15,7 @@ namespace npycrf {
 		wchar_t const* _characters; // _sentence_strの各文字. 実際には使わない
 		int* _character_ids;// _sentence_strの各文字のid. 実際に使われるのはこっち
 		id* _word_ids;		// <bos>2つと<eos>1つを含める
+		int* _labels;		// CRFのラベル. <bos>が1つ先頭に入り、<eos>が末尾に2つ入る. CRFに合わせて1スタート、[0]は<bos>
 		std::wstring _sentence_str;	// 生の文データ
 		Sentence(std::wstring sentence, int* character_ids);
 		Sentence(std::wstring sentence, int* character_ids, bool supervised);
@@ -27,6 +28,7 @@ namespace npycrf {
 		int get_word_length_at(int t);
 		id get_word_id_at(int t);
 		id get_substr_word_id(int start_index, int end_index);				// end_indexを含む
+		int get_crf_label_at(int t);	// tは1から
 		std::wstring get_substr_word_str(int start_index, int end_index);	// endを含む
 		std::wstring get_word_str_at(int t);	// t=0,1の時は<bos>が返る
 		void dump_characters();

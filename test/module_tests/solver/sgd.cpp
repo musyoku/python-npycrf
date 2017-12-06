@@ -130,22 +130,28 @@ void test_backward_unigram(){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
+	solver::SGD* sgd = new solver::SGD(lattice, crf);
+	sgd->_backward_unigram(sentence);
+
 	int const* character_ids = sentence->_character_ids;
 	wchar_t const* characters = sentence->_characters;
 	int character_ids_length = sentence->size();
 
 	for(int pos = 1;pos <= crf->_x_range_unigram;pos++){
 		for(int x_i = 0;x_i < token_ids.size();x_i++){
-			// cout << "index = " << crf->_index_w_unigram_u(0, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
-			// cout << "index = " << crf->_index_w_unigram_u(1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
+			cout << "index = " << crf->_index_w_unigram_u(0, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
+			cout << "index = " << crf->_index_w_unigram_u(1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
 			assert(pos == (crf->_index_w_unigram_u(0, pos, x_i) % (crf->_x_range_unigram * 2)) / 2 + 1);
 			assert(pos == (crf->_index_w_unigram_u(1, pos, x_i) % (crf->_x_range_unigram * 2)) / 2 + 1);
 		}
 	}
 
-	double* grad_w_label = new double[crf->_w_size_label_u + crf->_w_size_label_b];
+	double* grad_w_label = new double[crf->_w_size_unigram_u + crf->_w_size_unigram_b];
+	for(int k = 0;k < crf->_w_size_unigram_u + crf->_w_size_unigram_b;k++){
+		grad_w_label[k] = 0;
+	}
 
-	// sentence->dump_words();
+	sentence->dump_words();
 
 	for(int k = 0;k < crf->_w_size_unigram_u;k++){
 		double grad = 0;
@@ -156,24 +162,9 @@ void test_backward_unigram(){
 		int t_start = std::max(1, -(crf->_x_unigram_start + pos - 1) + 1);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_unigram_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_unigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(0 <= index);
@@ -243,25 +234,9 @@ void test_backward_unigram(){
 		int pos = ((k - crf->_w_size_unigram_u) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1;
 		int t_start = std::max(1, -(crf->_x_unigram_start + pos - 1) + 1);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_unigram_start + pos - 1));
-		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_unigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(0 <= index);
@@ -305,6 +280,12 @@ void test_backward_unigram(){
 			cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
 		}
 		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_label[k] = grad;
+	}
+
+	for(int k = 0;k < crf->_w_size_unigram_u + crf->_w_size_unigram_b;k++){
+		cout << "k = " << k << ", " << grad_w_label[k] << " == " << sgd->_grad_w_unigram[k] << endl;
+		assert(std::abs(grad_w_label[k] - sgd->_grad_w_unigram[k]) < 1e-12);
 	}
 
 	delete sentence;

@@ -15,9 +15,11 @@ namespace npycrf {
 		_word_ids = new id[size() + 3];
 		_segments = new int[size() + 3];
 		_start = new int[size() + 3];
+		_labels = new int[size() + 3];
 		for(int i = 0;i < size() + 3;i++){
 			_word_ids[i] = 0;
 			_segments[i] = 0;
+			_labels[i] = 0;
 		}
 		_word_ids[0] = ID_BOS;
 		_word_ids[1] = ID_BOS;
@@ -150,5 +152,28 @@ namespace npycrf {
 			_start[n + 2] = 0;
 		}
 		_num_segments = num_segments_without_special_tokens + 3;
+		
+		// CRFのラベルを設定
+		// 文字位置は1スタート、<bos>は1つ、<eos>は2つと考える
+		_labels[0] = 1;
+		int yt_1 = 1;
+		int yt = 1;
+		int i = 2;
+		for(int t = 1;t <= size();t++){
+			int s = (i < _num_segments - 1) ? _start[i] + 1 : size() + 1;
+			yt_1 = yt;
+			yt = 0;
+			if(t == s){
+				i = (i < _num_segments - 1) ? i + 1 : _num_segments - 1;
+				yt = 1;
+			}
+			_labels[t] = yt;
+		}
+		_labels[size() + 1] = 1;	// <eos>
+		_labels[size() + 2] = 1;	// <eos>
+	}
+	int Sentence::get_crf_label_at(int t){
+		assert(t <= size() + 2);
+		return _labels[t];
 	}
 } // namespace npycrf

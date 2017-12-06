@@ -342,31 +342,13 @@ void test_grad_unigram(){
 
 	for(int k = 0;k < crf->_w_size_unigram_u;k++){
 		double grad = 0;
-		int yt_1 = 1;
-		int yt = 1;
-		int i = 2;
 		int pos = (k % (crf->_x_range_unigram * 2)) / 2 + 1;
 		int t_start = std::max(1, -(crf->_x_unigram_start + pos - 1) + 1);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_unigram_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_unigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(0 <= index);
@@ -429,31 +411,13 @@ void test_grad_unigram(){
 
 	for(int k = crf->_w_size_unigram_u;k < crf->_w_size_unigram_u + crf->_w_size_unigram_b;k++){
 		double grad = 0;
-		int yt_1 = 1;
-		int yt = 1;
-		int i = 2;
 		int pos = ((k - crf->_w_size_unigram_u) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1;
 		int t_start = std::max(1, -(crf->_x_unigram_start + pos - 1) + 1);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_unigram_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_unigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(0 <= index);
@@ -534,31 +498,13 @@ void test_grad_bigram(){
 
 	for(int k = 0;k < crf->_w_size_bigram_u;k++){
 		double grad = 0;
-		int yt_1 = 1;
-		int yt = 1;
-		int i = 2;
 		int pos = (k % (crf->_x_range_bigram * 2)) / 2 + 1;
 		int t_start = std::max(1, -(crf->_x_bigram_start + pos - 1) + 2);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_bigram_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_bigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(1 <= index);
@@ -618,31 +564,13 @@ void test_grad_bigram(){
 	
 	for(int k = crf->_w_size_bigram_u;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
 		double grad = 0;
-		int yt_1 = 1;
-		int yt = 1;
-		int i = 2;
 		int pos = ((k - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1;
 		int t_start = std::max(1, -(crf->_x_bigram_start + pos - 1) + 2);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_bigram_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_bigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(1 <= index);
@@ -718,31 +646,13 @@ void test_grad_identical_1(){
 
 	for(int k = 0;k < crf->_w_size_identical_1_u;k++){
 		double grad = 0;
-		int yt_1 = 1;
-		int yt = 1;
-		int i = 2;
 		int pos = k / 2 + 1;
 		int t_start = std::max(1, -(crf->_x_identical_1_start + pos - 1) + 2);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_1_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_identical_1_start + (pos - 1);
 			int index = t + r - 1;
 			assert(1 <= index);
@@ -805,24 +715,9 @@ void test_grad_identical_1(){
 		int t_start = std::max(1, -(crf->_x_identical_1_start + pos - 1) + 2);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_1_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_identical_1_start + (pos - 1);
 			int index = t + r - 1;
 			assert(1 <= index);
@@ -906,24 +801,9 @@ void test_grad_identical_2(){
 		int t_start = std::max(1, -(crf->_x_identical_2_start + pos - 1) + 3);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_2_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_identical_2_start + (pos - 1);
 			int index = t + r - 1;
 			assert(2 <= index);
@@ -986,24 +866,9 @@ void test_grad_identical_2(){
 		int t_start = std::max(1, -(crf->_x_identical_2_start + pos - 1) + 3);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_2_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			int r = crf->_x_identical_2_start + (pos - 1);
 			int index = t + r - 1;
 			assert(2 <= index);
@@ -1078,24 +943,9 @@ void test_grad_character_type_unigram(){
 		int t_start = 1;
 		int t_end = sentence->size() + 2;
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			wchar_t c_i = (t <= character_ids_length) ? characters[t - 1] : 0;
 			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(c_i) : CTYPE_UNKNOWN;
 			double pi_k = (k == crf->_index_w_unigram_type_u(yt, type_i)) ? 1 : 0;
@@ -1147,24 +997,9 @@ void test_grad_character_type_unigram(){
 		int t_start = 1;
 		int t_end = sentence->size() + 2;
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			wchar_t c_i = (t <= character_ids_length) ? characters[t - 1] : 0;
 			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(c_i) : CTYPE_UNKNOWN;
 			double pi_k = (k == crf->_index_w_unigram_type_b(yt_1, yt, type_i)) ? 1 : 0;
@@ -1254,24 +1089,9 @@ void test_grad_character_type_bigram(){
 		int t_start = 2;
 		int t_end = sentence->size() + 2;
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			wchar_t c_i = (t <= character_ids_length) ? characters[t - 1] : 0;
 			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(c_i) : CTYPE_UNKNOWN;
 			wchar_t c_i_1 = (t - 1 <= character_ids_length) ? characters[t - 2] : 0;
@@ -1344,24 +1164,9 @@ void test_grad_character_type_bigram(){
 		int t_start = 2;
 		int t_end = sentence->size() + 2;
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			wchar_t c_i = (t <= character_ids_length) ? characters[t - 1] : 0;
 			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(c_i) : CTYPE_UNKNOWN;
 			wchar_t c_i_1 = (t - 1 <= character_ids_length) ? characters[t - 2] : 0;
@@ -1435,24 +1240,9 @@ void test_grad_label(){
 		int t_start = 1;
 		int t_end = sentence->size() + 2;
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			double pi_k = (k == crf->_index_w_label_u(yt)) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
@@ -1503,24 +1293,9 @@ void test_grad_label(){
 		int t_start = 2;
 		int t_end = sentence->size() + 2;
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
-		for(int t = 1;t < t_start;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
-			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
-		}
 		for(int t = t_start;t <= t_end;t++){
-			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
-			yt_1 = yt;
-			yt = 0;
-			if(t == s || t == sentence->size() + 2){
-				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
-				yt = 1;
-			}
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
 			double pi_k = (k == crf->_index_w_label_b(yt_1, yt)) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
