@@ -132,10 +132,11 @@ void assert_test_compute_normalizing_constant(Sentence* sentence, Lattice* latti
 	assert(std::abs(log_py_x_u - log_py_x_b) < 1e-12);
 }
 
-void test_compute_normalizing_constant(){
+void test_compute_normalizing_constant(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 
 	Sentence* sentence = generate_sentence_1();
 	assert_test_compute_normalizing_constant(sentence, lattice, model);
@@ -147,16 +148,23 @@ void test_compute_normalizing_constant(){
 
 	sentence = generate_sentence_5();
 	double log_Zs = log(model->compute_normalizing_constant(sentence));
-	double log_py = model->compute_log_proportional_p_y_given_sentence(sentence);
+
+	lattice->_npylm->reserve(sentence->size());	// キャッシュの再確保
+	double log_crf = lattice->_crf->compute_log_p_y_given_sentence(sentence);
+	double log_npylm = lattice->_npylm->compute_log_p_y_given_sentence(sentence);
+	double log_py = pure_crf_mode ? log_crf : log_crf + model->get_lambda_0() * log_npylm;
+	
+	cout << log_Zs << ", " << log_py << endl;
 	assert(std::abs(log_Zs - log_py) < 1e-12);
 
 	delete sentence;
 	delete var;
 }
 
-void test_viterbi_decode(){
+void test_viterbi_decode(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Lattice* lattice = var->model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_1();
 	std::vector<int> segments;
 	lattice->viterbi_decode(sentence, segments);
@@ -167,9 +175,10 @@ void test_viterbi_decode(){
 	delete var;
 }
 
-void test_scaling(){
+void test_scaling(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Lattice* lattice = var->model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_1();
 	double*** alpha;
 	double*** beta;
@@ -210,9 +219,10 @@ void test_scaling(){
 	delete var;
 }
 
-void test_enumerate_proportional_p_substring_given_sentence(){
+void test_enumerate_proportional_p_substring_given_sentence(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Lattice* lattice = var->model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_1();
 	double*** alpha;
 	double*** beta;
@@ -259,9 +269,10 @@ void test_enumerate_proportional_p_substring_given_sentence(){
 	delete var;
 }
 
-void test_enumerate_marginal_p_path_given_sentence(){
+void test_enumerate_marginal_p_path_given_sentence(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Lattice* lattice = var->model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
 	double*** alpha;
 	double*** beta;
@@ -1352,15 +1363,20 @@ int main(int argc, char *argv[]){
 	token_ids[CHARACTER_ID_BOS] = token_ids.size();
 	token_ids[CHARACTER_ID_EOS] = token_ids.size();
 	
-	test_compute_normalizing_constant();
+	test_compute_normalizing_constant(true);
+	test_compute_normalizing_constant(false);
 	cout << "OK" << endl;
-	test_viterbi_decode();
+	test_viterbi_decode(true);
+	test_viterbi_decode(false);
 	cout << "OK" << endl;
-	test_scaling();
+	test_scaling(true);
+	test_scaling(false);
 	cout << "OK" << endl;
-	test_enumerate_proportional_p_substring_given_sentence();
+	test_enumerate_proportional_p_substring_given_sentence(true);
+	test_enumerate_proportional_p_substring_given_sentence(false);
 	cout << "OK" << endl;
-	test_enumerate_marginal_p_path_given_sentence();
+	test_enumerate_marginal_p_path_given_sentence(true);
+	test_enumerate_marginal_p_path_given_sentence(false);
 	cout << "OK" << endl;
 	test_grad_unigram();
 	cout << "OK" << endl;

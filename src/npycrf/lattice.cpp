@@ -236,14 +236,14 @@ namespace npycrf {
 		assert(t - k >= 0);
 		// <bos>から生成されている場合
 		if(j == 0){
-			_word_ids[0] = ID_BOS;
-			_word_ids[1] = ID_BOS;
-			_word_ids[2] = word_k_id;
 			double p = 0;
 			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
+				_word_ids[0] = ID_BOS;
+				_word_ids[1] = ID_BOS;
+				_word_ids[2] = word_k_id;
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				p = exp(_lambda_0 * log(pw_h) + potential);
@@ -255,15 +255,14 @@ namespace npycrf {
 		}
 		// i=0に相当
 		if(t - k - j == 0){
-			id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-			_word_ids[0] = ID_BOS;
-			_word_ids[1] = word_j_id;
-			_word_ids[2] = word_k_id;
 			double p = 0;
 			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
+				_word_ids[0] = ID_BOS;
+				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);;
+				_word_ids[2] = word_k_id;
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				assert(alpha[t - k][j][0] > 0);
@@ -278,16 +277,14 @@ namespace npycrf {
 		// それ以外の場合は周辺化
 		double sum = 0;
 		for(int i = 1;i <= std::min(t - k - j, _max_word_length);i++){
-			id word_i_id = get_substring_word_id_at_t_k(sentence, t - k - j, i);
-			id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-			_word_ids[0] = word_i_id;
-			_word_ids[1] = word_j_id;
-			_word_ids[2] = word_k_id;
 			double p = 0;
 			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
+				_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k - j, i);;
+				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);;
+				_word_ids[2] = word_k_id;
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				assert(i <= _max_word_length);
@@ -557,7 +554,7 @@ namespace npycrf {
 			}
 			assert(_alpha[t - k][j][0] != 0);
 			_alpha[t][k][j] = log(p) + _alpha[t - k][j][0];
-			assert(_alpha[t][k][j] <= 0);
+			assert(_alpha[t][k][j] != 0);
 			_viterbi_backward[t][k][j] = 0;
 			return;
 		}
@@ -580,9 +577,9 @@ namespace npycrf {
 				p = exp(_lambda_0 * log(pw_h) + potential);
 			}
 			assert(i <= _max_word_length);
-			assert(_alpha[t - k][j][i] <= 0);
+			assert(_alpha[t - k][j][i] != 0);
 			double value = log(p) + _alpha[t - k][j][i];
-			assert(value <= 0);
+			assert(value != 0);
 			if(argmax == 0 || value > max_log_p){
 				argmax = i;
 				max_log_p = value;
@@ -628,9 +625,9 @@ namespace npycrf {
 					assert(pw_h > 0);
 					p = exp(_lambda_0 * log(pw_h) + potential);
 				}
-				assert(_alpha[t][k][j] <= 0);
+				assert(_alpha[t][k][j] != 0);
 				double value = log(p) + _alpha[t][k][j];
-				assert(value <= 0);
+				assert(value != 0);
 				if(argmax_k == 0 || value > max_log_p){
 					max_log_p = value;
 					argmax_k = k;
@@ -650,9 +647,9 @@ namespace npycrf {
 					assert(pw_h > 0);
 					p = exp(_lambda_0 * log(pw_h) + potential);
 				}
-				assert(_alpha[t][k][0] <= 0);
+				assert(_alpha[t][k][0] != 0);
 				double value = log(p) + _alpha[t][k][0];
-				assert(value <= 0);
+				assert(value != 0);
 				if(argmax_k == 0 || value > max_log_p){
 					max_log_p = value;
 					argmax_k = k;
