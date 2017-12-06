@@ -288,6 +288,8 @@ void test_backward_unigram(){
 		assert(std::abs(grad_w_unigram[k] - sgd->_grad_w_unigram[k]) < 1e-12);
 	}
 
+	delete[] grad_w_unigram;
+	delete sgd;
 	delete sentence;
 	delete var;
 }
@@ -453,11 +455,13 @@ void test_backward_bigram(){
 		assert(std::abs(grad_w_bigram[k] - sgd->_grad_w_bigram[k]) < 1e-12);
 	}
 
+	delete[] grad_w_bigram;
+	delete sgd;
 	delete sentence;
 	delete var;
 }
 
-void test_grad_identical_1(){
+void test_backward_identical_1(){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
@@ -472,8 +476,8 @@ void test_grad_identical_1(){
 	solver::SGD* sgd = new solver::SGD(lattice, crf);
 	sgd->_backward_identical_1(sentence);
 
-	double* grad_w_identical_1 = new double[crf->_w_size_bigram_u + crf->_w_size_bigram_b];
-	for(int k = 0;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
+	double* grad_w_identical_1 = new double[crf->_w_size_identical_1_u + crf->_w_size_identical_1_b];
+	for(int k = 0;k < crf->_w_size_identical_1_u + crf->_w_size_identical_1_b;k++){
 		grad_w_identical_1[k] = 0;
 	}
 
@@ -613,11 +617,13 @@ void test_grad_identical_1(){
 		assert(std::abs(grad_w_identical_1[k] - sgd->_grad_w_identical_1[k]) < 1e-12);
 	}
 
+	delete[] grad_w_identical_1;
+	delete sgd;
 	delete sentence;
 	delete var;
 }
 
-void test_grad_identical_2(){
+void test_backward_identical_2(){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
@@ -632,8 +638,8 @@ void test_grad_identical_2(){
 	solver::SGD* sgd = new solver::SGD(lattice, crf);
 	sgd->_backward_identical_2(sentence);
 
-	double* grad_w_identical_2 = new double[crf->_w_size_bigram_u + crf->_w_size_bigram_b];
-	for(int k = 0;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
+	double* grad_w_identical_2 = new double[crf->_w_size_identical_2_u + crf->_w_size_identical_2_b];
+	for(int k = 0;k < crf->_w_size_identical_2_u + crf->_w_size_identical_2_b;k++){
 		grad_w_identical_2[k] = 0;
 	}
 
@@ -777,6 +783,326 @@ void test_grad_identical_2(){
 		assert(std::abs(grad_w_identical_2[k] - sgd->_grad_w_identical_2[k]) < 1e-12);
 	}
 
+	delete[] grad_w_identical_2;
+	delete sgd;
+	delete sentence;
+	delete var;
+}
+
+void test_backward_character_type_unigram(){
+	Variables* var = new Variables();
+	Model* model = var->model;
+	Lattice* lattice = model->_lattice;
+	Sentence* sentence = generate_sentence_4();
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
+	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+
+	crf::CRF* crf = var->py_crf->_crf;
+	solver::SGD* sgd = new solver::SGD(lattice, crf);
+	sgd->_backward_unigram_type(sentence);
+
+	double* grad_w_unigram_type = new double[crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b];
+	for(int k = 0;k < crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b;k++){
+		grad_w_unigram_type[k] = 0;
+	}
+	int const* character_ids = sentence->_character_ids;
+	wchar_t const* characters = sentence->_characters;
+	int character_ids_length = sentence->size();
+
+	// sentence->dump_words();
+
+	for(int k = 0;k < crf->_w_size_unigram_type_u;k++){
+		double grad = 0;
+		int yt_1 = 1;
+		int yt = 1;
+		int i = 2;
+		int t_start = 1;
+		int t_end = sentence->size() + 2;
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			wchar_t c_i = (t <= character_ids_length) ? characters[t - 1] : 0;
+			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(c_i) : CTYPE_UNKNOWN;
+			double pi_k = (k == crf->_index_w_unigram_type_u(yt, type_i)) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_unigram_type_u(1, type_i) == k) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_unigram_type_u(0, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_unigram_type_u(1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_unigram_type_u(0, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_unigram_type_u(1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", type_i = " << type_i << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_unigram_type[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_unigram_type[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_unigram_type[k] = grad;
+	}
+
+	crf->_w_unigram_type[crf->_w_size_unigram_type_u - 1] -= 1e-8;
+	
+	for(int k = crf->_w_size_unigram_type_u;k < crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b;k++){
+		double grad = 0;
+		int t_start = 1;
+		int t_end = sentence->size() + 2;
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(characters[t - 1]) : CTYPE_UNKNOWN;
+			double pi_k = (k == crf->_index_w_unigram_type_b(yt_1, yt, type_i)) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_unigram_type_b(1, 1, type_i) == k) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_unigram_type_b(0, 0, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_unigram_type_b(0, 1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_unigram_type_b(1, 0, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_unigram_type_b(1, 1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_unigram_type[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_unigram_type[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_unigram_type[k] = grad;
+	}
+
+	for(int k = 0;k < crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b;k++){
+		// cout << "k = " << k << ", " << grad_w_unigram_type[k] << " == " << sgd->_grad_w_unigram_type[k] << endl;
+		assert(std::abs(grad_w_unigram_type[k] - sgd->_grad_w_unigram_type[k]) < 1e-12);
+	}
+
+	delete[] grad_w_unigram_type;
+	delete sgd;
+	delete sentence;
+	delete var;
+}
+
+void test_backward_character_type_bigram(){
+	Variables* var = new Variables();
+	Model* model = var->model;
+	Lattice* lattice = model->_lattice;
+	Sentence* sentence = generate_sentence_4();
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
+	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+
+	crf::CRF* crf = var->py_crf->_crf;
+	solver::SGD* sgd = new solver::SGD(lattice, crf);
+	sgd->_backward_bigram_type(sentence);
+
+	double* grad_w_bigram_type = new double[crf->_w_size_bigram_type_u + crf->_w_size_bigram_type_b];
+	for(int k = 0;k < crf->_w_size_bigram_type_u + crf->_w_size_bigram_type_b;k++){
+		grad_w_bigram_type[k] = 0;
+	}
+	int const* character_ids = sentence->_character_ids;
+	wchar_t const* characters = sentence->_characters;
+	int character_ids_length = sentence->size();
+
+	// sentence->dump_words();
+
+	// cout << crf->_w_size_bigram_type_u << endl;
+	// cout << crf->_w_size_bigram_type_b << endl;
+
+	for(int type_i = 0;type_i < 281;type_i++){
+		for(int type_i_1 = 0;type_i_1 < 281;type_i_1++){
+			assert(type_i == crf->_index_w_bigram_type_u(0, type_i_1, type_i) / (281 * 2));
+			assert(type_i == crf->_index_w_bigram_type_u(1, type_i_1, type_i) / (281 * 2));
+			assert(type_i_1 == crf->_index_w_bigram_type_u(0, type_i_1, type_i) % (281 * 2) / 2);
+			assert(type_i_1 == crf->_index_w_bigram_type_u(1, type_i_1, type_i) % (281 * 2) / 2);
+		}
+	}
+
+	for(int k = 0;k < crf->_w_size_bigram_type_u;k++){
+		unsigned int type_i = k / (281 * 2);
+		unsigned int type_i_1 = k % (281 * 2) / 2;
+		if(!((type_i == CTYPE_HIRAGANA || type_i == CTYPE_UNKNOWN) && (type_i_1 == CTYPE_HIRAGANA || type_i_1 == CTYPE_UNKNOWN))){
+			continue;
+		}
+		// cout << "k = " << k / (281 * 2) << endl;
+		double grad = 0;
+		int t_start = 2;
+		int t_end = sentence->size() + 2;
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			wchar_t c_i = (t <= character_ids_length) ? characters[t - 1] : 0;
+			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(c_i) : CTYPE_UNKNOWN;
+			wchar_t c_i_1 = (t - 1 <= character_ids_length) ? characters[t - 2] : 0;
+			unsigned int type_i_1 = (t - 1 <= character_ids_length) ? ctype::get_type(c_i_1) : CTYPE_UNKNOWN;
+			double pi_k = (k == crf->_index_w_bigram_type_u(yt, type_i_1, type_i)) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_type_u(0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_type_u(0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", type_i_1 = " << type_i_1 << ", type_i = " << type_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_bigram_type[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_bigram_type[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_bigram_type[k] = grad;
+	}
+
+	crf->_w_bigram_type[crf->_w_size_bigram_type_u - 1] -= 1e-8;
+	
+	for(unsigned int type_i = 0;type_i < 281;type_i++){
+		for(unsigned int type_i_1 = 0;type_i_1 < 281;type_i_1++){
+			assert(type_i == (crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
+			assert(type_i == (crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
+			assert(type_i == (crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
+			assert(type_i == (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
+		}
+	}
+
+
+	for(int k = crf->_w_size_bigram_type_u;k < crf->_w_size_bigram_type_u + crf->_w_size_bigram_type_b;k++){
+		unsigned int type_i = (k - crf->_w_size_bigram_type_u) / (281 * 4);
+		unsigned int type_i_1 = (k - crf->_w_size_bigram_type_u) % (281 * 4) / 4;
+		if(!((type_i == CTYPE_HIRAGANA || type_i == CTYPE_UNKNOWN) && (type_i_1 == CTYPE_HIRAGANA || type_i_1 == CTYPE_UNKNOWN))){
+			continue;
+		}
+		double grad = 0;
+		int yt_1 = 1;
+		int yt = 1;
+		int i = 2;
+		int t_start = 2;
+		int t_end = sentence->size() + 2;
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			wchar_t c_i = (t <= character_ids_length) ? characters[t - 1] : 0;
+			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(c_i) : CTYPE_UNKNOWN;
+			wchar_t c_i_1 = (t - 1 <= character_ids_length) ? characters[t - 2] : 0;
+			unsigned int type_i_1 = (t - 1 <= character_ids_length) ? ctype::get_type(c_i_1) : CTYPE_UNKNOWN;
+			double pi_k = (k == crf->_index_w_bigram_type_b(yt_1, yt, type_i_1, type_i)) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) == k) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_bigram_type[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_bigram_type[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_bigram_type[k] = grad;
+	}
+
+	for(int k = 0;k < crf->_w_size_bigram_type_u + crf->_w_size_bigram_type_b;k++){
+		// cout << "k = " << k << ", " << grad_w_bigram_type[k] << " == " << sgd->_grad_w_bigram_type[k] << endl;
+		assert(std::abs(grad_w_bigram_type[k] - sgd->_grad_w_bigram_type[k]) < 1e-12);
+	}
+
+	delete[] grad_w_bigram_type;
+	delete sgd;
 	delete sentence;
 	delete var;
 }
@@ -793,9 +1119,13 @@ int main(int argc, char *argv[]){
 	token_ids[CHARACTER_ID_BOS] = token_ids.size();
 	token_ids[CHARACTER_ID_EOS] = token_ids.size();
 
-	test_grad_identical_2();
+	test_backward_character_type_bigram();
 	cout << "OK" << endl;
-	test_grad_identical_1();
+	test_backward_character_type_unigram();
+	cout << "OK" << endl;
+	test_backward_identical_2();
+	cout << "OK" << endl;
+	test_backward_identical_1();
 	cout << "OK" << endl;
 	test_backward_bigram();
 	cout << "OK" << endl;

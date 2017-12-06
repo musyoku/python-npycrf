@@ -1060,7 +1060,7 @@ void test_grad_character_type_bigram(){
 	wchar_t const* characters = sentence->_characters;
 	int character_ids_length = sentence->size();
 
-	sentence->dump_words();
+	// sentence->dump_words();
 
 	// cout << crf->_w_size_bigram_type_u << endl;
 	// cout << crf->_w_size_bigram_type_b << endl;
