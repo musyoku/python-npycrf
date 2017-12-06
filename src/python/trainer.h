@@ -2,6 +2,7 @@
 #include <boost/python.hpp>
 #include <vector>
 #include <cassert>
+#include "../npycrf/solver/sgd.h"
 #include "dataset.h"
 #include "model.h"
 #include "dictionary.h"
@@ -15,6 +16,7 @@ namespace npycrf {
 			Dataset* _dataset;
 			Dictionary* _dict;
 			Model* _model;
+			solver::SGD* _sgd;
 			double* _vpylm_sampling_probability_table;
 			wchar_t* _vpylm_sampling_id_table;
 			bool _always_accept_new_segmentation;

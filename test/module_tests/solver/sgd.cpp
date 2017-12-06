@@ -130,8 +130,8 @@ void test_backward_unigram(){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
-	solver::SGD* sgd = new solver::SGD(lattice, crf);
-	sgd->_backward_unigram(sentence);
+	solver::SGD* sgd = new solver::SGD(crf);
+	sgd->_backward_unigram(sentence, lattice->_pz_s);
 
 	int const* character_ids = sentence->_character_ids;
 	wchar_t const* characters = sentence->_characters;
@@ -306,8 +306,8 @@ void test_backward_bigram(){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
-	solver::SGD* sgd = new solver::SGD(lattice, crf);
-	sgd->_backward_bigram(sentence);
+	solver::SGD* sgd = new solver::SGD(crf);
+	sgd->_backward_bigram(sentence, lattice->_pz_s);
 
 	double* grad_w_bigram = new double[crf->_w_size_bigram_u + crf->_w_size_bigram_b];
 	for(int k = 0;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
@@ -473,8 +473,8 @@ void test_backward_identical_1(){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
-	solver::SGD* sgd = new solver::SGD(lattice, crf);
-	sgd->_backward_identical_1(sentence);
+	solver::SGD* sgd = new solver::SGD(crf);
+	sgd->_backward_identical_1(sentence, lattice->_pz_s);
 
 	double* grad_w_identical_1 = new double[crf->_w_size_identical_1_u + crf->_w_size_identical_1_b];
 	for(int k = 0;k < crf->_w_size_identical_1_u + crf->_w_size_identical_1_b;k++){
@@ -635,8 +635,8 @@ void test_backward_identical_2(){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
-	solver::SGD* sgd = new solver::SGD(lattice, crf);
-	sgd->_backward_identical_2(sentence);
+	solver::SGD* sgd = new solver::SGD(crf);
+	sgd->_backward_identical_2(sentence, lattice->_pz_s);
 
 	double* grad_w_identical_2 = new double[crf->_w_size_identical_2_u + crf->_w_size_identical_2_b];
 	for(int k = 0;k < crf->_w_size_identical_2_u + crf->_w_size_identical_2_b;k++){
@@ -801,8 +801,8 @@ void test_backward_character_type_unigram(){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
-	solver::SGD* sgd = new solver::SGD(lattice, crf);
-	sgd->_backward_unigram_type(sentence);
+	solver::SGD* sgd = new solver::SGD(crf);
+	sgd->_backward_unigram_type(sentence, lattice->_pz_s);
 
 	double* grad_w_unigram_type = new double[crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b];
 	for(int k = 0;k < crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b;k++){
@@ -939,8 +939,8 @@ void test_backward_character_type_bigram(){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
-	solver::SGD* sgd = new solver::SGD(lattice, crf);
-	sgd->_backward_bigram_type(sentence);
+	solver::SGD* sgd = new solver::SGD(crf);
+	sgd->_backward_bigram_type(sentence, lattice->_pz_s);
 
 	double* grad_w_bigram_type = new double[crf->_w_size_bigram_type_u + crf->_w_size_bigram_type_b];
 	for(int k = 0;k < crf->_w_size_bigram_type_u + crf->_w_size_bigram_type_b;k++){
@@ -1119,8 +1119,8 @@ void test_backward_label(){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
-	solver::SGD* sgd = new solver::SGD(lattice, crf);
-	sgd->_backward_label(sentence);
+	solver::SGD* sgd = new solver::SGD(crf);
+	sgd->_backward_label(sentence, lattice->_pz_s);
 
 	double* grad_w_label = new double[crf->_w_size_label_u + crf->_w_size_label_b];
 	for(int k = 0;k < crf->_w_size_label_u + crf->_w_size_label_b;k++){
