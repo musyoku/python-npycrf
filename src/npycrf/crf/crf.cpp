@@ -357,11 +357,18 @@ namespace npycrf {
 			if(i == character_ids_length + 1){	// </s>
 				assert(y_i == 1);
 			}
+			cost += _compute_cost_label_features(y_i_1, y_i);
 			cost += _compute_cost_unigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
 			cost += _compute_cost_bigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
 			cost += _compute_cost_identical_1_features(character_ids, character_ids_length, i, y_i_1, y_i);
 			cost += _compute_cost_identical_2_features(character_ids, character_ids_length, i, y_i_1, y_i);
 			cost += _compute_cost_unigram_and_bigram_type_features(character_ids, characters, character_ids_length, i, y_i_1, y_i);
+			return cost;
+		}
+		double CRF::_compute_cost_label_features(int y_i_1, int y_i){
+			double cost = 0;
+			cost += w_label_u(y_i);
+			cost += w_label_b(y_i_1, y_i);
 			return cost;
 		}
 		double CRF::_compute_cost_unigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
