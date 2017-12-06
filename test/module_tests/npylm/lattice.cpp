@@ -1310,7 +1310,7 @@ void test_grad_character_type_bigram(){
 			continue;
 		}
 		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
-		cout << std::abs(true_grad - grad) << endl;
+		// cout << std::abs(true_grad - grad) << endl;
 		assert(std::abs(true_grad - grad) < 1e-4);
 
 	}
