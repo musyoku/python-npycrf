@@ -29,6 +29,7 @@ namespace npycrf {
 	}
 	class Lattice {
 	private:
+		bool _pure_crf_mode;	// NPYLMを無視
 		void _allocate_capacity(int max_word_length, int max_sentence_length);
 		void _delete_capacity();
 		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double prod_scaling);
@@ -50,10 +51,10 @@ namespace npycrf {
 		int _max_word_length;
 		int _max_sentence_length;
 		double _lambda_0;
-		bool _pure_crf_mode;	// NPYLMを無視
 		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, double lambda_0, int max_word_length, int max_sentence_length);
 		~Lattice();
 		void set_pure_crf_mode(bool enabled);
+		bool get_pure_crf_mode();
 		id get_substring_word_id_at_t_k(Sentence* sentence, int t, int k);
 		void reserve(int max_word_length, int max_sentence_length);
 		void forward_filtering(Sentence* sentence, bool use_scaling);

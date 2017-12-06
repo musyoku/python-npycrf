@@ -203,6 +203,9 @@ namespace npycrf {
 	void Lattice::set_pure_crf_mode(bool enabled){
 		_pure_crf_mode = enabled;
 	}
+	bool Lattice::get_pure_crf_mode(){
+		return _pure_crf_mode;
+	}
 	id Lattice::get_substring_word_id_at_t_k(Sentence* sentence, int t, int k){
 		assert(t < _max_sentence_length + 1);
 		assert(k < _max_sentence_length + 1);
@@ -244,10 +247,10 @@ namespace npycrf {
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				p = exp(_lambda_0 * log(pw_h) + potential);
+				pw_h_tkji[t][k][0][0] = pw_h;
 			}
 			assert(p > 0);
 			alpha[t][k][0] = p * prod_scaling;
-			pw_h_tkji[t][k][0][0] = pw_h;
 			return;
 		}
 		// i=0に相当
@@ -265,11 +268,11 @@ namespace npycrf {
 				assert(pw_h > 0);
 				assert(alpha[t - k][j][0] > 0);
 				p = exp(_lambda_0 * log(pw_h) + potential);
+				pw_h_tkji[t][k][j][0] = pw_h;
 			}
 			assert(p > 0);
 			alpha[t][k][j] = p * alpha[t - k][j][0] * prod_scaling;
 			assert(alpha[t][k][j] > 0);
-			pw_h_tkji[t][k][j][0] = pw_h;
 			return;
 		}
 		// それ以外の場合は周辺化
@@ -290,13 +293,14 @@ namespace npycrf {
 				assert(i <= _max_word_length);
 				assert(alpha[t - k][j][i] > 0);
 				p = exp(_lambda_0 * log(pw_h) + potential);
+				pw_h_tkji[t][k][j][i] = pw_h;
 			}
 			assert(p > 0);
 			double value = p * alpha[t - k][j][i];
 
 			#ifdef __DEBUG__
 				if(value == 0){
-					std::cout << pw_h << std::endl;
+					// std::cout << pw_h << std::endl;
 					std::cout << alpha[t - k][j][i] << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
@@ -304,7 +308,6 @@ namespace npycrf {
 
 			assert(value > 0);
 			sum += value;
-			pw_h_tkji[t][k][j][i] = pw_h;
 		}
 		assert(sum > 0);
 		alpha[t][k][j] = sum * prod_scaling;
@@ -369,6 +372,7 @@ namespace npycrf {
 		assert(_pure_crf_mode == false);
 		int table_index = 0;
 		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		double sum_p = 0;
 		int limit_k = std::min(t, _max_word_length);
@@ -511,6 +515,7 @@ namespace npycrf {
 	void Lattice::viterbi_argmax_alpha_t_k_j(Sentence* sentence, int t, int k, int j){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		assert(t <= character_ids_length + 1);
 		assert(k <= _max_word_length);
@@ -548,7 +553,6 @@ namespace npycrf {
 			}else{
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
-				assert(alpha[t - k][j][0] > 0);
 				p = exp(_lambda_0 * log(pw_h) + potential);
 			}
 			assert(_alpha[t - k][j][0] != 0);
@@ -573,8 +577,6 @@ namespace npycrf {
 			}else{
 				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
-				assert(i <= _max_word_length);
-				assert(alpha[t - k][j][i] > 0);
 				p = exp(_lambda_0 * log(pw_h) + potential);
 			}
 			assert(i <= _max_word_length);
@@ -606,6 +608,7 @@ namespace npycrf {
 	void Lattice::viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j){
 		assert(t == sentence->size());
 		wchar_t const* characters = sentence->_characters;
+		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		double max_log_p = 0;
 		argmax_k = 0;
@@ -623,8 +626,6 @@ namespace npycrf {
 				}else{
 					double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
 					assert(pw_h > 0);
-					assert(i <= _max_word_length);
-					assert(alpha[t - k][j][i] > 0);
 					p = exp(_lambda_0 * log(pw_h) + potential);
 				}
 				assert(_alpha[t][k][j] <= 0);
@@ -647,8 +648,6 @@ namespace npycrf {
 				}else{
 					double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
 					assert(pw_h > 0);
-					assert(i <= _max_word_length);
-					assert(alpha[t - k][j][i] > 0);
 					p = exp(_lambda_0 * log(pw_h) + potential);
 				}
 				assert(_alpha[t][k][0] <= 0);
@@ -934,6 +933,7 @@ namespace npycrf {
 		// <bos>2つが文脈になる
 		double beta_0_1_1 = 0;
 		for(int i = 1;i <= std::min(sentence->size(), _max_word_length);i++){
+			double p = 0;
 			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, 1, i + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
@@ -999,7 +999,7 @@ namespace npycrf {
 					if(value <= 0){
 						std::cout << value << std::endl;
 						std::cout << prod_scaling << std::endl;
-						std::cout << pw_h << std::endl;
+						// std::cout << pw_h << std::endl;
 						std::cout << beta[t + i][i][k] << std::endl;
 						std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 					}

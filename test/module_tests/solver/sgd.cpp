@@ -118,10 +118,11 @@ public:
 	}
 };
 
-void test_backward_unigram(){
+void test_backward_unigram(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
@@ -294,10 +295,11 @@ void test_backward_unigram(){
 	delete var;
 }
 
-void test_backward_bigram(){
+void test_backward_bigram(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
@@ -461,10 +463,11 @@ void test_backward_bigram(){
 	delete var;
 }
 
-void test_backward_identical_1(){
+void test_backward_identical_1(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
@@ -623,10 +626,11 @@ void test_backward_identical_1(){
 	delete var;
 }
 
-void test_backward_identical_2(){
+void test_backward_identical_2(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
@@ -789,10 +793,11 @@ void test_backward_identical_2(){
 	delete var;
 }
 
-void test_backward_character_type_unigram(){
+void test_backward_character_type_unigram(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
@@ -927,10 +932,11 @@ void test_backward_character_type_unigram(){
 	delete var;
 }
 
-void test_backward_character_type_bigram(){
+void test_backward_character_type_bigram(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
@@ -1107,10 +1113,11 @@ void test_backward_character_type_bigram(){
 	delete var;
 }
 
-void test_backward_label(){
+void test_backward_label(bool pure_crf_mode){
 	Variables* var = new Variables();
 	Model* model = var->model;
 	Lattice* lattice = model->_lattice;
+	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
@@ -1263,18 +1270,25 @@ int main(int argc, char *argv[]){
 	token_ids[CHARACTER_ID_BOS] = token_ids.size();
 	token_ids[CHARACTER_ID_EOS] = token_ids.size();
 
-	test_backward_label();
+	test_backward_label(false);
+	test_backward_label(true);
 	cout << "OK" << endl;
-	test_backward_character_type_bigram();
+	test_backward_character_type_bigram(false);
+	test_backward_character_type_bigram(true);
 	cout << "OK" << endl;
-	test_backward_character_type_unigram();
+	test_backward_character_type_unigram(false);
+	test_backward_character_type_unigram(true);
 	cout << "OK" << endl;
-	test_backward_identical_2();
+	test_backward_identical_2(false);
+	test_backward_identical_2(true);
 	cout << "OK" << endl;
-	test_backward_identical_1();
+	test_backward_identical_1(false);
+	test_backward_identical_1(true);
 	cout << "OK" << endl;
-	test_backward_bigram();
+	test_backward_bigram(false);
+	test_backward_bigram(true);
 	cout << "OK" << endl;
-	test_backward_unigram();
+	test_backward_unigram(false);
+	test_backward_unigram(true);
 	cout << "OK" << endl;
 }
