@@ -420,11 +420,12 @@ namespace npycrf {
 			return cost;
 		}
 		double CRF::_compute_cost_unigram_and_bigram_type_features(int const* character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i){
+			assert(i > 1);
 			double cost = 0;
-			wchar_t char_i = characters[i - 1] ? i <= character_ids_length : 0;
-			wchar_t char_i_1 = characters[i - 2];
+			wchar_t char_i = (i <= character_ids_length) ? characters[i - 1] : CHARACTER_ID_EOS;
+			wchar_t char_i_1 = (i - 1 <= character_ids_length) ? characters[i - 2] : CHARACTER_ID_EOS;
 			int type_i = (i <= character_ids_length) ? ctype::get_type(char_i) : CTYPE_UNKNOWN;
-			int type_i_1 = ctype::get_type(char_i_1);
+			int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(char_i_1) : CTYPE_UNKNOWN;
 			cost += w_unigram_type_u(y_i, type_i);
 			cost += w_unigram_type_b(y_i_1, y_i, type_i);
 			cost += w_bigram_type_u(y_i, type_i_1, type_i);
