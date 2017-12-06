@@ -56,6 +56,7 @@ namespace npycrf {
 			_backward_identical_1(sentence);
 			_backward_unigram_type(sentence);
 			_backward_bigram_type(sentence);
+			_backward_label(sentence);
 		}
 		void SGD::_backward_unigram(Sentence* sentence){
 			int const* character_ids = sentence->_character_ids;
@@ -289,6 +290,39 @@ namespace npycrf {
 				_grad_w_bigram_type[k_0_1] -= _lattice->_pz_s[i - 1][0][1];
 				_grad_w_bigram_type[k_1_0] -= _lattice->_pz_s[i - 1][1][0];
 				_grad_w_bigram_type[k_1_1] -= _lattice->_pz_s[i - 1][1][1];
+			}
+		}
+		void SGD::_backward_label(Sentence* sentence){
+			int const* character_ids = sentence->_character_ids;
+			wchar_t const* characters = sentence->_characters;
+			int character_ids_length = sentence->size();
+			for(int i = 2;i <= sentence->size() + 2;i++){
+				// ラベルを取得
+				int y_i_1 = sentence->get_crf_label_at(i - 1);
+				int y_i = sentence->get_crf_label_at(i);
+
+				// 発火
+				int k_u = _crf->_index_w_label_u(y_i);
+				_grad_w_label[k_u] += 1;
+				int k_b = _crf->_index_w_label_b(y_i_1, y_i);
+				_grad_w_label[k_b] += 1;
+
+				// 発火の期待値
+				int k_0 = _crf->_index_w_label_u(0);
+				int k_1 = _crf->_index_w_label_u(1);
+				_grad_w_label[k_0] -= _lattice->_pz_s[i - 1][0][0];
+				_grad_w_label[k_0] -= _lattice->_pz_s[i - 1][1][0];
+				_grad_w_label[k_1] -= _lattice->_pz_s[i - 1][0][1];
+				_grad_w_label[k_1] -= _lattice->_pz_s[i - 1][1][1];
+
+				int k_0_0 = _crf->_index_w_label_b(0, 0);
+				int k_0_1 = _crf->_index_w_label_b(0, 1);
+				int k_1_0 = _crf->_index_w_label_b(1, 0);
+				int k_1_1 = _crf->_index_w_label_b(1, 1);
+				_grad_w_label[k_0_0] -= _lattice->_pz_s[i - 1][0][0];
+				_grad_w_label[k_0_1] -= _lattice->_pz_s[i - 1][0][1];
+				_grad_w_label[k_1_0] -= _lattice->_pz_s[i - 1][1][0];
+				_grad_w_label[k_1_1] -= _lattice->_pz_s[i - 1][1][1];
 			}
 		}
 	}

@@ -28,6 +28,7 @@ namespace npycrf {
 			void _backward_identical_2(Sentence* sentence);
 			void _backward_unigram_type(Sentence* sentence);
 			void _backward_bigram_type(Sentence* sentence);
+			void _backward_label(Sentence* sentence);
 		};
 	}
 }
