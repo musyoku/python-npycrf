@@ -263,11 +263,11 @@ int main(){
 	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
 	std::wcout.imbue(ctype_default);
 	std::wcin.imbue(ctype_default);
-	test_grads();
-	cout << "OK" << endl;
+	// test_grads();
+	// cout << "OK" << endl;
 	test_init();
 	cout << "OK" << endl;
-	test_compute_path_cost();
-	cout << "OK" << endl;
+	// test_compute_path_cost();
+	// cout << "OK" << endl;
 	return 0;
 }

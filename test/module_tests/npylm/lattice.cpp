@@ -1228,8 +1228,8 @@ void test_grad_character_type_bigram(){
 
 	sentence->dump_words();
 
-	cout << crf->_w_size_bigram_type_u << endl;
-	cout << crf->_w_size_bigram_type_b << endl;
+	// cout << crf->_w_size_bigram_type_u << endl;
+	// cout << crf->_w_size_bigram_type_b << endl;
 
 	for(int type_i = 0;type_i < 281;type_i++){
 		for(int type_i_1 = 0;type_i_1 < 281;type_i_1++){
