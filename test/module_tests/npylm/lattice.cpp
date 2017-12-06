@@ -1068,7 +1068,7 @@ void test_grad_character_type_unigram(){
 	wchar_t const* characters = sentence->_characters;
 	int character_ids_length = sentence->size();
 
-	sentence->dump_words();
+	// sentence->dump_words();
 
 	for(int k = 0;k < crf->_w_size_unigram_type_u;k++){
 		double grad = 0;
@@ -1210,6 +1210,204 @@ void test_grad_character_type_unigram(){
 	delete var;
 }
 
+void test_grad_character_type_bigram(){
+	Variables* var = new Variables();
+	Model* model = var->model;
+	Lattice* lattice = model->_lattice;
+	Sentence* sentence = generate_sentence_4();
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
+	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+
+	crf::CRF* crf = var->py_crf->_crf;
+	int const* character_ids = sentence->_character_ids;
+	wchar_t const* characters = sentence->_characters;
+	int character_ids_length = sentence->size();
+
+	sentence->dump_words();
+
+	cout << crf->_w_size_bigram_type_u << endl;
+	cout << crf->_w_size_bigram_type_b << endl;
+
+	for(int type_i = 0;type_i < 281;type_i++){
+		for(int type_i_1 = 0;type_i_1 < 281;type_i_1++){
+			assert(type_i == crf->_index_w_bigram_type_u(0, type_i_1, type_i) / (281 * 2));
+			assert(type_i == crf->_index_w_bigram_type_u(1, type_i_1, type_i) / (281 * 2));
+			assert(type_i_1 == crf->_index_w_bigram_type_u(0, type_i_1, type_i) % (281 * 2) / 2);
+			assert(type_i_1 == crf->_index_w_bigram_type_u(1, type_i_1, type_i) % (281 * 2) / 2);
+		}
+	}
+
+	for(int k = 0;k < crf->_w_size_bigram_type_u;k++){
+		unsigned int type_i = k / (281 * 2);
+		unsigned int type_i_1 = k % (281 * 2) / 2;
+		if(type_i != CTYPE_HIRAGANA || type_i_1 != CTYPE_HIRAGANA){
+			continue;
+		}
+		// cout << "k = " << k / (281 * 2) << endl;
+		double grad = 0;
+		int yt_1 = 1;
+		int yt = 1;
+		int i = 2;
+		int t_start = 2;
+		int t_end = sentence->size() + 2;
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = 1;t < t_start;t++){
+			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
+			yt_1 = yt;
+			yt = 0;
+			if(t == s){
+				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
+				yt = 1;
+			}
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+		}
+		for(int t = t_start;t <= t_end;t++){
+			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
+			yt_1 = yt;
+			yt = 0;
+			if(t == s || t == sentence->size() + 2){
+				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
+				yt = 1;
+			}
+			wchar_t c_i = (t <= character_ids_length) ? characters[t - 1] : 0;
+			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(c_i) : CTYPE_UNKNOWN;
+			wchar_t c_i_1 = (t - 1 <= character_ids_length) ? characters[t - 2] : 0;
+			unsigned int type_i_1 = (t - 1 <= character_ids_length) ? ctype::get_type(c_i_1) : CTYPE_UNKNOWN;
+			double pi_k = (k == crf->_index_w_bigram_type_u(yt, type_i_1, type_i)) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_type_u(0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_type_u(0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", type_i_1 = " << type_i_1 << ", type_i = " << type_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_bigram_type[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_bigram_type[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+
+	}
+
+	crf->_w_bigram_type[crf->_w_size_bigram_type_u - 1] -= 1e-8;
+	
+	for(int type_i = 0;type_i < 281;type_i++){
+		for(int type_i_1 = 0;type_i_1 < 281;type_i_1++){
+			assert(type_i == (crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
+			assert(type_i == (crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
+			assert(type_i == (crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
+			assert(type_i == (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
+		}
+	}
+
+
+	for(int k = crf->_w_size_bigram_type_u;k < crf->_w_size_bigram_type_u + crf->_w_size_bigram_type_b;k++){
+		unsigned int type_i = k / (281 * 4);
+		unsigned int type_i_1 = k % (281 * 4) / 4;
+		if(type_i != CTYPE_HIRAGANA || type_i_1 != CTYPE_HIRAGANA){
+			continue;
+		}
+		double grad = 0;
+		int yt_1 = 1;
+		int yt = 1;
+		int i = 2;
+		int t_start = 2;
+		int t_end = sentence->size() + 2;
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = 1;t < t_start;t++){
+			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
+			yt_1 = yt;
+			yt = 0;
+			if(t == s){
+				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
+				yt = 1;
+			}
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+		}
+		for(int t = t_start;t <= t_end;t++){
+			int s = (i < sentence->_num_segments - 1) ? sentence->_start[i] + 1 : sentence->size() + 1;
+			yt_1 = yt;
+			yt = 0;
+			if(t == s || t == sentence->size() + 2){
+				i = (i < sentence->_num_segments - 1) ? i + 1 : sentence->_num_segments - 1;
+				yt = 1;
+			}
+			wchar_t c_i = (t <= character_ids_length) ? characters[t - 1] : 0;
+			unsigned int type_i = (t <= character_ids_length) ? ctype::get_type(c_i) : CTYPE_UNKNOWN;
+			wchar_t c_i_1 = (t - 1 <= character_ids_length) ? characters[t - 2] : 0;
+			unsigned int type_i_1 = (t - 1 <= character_ids_length) ? ctype::get_type(c_i_1) : CTYPE_UNKNOWN;
+			double pi_k = (k == crf->_index_w_bigram_type_b(yt_1, yt, type_i_1, type_i)) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) == k) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_bigram_type[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_bigram_type[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+
+	}
+
+	delete sentence;
+	delete var;
+}
 
 int main(int argc, char *argv[]){
 	setlocale(LC_CTYPE, "ja_JP.UTF-8");
@@ -1242,5 +1440,7 @@ int main(int argc, char *argv[]){
 	test_grad_identical_2();
 	cout << "OK" << endl;
 	test_grad_character_type_unigram();
+	cout << "OK" << endl;
+	test_grad_character_type_bigram();
 	cout << "OK" << endl;
 }

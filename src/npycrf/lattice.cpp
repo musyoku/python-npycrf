@@ -994,7 +994,7 @@ namespace npycrf {
 					std::cout << "0-0: " << pz_s[t][0][0] << std::endl;
 					std::cout << "*-* - 0-0: " << pz_s[t][1][1] + pz_s[t][1][0] + pz_s[t][0][1] << std::endl;
 				}
-				assert(pz_s[t][0][0] > 0);
+				// assert(pz_s[t][0][0] > 0);
 			}
 		}
 		// std::cout << "1-1: " << pz_s[sentence_length][1][1] << std::endl;
