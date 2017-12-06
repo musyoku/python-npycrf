@@ -139,19 +139,19 @@ void test_backward_unigram(){
 
 	for(int pos = 1;pos <= crf->_x_range_unigram;pos++){
 		for(int x_i = 0;x_i < token_ids.size();x_i++){
-			cout << "index = " << crf->_index_w_unigram_u(0, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
-			cout << "index = " << crf->_index_w_unigram_u(1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
+			// cout << "index = " << crf->_index_w_unigram_u(0, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
+			// cout << "index = " << crf->_index_w_unigram_u(1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
 			assert(pos == (crf->_index_w_unigram_u(0, pos, x_i) % (crf->_x_range_unigram * 2)) / 2 + 1);
 			assert(pos == (crf->_index_w_unigram_u(1, pos, x_i) % (crf->_x_range_unigram * 2)) / 2 + 1);
 		}
 	}
 
-	double* grad_w_label = new double[crf->_w_size_unigram_u + crf->_w_size_unigram_b];
+	double* grad_w_unigram = new double[crf->_w_size_unigram_u + crf->_w_size_unigram_b];
 	for(int k = 0;k < crf->_w_size_unigram_u + crf->_w_size_unigram_b;k++){
-		grad_w_label[k] = 0;
+		grad_w_unigram[k] = 0;
 	}
 
-	sentence->dump_words();
+	// sentence->dump_words();
 
 	for(int k = 0;k < crf->_w_size_unigram_u;k++){
 		double grad = 0;
@@ -208,7 +208,7 @@ void test_backward_unigram(){
 			cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
 		}
 		assert(std::abs(true_grad - grad) < 1e-4);
-		grad_w_label[k] = grad;
+		grad_w_unigram[k] = grad;
 	}
 	crf->_w_unigram[crf->_w_size_unigram_u - 1] -= 1e-8;
 
@@ -280,12 +280,501 @@ void test_backward_unigram(){
 			cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
 		}
 		assert(std::abs(true_grad - grad) < 1e-4);
-		grad_w_label[k] = grad;
+		grad_w_unigram[k] = grad;
 	}
 
 	for(int k = 0;k < crf->_w_size_unigram_u + crf->_w_size_unigram_b;k++){
-		cout << "k = " << k << ", " << grad_w_label[k] << " == " << sgd->_grad_w_unigram[k] << endl;
-		assert(std::abs(grad_w_label[k] - sgd->_grad_w_unigram[k]) < 1e-12);
+		// cout << "k = " << k << ", " << grad_w_unigram[k] << " == " << sgd->_grad_w_unigram[k] << endl;
+		assert(std::abs(grad_w_unigram[k] - sgd->_grad_w_unigram[k]) < 1e-12);
+	}
+
+	delete sentence;
+	delete var;
+}
+
+void test_backward_bigram(){
+	Variables* var = new Variables();
+	Model* model = var->model;
+	Lattice* lattice = model->_lattice;
+	Sentence* sentence = generate_sentence_4();
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
+	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+
+	crf::CRF* crf = var->py_crf->_crf;
+	solver::SGD* sgd = new solver::SGD(lattice, crf);
+	sgd->_backward_bigram(sentence);
+
+	double* grad_w_bigram = new double[crf->_w_size_bigram_u + crf->_w_size_bigram_b];
+	for(int k = 0;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
+		grad_w_bigram[k] = 0;
+	}
+
+	int const* character_ids = sentence->_character_ids;
+	wchar_t const* characters = sentence->_characters;
+	int character_ids_length = sentence->size();
+
+	for(int pos = 1;pos <= crf->_x_range_bigram;pos++){
+		for(int x_i = 0;x_i < token_ids.size();x_i++){
+			for(int x_i_1 = 0;x_i_1 < token_ids.size();x_i_1++){
+				// cout << "index = " << crf->_index_w_bigram_u(0, pos, x_i_1, x_i) << ", pos = " << pos << ", x_i_1 = " << x_i_1 << ", x_i = " << x_i << endl;
+				// cout << "index = " << crf->_index_w_bigram_u(1, pos, x_i_1, x_i) << ", pos = " << pos << ", x_i_1 = " << x_i_1 << ", x_i = " << x_i << endl;
+				assert(pos == (crf->_index_w_bigram_u(0, pos, x_i_1, x_i) % (crf->_x_range_bigram * 2)) / 2 + 1);
+				assert(pos == (crf->_index_w_bigram_u(1, pos, x_i_1, x_i) % (crf->_x_range_bigram * 2)) / 2 + 1);
+			}
+		}
+	}
+	// sentence->dump_words();
+
+	for(int k = 0;k < crf->_w_size_bigram_u;k++){
+		double grad = 0;
+		int pos = (k % (crf->_x_range_bigram * 2)) / 2 + 1;
+		int t_start = std::max(1, -(crf->_x_bigram_start + pos - 1) + 2);
+		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_bigram_start + pos - 1));
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			int r = crf->_x_bigram_start + (pos - 1);
+			int index = t + r - 1;
+			assert(1 <= index);
+			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
+			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : CHARACTER_ID_EOS;
+			double pi_k = (k == crf->_index_w_bigram_u(yt, pos, x_i_1, x_i)) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_bigram_u(1, pos, x_i_1, x_i) == k) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_u(0, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_u(1, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_u(0, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_u(1, pos, x_i_1, x_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_bigram[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_bigram[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_bigram[k] = grad;
+	}
+
+	crf->_w_bigram[crf->_w_size_unigram_u - 1] -= 1e-8;
+
+	for(int pos = 1;pos <= crf->_x_range_bigram;pos++){
+		for(int x_i = 0;x_i < token_ids.size();x_i++){
+			for(int x_i_1 = 0;x_i_1 < token_ids.size();x_i_1++){
+				assert(pos == ((crf->_index_w_bigram_b(0, 0, pos, x_i_1, x_i) - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
+				assert(pos == ((crf->_index_w_bigram_b(0, 1, pos, x_i_1, x_i) - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
+				assert(pos == ((crf->_index_w_bigram_b(1, 0, pos, x_i_1, x_i) - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
+				assert(pos == ((crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i) - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
+			}
+		}
+	}
+	
+	for(int k = crf->_w_size_bigram_u;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
+		double grad = 0;
+		int pos = ((k - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1;
+		int t_start = std::max(1, -(crf->_x_bigram_start + pos - 1) + 2);
+		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_bigram_start + pos - 1));
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			int r = crf->_x_bigram_start + (pos - 1);
+			int index = t + r - 1;
+			assert(1 <= index);
+			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
+			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : CHARACTER_ID_EOS;
+			double pi_k = (k == crf->_index_w_bigram_b(yt_1, yt, pos, x_i_1, x_i)) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i) == k) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_b(0, 0, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_b(0, 1, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_b(1, 0, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_bigram[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_bigram[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_bigram[k] = grad;
+
+	}
+
+	for(int k = 0;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
+		// cout << "k = " << k << ", " << grad_w_bigram[k] << " == " << sgd->_grad_w_bigram[k] << endl;
+		assert(std::abs(grad_w_bigram[k] - sgd->_grad_w_bigram[k]) < 1e-12);
+	}
+
+	delete sentence;
+	delete var;
+}
+
+void test_grad_identical_1(){
+	Variables* var = new Variables();
+	Model* model = var->model;
+	Lattice* lattice = model->_lattice;
+	Sentence* sentence = generate_sentence_4();
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
+	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+
+	crf::CRF* crf = var->py_crf->_crf;
+	solver::SGD* sgd = new solver::SGD(lattice, crf);
+	sgd->_backward_identical_1(sentence);
+
+	double* grad_w_identical_1 = new double[crf->_w_size_bigram_u + crf->_w_size_bigram_b];
+	for(int k = 0;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
+		grad_w_identical_1[k] = 0;
+	}
+
+	int const* character_ids = sentence->_character_ids;
+	wchar_t const* characters = sentence->_characters;
+	int character_ids_length = sentence->size();
+
+	for(int pos = 1;pos <= crf->_x_range_identical_1;pos++){
+		// cout << "index = " << crf->_index_w_identical_1_u(0, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
+		// cout << "index = " << crf->_index_w_identical_1_u(1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
+		assert(pos == crf->_index_w_identical_1_u(0, pos) / 2 + 1);
+		assert(pos == crf->_index_w_identical_1_u(1, pos) / 2 + 1);
+	}
+
+	// sentence->dump_words();
+
+	for(int k = 0;k < crf->_w_size_identical_1_u;k++){
+		double grad = 0;
+		int pos = k / 2 + 1;
+		int t_start = std::max(1, -(crf->_x_identical_1_start + pos - 1) + 2);
+		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_1_start + pos - 1));
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			int r = crf->_x_identical_1_start + (pos - 1);
+			int index = t + r - 1;
+			assert(1 <= index);
+			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
+			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : CHARACTER_ID_EOS;
+			double pi_k = (k == crf->_index_w_identical_1_u(yt, pos) && x_i_1 == x_i) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_identical_1_u(1, pos) == k && x_i_1 == x_i) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_identical_1_u(0, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_identical_1_u(1, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_identical_1_u(0, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_identical_1_u(1, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_identical_1[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_identical_1[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_identical_1[k] = grad;
+	}
+
+	crf->_w_identical_1[crf->_w_size_identical_1_u - 1] -= 1e-8;
+
+	for(int pos = 1;pos <= crf->_x_range_identical_1;pos++){
+		assert(pos == (crf->_index_w_identical_1_b(0, 0, pos) - crf->_w_size_identical_1_u) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_1_b(0, 1, pos) - crf->_w_size_identical_1_u) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_1_b(1, 0, pos) - crf->_w_size_identical_1_u) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_1_b(1, 1, pos) - crf->_w_size_identical_1_u) / 4 + 1);
+	}
+	
+	for(int k = crf->_w_size_identical_1_u;k < crf->_w_size_identical_1_u + crf->_w_size_identical_1_b;k++){
+		double grad = 0;
+		int yt_1 = 1;
+		int yt = 1;
+		int i = 2;
+		int pos = (k - crf->_w_size_identical_1_u) / 4 + 1;
+		int t_start = std::max(1, -(crf->_x_identical_1_start + pos - 1) + 2);
+		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_1_start + pos - 1));
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			int r = crf->_x_identical_1_start + (pos - 1);
+			int index = t + r - 1;
+			assert(1 <= index);
+			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
+			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : CHARACTER_ID_EOS;
+			double pi_k = (k == crf->_index_w_identical_1_b(yt_1, yt, pos) && x_i_1 == x_i) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_identical_1_b(1, 1, pos) == k && x_i_1 == x_i) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_identical_1_b(0, 0, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_identical_1_b(0, 1, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_identical_1_b(1, 0, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_identical_1_b(1, 1, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_identical_1[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_identical_1[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_identical_1[k] = grad;
+	}
+
+	for(int k = 0;k < crf->_w_size_identical_1_u + crf->_w_size_identical_1_b;k++){
+		// cout << "k = " << k << ", " << grad_w_identical_1[k] << " == " << sgd->_grad_w_identical_1[k] << endl;
+		assert(std::abs(grad_w_identical_1[k] - sgd->_grad_w_identical_1[k]) < 1e-12);
+	}
+
+	delete sentence;
+	delete var;
+}
+
+void test_grad_identical_2(){
+	Variables* var = new Variables();
+	Model* model = var->model;
+	Lattice* lattice = model->_lattice;
+	Sentence* sentence = generate_sentence_4();
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
+	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+
+	crf::CRF* crf = var->py_crf->_crf;
+	solver::SGD* sgd = new solver::SGD(lattice, crf);
+	sgd->_backward_identical_2(sentence);
+
+	double* grad_w_identical_2 = new double[crf->_w_size_bigram_u + crf->_w_size_bigram_b];
+	for(int k = 0;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
+		grad_w_identical_2[k] = 0;
+	}
+
+	int const* character_ids = sentence->_character_ids;
+	wchar_t const* characters = sentence->_characters;
+	int character_ids_length = sentence->size();
+
+	for(int pos = 1;pos <= crf->_x_range_identical_2;pos++){
+		// cout << "index = " << crf->_index_w_identical_2_u(0, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
+		// cout << "index = " << crf->_index_w_identical_2_u(1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
+		assert(pos == crf->_index_w_identical_2_u(0, pos) / 2 + 1);
+		assert(pos == crf->_index_w_identical_2_u(1, pos) / 2 + 1);
+	}
+
+	// sentence->dump_words();
+
+	for(int k = 0;k < crf->_w_size_identical_2_u;k++){
+		double grad = 0;
+		int yt_1 = 1;
+		int yt = 1;
+		int i = 2;
+		int pos = k / 2 + 1;
+		int t_start = std::max(1, -(crf->_x_identical_2_start + pos - 1) + 3);
+		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_2_start + pos - 1));
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			int r = crf->_x_identical_2_start + (pos - 1);
+			int index = t + r - 1;
+			assert(2 <= index);
+			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
+			int x_i_2 = (index - 2 < character_ids_length) ? character_ids[index - 2] : CHARACTER_ID_EOS;
+			double pi_k = (k == crf->_index_w_identical_2_u(yt, pos) && x_i_2 == x_i) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_identical_2_u(1, pos) == k && x_i_2 == x_i) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_identical_2_u(0, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_identical_2_u(1, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_identical_2_u(0, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_identical_2_u(1, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_identical_2[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_identical_2[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_identical_2[k] = grad;		
+	}
+
+	crf->_w_identical_2[crf->_w_size_identical_2_u - 1] -= 1e-8;
+
+	for(int pos = 1;pos <= crf->_x_range_identical_2;pos++){
+		assert(pos == (crf->_index_w_identical_2_b(0, 0, pos) - crf->_w_size_identical_2_u) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_2_b(0, 1, pos) - crf->_w_size_identical_2_u) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_2_b(1, 0, pos) - crf->_w_size_identical_2_u) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_2_b(1, 1, pos) - crf->_w_size_identical_2_u) / 4 + 1);
+	}
+	
+	for(int k = crf->_w_size_identical_2_u;k < crf->_w_size_identical_2_u + crf->_w_size_identical_2_b;k++){
+		double grad = 0;
+		int yt_1 = 1;
+		int yt = 1;
+		int i = 2;
+		int pos = (k - crf->_w_size_identical_2_u) / 4 + 1;
+		int t_start = std::max(1, -(crf->_x_identical_2_start + pos - 1) + 3);
+		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_2_start + pos - 1));
+		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
+		for(int t = t_start;t <= t_end;t++){
+			int yt_1 = sentence->get_crf_label_at(t - 1);
+			int yt = sentence->get_crf_label_at(t);
+			int r = crf->_x_identical_2_start + (pos - 1);
+			int index = t + r - 1;
+			assert(2 <= index);
+			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
+			int x_i_2 = (index - 2 < character_ids_length) ? character_ids[index - 2] : CHARACTER_ID_EOS;
+			double pi_k = (k == crf->_index_w_identical_2_b(yt_1, yt, pos) && x_i_2 == x_i) ? 1 : 0;
+			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
+			double sum_expectation = 0;
+			if(t == sentence->size() + 2){
+				sum_expectation += (crf->_index_w_identical_2_b(1, 1, pos) == k && x_i_2 == x_i) ? 1 : 0;
+			}else{
+				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_identical_2_b(0, 0, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_identical_2_b(0, 1, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_identical_2_b(1, 0, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_identical_2_b(1, 1, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
+				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
+				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
+				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+			}
+			grad += pi_k - sum_expectation;
+			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
+		}
+
+		if(k > 0){
+			crf->_w_identical_2[k] -= 1e-8;
+		}
+		double log_Zs = log(model->compute_normalizing_constant(sentence));
+		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
+		// cout << log_Zs << " == " << log_py << endl;
+		crf->_w_identical_2[k] += 1e-8;
+		double _log_Zs = log(model->compute_normalizing_constant(sentence));
+		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
+		// cout << _log_Zs << " == " << _log_py << endl;
+		double true_grad = (_log_py - log_py) / 1e-8;
+		if(true_grad == 0 && grad == 0){
+			continue;
+		}
+		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
+		// cout << std::abs(true_grad - grad) << endl;
+		assert(std::abs(true_grad - grad) < 1e-4);
+		grad_w_identical_2[k] = grad;		
+
+	}
+
+	for(int k = 0;k < crf->_w_size_identical_2_u + crf->_w_size_identical_2_b;k++){
+		// cout << "k = " << k << ", " << grad_w_identical_2[k] << " == " << sgd->_grad_w_identical_2[k] << endl;
+		assert(std::abs(grad_w_identical_2[k] - sgd->_grad_w_identical_2[k]) < 1e-12);
 	}
 
 	delete sentence;
@@ -303,6 +792,13 @@ int main(int argc, char *argv[]){
 	token_ids[CHARACTER_ID_UNK] = token_ids.size();
 	token_ids[CHARACTER_ID_BOS] = token_ids.size();
 	token_ids[CHARACTER_ID_EOS] = token_ids.size();
+
+	test_grad_identical_2();
+	cout << "OK" << endl;
+	test_grad_identical_1();
+	cout << "OK" << endl;
+	test_backward_bigram();
+	cout << "OK" << endl;
 	test_backward_unigram();
 	cout << "OK" << endl;
 }

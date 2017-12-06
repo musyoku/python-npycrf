@@ -612,7 +612,6 @@ void test_grad_bigram(){
 		// cout << "k = " << k << ", " << grad << ", " << true_grad << endl;
 		// cout << std::abs(true_grad - grad) << endl;
 		assert(std::abs(true_grad - grad) < 1e-4);
-
 	}
 
 	delete sentence;

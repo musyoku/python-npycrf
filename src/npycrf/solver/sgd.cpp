@@ -50,7 +50,9 @@ namespace npycrf {
 		// CRFの勾配計算について
 		// http://www.ism.ac.jp/editsec/toukei/pdf/64-2-179.pdf
 		void SGD::backward(Sentence* sentence){
-			_backward_unigram(sentence);	
+			_backward_unigram(sentence);
+			_backward_bigram(sentence);
+			_backward_identical_1(sentence);
 		}
 		void SGD::_backward_unigram(Sentence* sentence){
 			int const* character_ids = sentence->_character_ids;
@@ -62,7 +64,6 @@ namespace npycrf {
 				int yt = sentence->get_crf_label_at(t);
 				assert(yt == sentence->get_crf_label_at(t));
 
-				// ラベルunigram・bigram素性の範囲を網羅
 				int r_start = std::max(1, t + _crf->_x_unigram_start);
 				int r_end = std::min(character_ids_length + 2, t + _crf->_x_unigram_end);	// <eos>2つを考慮
 				for(int r = r_start;r <= r_end;r++){
@@ -91,6 +92,134 @@ namespace npycrf {
 					_grad_w_unigram[k_0_1] -= _lattice->_pz_s[t - 1][0][1];
 					_grad_w_unigram[k_1_0] -= _lattice->_pz_s[t - 1][1][0];
 					_grad_w_unigram[k_1_1] -= _lattice->_pz_s[t - 1][1][1];
+				}
+			}
+		}
+		void SGD::_backward_bigram(Sentence* sentence){
+			int const* character_ids = sentence->_character_ids;
+			wchar_t const* characters = sentence->_characters;
+			int character_ids_length = sentence->size();
+			for(int t = 1;t <= sentence->size() + 2;t++){
+				// ラベルを取得
+				int yt_1 = sentence->get_crf_label_at(t - 1);
+				int yt = sentence->get_crf_label_at(t);
+				assert(yt == sentence->get_crf_label_at(t));
+
+				int r_start = std::max(2, t + _crf->_x_bigram_start);
+				int r_end = std::min(character_ids_length + 2, t + _crf->_x_bigram_end);
+				for(int r = r_start;r <= r_end;r++){
+					int pos = r - t - _crf->_x_unigram_start + 1;	// [1, _x_range_bigram]
+					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+					int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+
+					// 発火
+					int k_u = _crf->_index_w_bigram_u(yt, pos, x_i_1, x_i);
+					_grad_w_bigram[k_u] += 1;
+					int k_b = _crf->_index_w_bigram_b(yt_1, yt, pos, x_i_1, x_i);
+					_grad_w_bigram[k_b] += 1;
+
+					// 発火の期待値
+					int k_0 = _crf->_index_w_bigram_u(0, pos, x_i_1, x_i);
+					int k_1 = _crf->_index_w_bigram_u(1, pos, x_i_1, x_i);
+					_grad_w_bigram[k_0] -= _lattice->_pz_s[t - 1][0][0];
+					_grad_w_bigram[k_0] -= _lattice->_pz_s[t - 1][1][0];
+					_grad_w_bigram[k_1] -= _lattice->_pz_s[t - 1][0][1];
+					_grad_w_bigram[k_1] -= _lattice->_pz_s[t - 1][1][1];
+
+					int k_0_0 = _crf->_index_w_bigram_b(0, 0, pos, x_i_1, x_i);
+					int k_0_1 = _crf->_index_w_bigram_b(0, 1, pos, x_i_1, x_i);
+					int k_1_0 = _crf->_index_w_bigram_b(1, 0, pos, x_i_1, x_i);
+					int k_1_1 = _crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i);
+					_grad_w_bigram[k_0_0] -= _lattice->_pz_s[t - 1][0][0];
+					_grad_w_bigram[k_0_1] -= _lattice->_pz_s[t - 1][0][1];
+					_grad_w_bigram[k_1_0] -= _lattice->_pz_s[t - 1][1][0];
+					_grad_w_bigram[k_1_1] -= _lattice->_pz_s[t - 1][1][1];
+				}
+			}
+		}
+		void SGD::_backward_identical_1(Sentence* sentence){
+			int const* character_ids = sentence->_character_ids;
+			wchar_t const* characters = sentence->_characters;
+			int character_ids_length = sentence->size();
+			for(int t = 1;t <= sentence->size() + 2;t++){
+				// ラベルを取得
+				int yt_1 = sentence->get_crf_label_at(t - 1);
+				int yt = sentence->get_crf_label_at(t);
+				assert(yt == sentence->get_crf_label_at(t));
+
+				int r_start = std::max(2, t + _crf->_x_identical_1_start);
+				int r_end = std::min(character_ids_length + 2, t + _crf->_x_identical_1_end);
+				for(int r = r_start;r <= r_end;r++){
+					int pos = r - t - _crf->_x_identical_1_start + 1;	// [1, _x_range_identical_1]
+					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+					int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+					if(x_i == x_i_1){
+						// 発火
+						int k_u = _crf->_index_w_identical_1_u(yt, pos);
+						_grad_w_identical_1[k_u] += 1;
+						int k_b = _crf->_index_w_identical_1_b(yt_1, yt, pos);
+						_grad_w_identical_1[k_b] += 1;
+
+						// 発火の期待値
+						int k_0 = _crf->_index_w_identical_1_u(0, pos);
+						int k_1 = _crf->_index_w_identical_1_u(1, pos);
+						_grad_w_identical_1[k_0] -= _lattice->_pz_s[t - 1][0][0];
+						_grad_w_identical_1[k_0] -= _lattice->_pz_s[t - 1][1][0];
+						_grad_w_identical_1[k_1] -= _lattice->_pz_s[t - 1][0][1];
+						_grad_w_identical_1[k_1] -= _lattice->_pz_s[t - 1][1][1];
+
+						int k_0_0 = _crf->_index_w_identical_1_b(0, 0, pos);
+						int k_0_1 = _crf->_index_w_identical_1_b(0, 1, pos);
+						int k_1_0 = _crf->_index_w_identical_1_b(1, 0, pos);
+						int k_1_1 = _crf->_index_w_identical_1_b(1, 1, pos);
+						_grad_w_identical_1[k_0_0] -= _lattice->_pz_s[t - 1][0][0];
+						_grad_w_identical_1[k_0_1] -= _lattice->_pz_s[t - 1][0][1];
+						_grad_w_identical_1[k_1_0] -= _lattice->_pz_s[t - 1][1][0];
+						_grad_w_identical_1[k_1_1] -= _lattice->_pz_s[t - 1][1][1];
+					}
+				}
+			}
+		}
+		void SGD::_backward_identical_2(Sentence* sentence){
+			int const* character_ids = sentence->_character_ids;
+			wchar_t const* characters = sentence->_characters;
+			int character_ids_length = sentence->size();
+			for(int t = 1;t <= sentence->size() + 2;t++){
+				// ラベルを取得
+				int yt_1 = sentence->get_crf_label_at(t - 1);
+				int yt = sentence->get_crf_label_at(t);
+				assert(yt == sentence->get_crf_label_at(t));
+
+				int r_start = std::max(3, t + _crf->_x_identical_2_start);
+				int r_end = std::min(character_ids_length + 2, t + _crf->_x_identical_2_end);
+				for(int r = r_start;r <= r_end;r++){
+					int pos = r - t - _crf->_x_identical_2_start + 1;	// [1, _x_range_identical_2]
+					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+					int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : CHARACTER_ID_EOS;
+					if(x_i == x_i_2){
+						// 発火
+						int k_u = _crf->_index_w_identical_2_u(yt, pos);
+						_grad_w_identical_2[k_u] += 1;
+						int k_b = _crf->_index_w_identical_2_b(yt_1, yt, pos);
+						_grad_w_identical_2[k_b] += 1;
+
+						// 発火の期待値
+						int k_0 = _crf->_index_w_identical_2_u(0, pos);
+						int k_1 = _crf->_index_w_identical_2_u(1, pos);
+						_grad_w_identical_2[k_0] -= _lattice->_pz_s[t - 1][0][0];
+						_grad_w_identical_2[k_0] -= _lattice->_pz_s[t - 1][1][0];
+						_grad_w_identical_2[k_1] -= _lattice->_pz_s[t - 1][0][1];
+						_grad_w_identical_2[k_1] -= _lattice->_pz_s[t - 1][1][1];
+
+						int k_0_0 = _crf->_index_w_identical_2_b(0, 0, pos);
+						int k_0_1 = _crf->_index_w_identical_2_b(0, 1, pos);
+						int k_1_0 = _crf->_index_w_identical_2_b(1, 0, pos);
+						int k_1_1 = _crf->_index_w_identical_2_b(1, 1, pos);
+						_grad_w_identical_2[k_0_0] -= _lattice->_pz_s[t - 1][0][0];
+						_grad_w_identical_2[k_0_1] -= _lattice->_pz_s[t - 1][0][1];
+						_grad_w_identical_2[k_1_0] -= _lattice->_pz_s[t - 1][1][0];
+						_grad_w_identical_2[k_1_1] -= _lattice->_pz_s[t - 1][1][1];
+					}
 				}
 			}
 		}

@@ -23,6 +23,9 @@ namespace npycrf {
 			void clear_grads();
 			void backward(Sentence* sentence);
 			void _backward_unigram(Sentence* sentence);
+			void _backward_bigram(Sentence* sentence);
+			void _backward_identical_1(Sentence* sentence);
+			void _backward_identical_2(Sentence* sentence);
 		};
 	}
 }
