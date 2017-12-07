@@ -132,6 +132,9 @@ namespace npycrf {
 			table = NULL;
 		}
 	}
+	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, double lambda_0): Lattice(npylm, crf, lambda_0, 12, 100){
+		
+	}
 	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, double lambda_0, int max_word_length, int max_sentence_length){
 		_npylm = npylm;
 		_crf = crf;

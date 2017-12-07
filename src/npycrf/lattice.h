@@ -51,6 +51,7 @@ namespace npycrf {
 		int _max_word_length;
 		int _max_sentence_length;
 		double _lambda_0;
+		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, double lambda_0);
 		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, double lambda_0, int max_word_length, int max_sentence_length);
 		~Lattice();
 		void set_pure_crf_mode(bool enabled);

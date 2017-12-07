@@ -42,7 +42,7 @@ namespace npycrf {
 			std::vector<int> rand_indices_l;
 			shuffle(rand_indices_l.begin(), rand_indices_l.end(), sampler::mt);	// データをシャッフル
 			train_split = std::min(1.0, std::max(0.0, train_split));
-			int num_train_data = _num_supervised_data * train_split;
+			num_train_data = _num_supervised_data * train_split;
 			for(int i = 0;i < _num_supervised_data;i++){
 				rand_indices_l.push_back(i);
 			}
@@ -76,7 +76,7 @@ namespace npycrf {
 				}
 				sum_sentence_length += sentence_str.size();
 			}
-			_avg_sentence_length = sum_sentence_length / (double)corpus->get_num_sentences();
+			_avg_sentence_length = sum_sentence_length / (double)(_num_supervised_data + _num_unsupervised_data);
 		}
 		Dataset::~Dataset(){
 			for(int n = 0;n < _sentence_sequences_train.size();n++){
@@ -88,14 +88,11 @@ namespace npycrf {
 				delete sentence;
 			}
 		}
-		int Dataset::get_num_sentences_train(){
+		int Dataset::get_num_training_data(){
 			return _sentence_sequences_train.size();
 		}
-		int Dataset::get_num_sentences_dev(){
+		int Dataset::get_num_validation_data(){
 			return _sentence_sequences_dev.size();
-		}
-		int Dataset::get_num_sentences_supervised(){
-			return _num_supervised_data;
 		}
 		void Dataset::_add_words_to_dataset(std::wstring &sentence_str, std::vector<Sentence*> &dataset, Dictionary* dict){
 			assert(sentence_str.size() > 0);

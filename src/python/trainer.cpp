@@ -7,32 +7,43 @@
 
 namespace npycrf {
 	namespace python {
-		Trainer::Trainer(Dataset* dataset_crf, Dataset* dataset_npycrf, Model* model){
-			_dataset_crf = dataset_crf;
-			_dataset_npycrf = dataset_npycrf;
+		Trainer::Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* model){
+			_dataset_l = dataset_l;
+			_dataset_u = dataset_u;
+			_dict = dict;
 			_model = model;
-			_dict = dataset->_dict;
 			_sgd = new solver::SGD(model->_crf);
 			_vpylm_sampling_probability_table = new double[_dict->get_num_characters() + 1];	// </s>を含む
 			_vpylm_sampling_id_table = new wchar_t[_dict->get_num_characters() + 1];			// </s>を含む
-			_added_to_npylm_train = new bool[dataset->_sentence_sequences_train.size()];
-			for(int data_index = 0;data_index < dataset->_sentence_sequences_train.size();data_index++){
-				_rand_indices_train.push_back(data_index);
-				_added_to_npylm_train[data_index] = false;
-			}
-			for(int data_index = 0;data_index < dataset->_sentence_sequences_dev.size();data_index++){
-				_rand_indices_dev.push_back(data_index);
-			}
-			_num_segmentation_rejection = 0;
-			_num_segmentation_acceptance = 0;
 
+			// 教師なしデータ
+			int num_data = dataset_u->get_num_training_data();
+			_added_to_npylm_u = new bool[num_data];
+			for(int data_index = 0;data_index < num_data;data_index++){
+				_rand_indices_train_u.push_back(data_index);
+				_added_to_npylm_u[data_index] = false;
+			}
+			for(int data_index = 0;data_index < dataset_u->_sentence_sequences_dev.size();data_index++){
+				_rand_indices_dev_u.push_back(data_index);
+			}
+			
+			// 教師ありデータ
+			num_data = dataset_l->get_num_training_data();
+			_added_to_npylm_l = new bool[num_data];
+			for(int data_index = 0;data_index < num_data;data_index++){
+				_rand_indices_train_l.push_back(data_index);
+				_added_to_npylm_l[data_index] = false;
+			}
+			for(int data_index = 0;data_index < dataset_l->_sentence_sequences_dev.size();data_index++){
+				_rand_indices_dev_l.push_back(data_index);
+			}
+
+			// 必要な領域を確保
 			int max_word_length = model->_npylm->_max_word_length;
-			int max_sentence_length = std::max(dataset_crf->get_max_sentence_length(), dataset_npycrf->get_max_sentence_length());
-			model->_npylm->reserve(max_word_length, max_sentence_length);
+			int max_sentence_length = std::max(dataset_l->get_max_sentence_length(), dataset_u->get_max_sentence_length());
+			model->_npylm->reserve(max_sentence_length);
 			model->_lattice->reserve(max_word_length, max_sentence_length);
-	
 		}
-
 		// HPYLM,VPYLMのdとthetaをサンプリング
 		void Trainer::sample_hpylm_vpylm_hyperparameters(){
 			_model->_npylm->sample_hpylm_vpylm_hyperparameters();
@@ -47,25 +58,29 @@ namespace npycrf {
 				a_for_type[type] = npylm->_lambda_a;
 				b_for_type[type] = npylm->_lambda_b;
 			}
-			for(auto sentence: _dataset->_sentence_sequences_train){
-				// <bos>と<eos>は除外
-				for(int t = 2;t < sentence->get_num_segments() - 1;t++){
-					std::wstring word = sentence->get_word_str_at(t);
-					id word_id = sentence->get_word_id_at(t);
-					int word_length = sentence->get_word_length_at(t);
-					if(word_length > npylm->_max_word_length){
-						continue;
-					}
-					if(words.find(word_id) == words.end()){
-						std::vector<int> &tables = npylm->_hpylm->_root->_arrangement[word_id];
-						int t_w = tables.size();
-						int type = wordtype::detect_word_type(word);
-						a_for_type[type] += t_w * word_length;
-						b_for_type[type] += t_w;
-						words.insert(word_id);
+			auto enumerate_words = [&a_for_type, &b_for_type, &words, &npylm](std::vector<Sentence*> &dataset) {
+				for(auto sentence: dataset){
+					// <bos>と<eos>は除外
+					for(int t = 2;t < sentence->get_num_segments() - 1;t++){
+						std::wstring word = sentence->get_word_str_at(t);
+						id word_id = sentence->get_word_id_at(t);
+						int word_length = sentence->get_word_length_at(t);
+						if(word_length > npylm->_max_word_length){
+							continue;
+						}
+						if(words.find(word_id) == words.end()){
+							std::vector<int> &tables = npylm->_hpylm->_root->_arrangement[word_id];
+							int t_w = tables.size();
+							int type = wordtype::detect_word_type(word);
+							a_for_type[type] += t_w * word_length;
+							b_for_type[type] += t_w;
+							words.insert(word_id);
+						}
 					}
 				}
-			}
+			};
+			enumerate_words(_dataset_l->_sentence_sequences_train);
+			enumerate_words(_dataset_u->_sentence_sequences_train);
 			for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
 				double lambda = sampler::gamma(a_for_type[type], b_for_type[type]);
 				npylm->_lambda_for_type[type] = lambda;
@@ -164,46 +179,22 @@ namespace npycrf {
 			delete[] wrapped_character_ids;
 		}
 		// 単語分割のギブスサンプリング
-		void Trainer::gibbs(){
-			int num_sentences = _dataset->_sentence_sequences_train.size();
-			assert(num_sentences > 0);
-			int max_sentence_length = _dataset->get_max_sentence_length();
+		void Trainer::gibbs(bool with_labeled_data){
+			// 教師なしデータでモデルパラメータを更新
 			std::vector<int> segments;		// 分割の一時保存用
-			shuffle(_rand_indices_train.begin(), _rand_indices_train.end(), sampler::mt);		// データをシャッフル
-			int* old_segments = new int[max_sentence_length + 3];
-			int num_old_segments;
-			// モデルパラメータを更新
-			for(int step = 1;step <= num_sentences;step++){
+			shuffle(_rand_indices_train_u.begin(), _rand_indices_train_u.end(), sampler::mt);		// データをシャッフル
+			for(int i = 0;i < _rand_indices_train_u.size();i++){
 				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 					return;		
 				}
 				// 訓練データを一つ取り出す
-				int data_index = _rand_indices_train[step - 1];
-				assert(data_index < _dataset->_sentence_sequences_train.size());
-				Sentence* sentence = _dataset->_sentence_sequences_train[data_index];
+				int data_index = _rand_indices_train_u[i];
+				assert(data_index < _dataset_u->get_num_training_data());
+				Sentence* sentence = _dataset_u->_sentence_sequences_train[data_index];
+				assert(sentence->is_supervised() == false);
 
-				// 教師あり
-				if(sentence->is_supervised()){
-					// モデルに追加されているかチェック
-					if(_added_to_npylm_train[data_index] == true){
-						// 古い分割をモデルから削除
-						for(int t = 2;t < sentence->get_num_segments();t++){
-							_model->_npylm->remove_customer_at_time_t(sentence, t);
-						}
-					}
-					// 同じ分割結果を再度モデルに追加
-					// ？？？「同じ分割を追加するなら最初から削除しなければ良いのでは？」
-					// 追加と削除を繰り返すことでHPYLMとVPYLMのパラメータ（客の配置）がギブスサンプリングされるので必要
-					for(int t = 2;t < sentence->get_num_segments();t++){
-						_model->_npylm->add_customer_at_time_t(sentence, t);
-					}
-					_added_to_npylm_train[data_index] = true;
-					continue;
-				}
-				// 教師なし
 				// モデルに追加されているかチェック
-				if(_added_to_npylm_train[data_index] == true){
-					double old_log_ps, new_log_ps;
+				if(_added_to_npylm_u[data_index] == true){
 					// 古い分割をモデルから削除
 					for(int t = 2;t < sentence->get_num_segments();t++){
 						_model->_npylm->remove_customer_at_time_t(sentence, t);
@@ -235,20 +226,78 @@ namespace npycrf {
 				for(int t = 2;t < sentence->get_num_segments();t++){
 					_model->_npylm->add_customer_at_time_t(sentence, t);
 				}
-				_added_to_npylm_train[data_index] = true;
+				_added_to_npylm_u[data_index] = true;
 			}
 			// 客数チェック
 			assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
-			delete[] old_segments;
-		}
-		void Trainer::sgd(bool pure_crf){
 
+			if(with_labeled_data){
+				_gibbs_labeled();
+			}
+		}
+		void Trainer::add_labelded_data_to_npylm(){
+			_gibbs_labeled();
+		}
+		// 教師ありデータでモデルパラメータを更新
+		void Trainer::_gibbs_labeled(){
+			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
+			for(int i = 0;i < _rand_indices_train_l.size();i++){
+				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+					return;		
+				}
+				// 訓練データを一つ取り出す
+				int data_index = _rand_indices_train_l[i];
+				assert(data_index < _dataset_l->get_num_training_data());
+				Sentence* sentence = _dataset_l->_sentence_sequences_train[data_index];
+				assert(sentence->is_supervised() == true);
+
+				// 教師あり
+				// モデルに追加されているかチェック
+				if(_added_to_npylm_l[data_index] == true){
+					// 古い分割をモデルから削除
+					for(int t = 2;t < sentence->get_num_segments();t++){
+						_model->_npylm->remove_customer_at_time_t(sentence, t);
+					}
+				}
+				// 同じ分割結果を再度モデルに追加
+				// 追加と削除を繰り返すことでHPYLMとVPYLMのパラメータ（客の配置）がギブスサンプリングされる
+				for(int t = 2;t < sentence->get_num_segments();t++){
+					_model->_npylm->add_customer_at_time_t(sentence, t);
+				}
+				_added_to_npylm_l[data_index] = true;
+			}
+		}
+		void Trainer::sgd(double learning_rate, int batchsize, bool pure_crf){
+			_sgd->clear_grads();
+			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
+			int total_batches = _rand_indices_train_l.size() / batchsize + (_rand_indices_train_l.size() % batchsize) ? 1 : 0;
+			std::cout << "total_batches: " << total_batches << std::endl;
+			Lattice* lattice = _model->_lattice;
+			for(int b = 0;b < total_batches;b++){
+				int size = std::min(batchsize, (int)(_rand_indices_train_l.size() - batchsize * b));
+				for(int i = 0;i < size;i++){
+					int data_index = _rand_indices_train_l[i + batchsize * b];
+					std::cout << "data_index: " << data_index << std::endl;
+					Sentence* sentence = _dataset_l->_sentence_sequences_train[data_index];
+
+					// 周辺確率を求める
+					lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
+					lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+					double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
+					lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+					lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+
+					// 更新
+					_sgd->backward(sentence, lattice->_pz_s);
+				}
+				_sgd->update(learning_rate / (double)size);
+			}
 		}
 		double Trainer::compute_perplexity_train(){
-			return _compute_perplexity(_dataset->_sentence_sequences_train);
+			return _compute_perplexity(_dataset_u->_sentence_sequences_train);
 		}
 		double Trainer::compute_perplexity_dev(){
-			return _compute_perplexity(_dataset->_sentence_sequences_dev);
+			return _compute_perplexity(_dataset_u->_sentence_sequences_dev);
 		}
 		double Trainer::_compute_perplexity(std::vector<Sentence*> &dataset){
 			if(dataset.size() == 0){
@@ -271,10 +320,10 @@ namespace npycrf {
 			return ppl;
 		}
 		double Trainer::compute_log_likelihood_train(){
-			return _compute_log_likelihood(_dataset->_sentence_sequences_train);
+			return _compute_log_likelihood(_dataset_u->_sentence_sequences_train);
 		}
 		double Trainer::compute_log_likelihood_dev(){
-			return _compute_log_likelihood(_dataset->_sentence_sequences_dev);
+			return _compute_log_likelihood(_dataset_u->_sentence_sequences_dev);
 		}
 		double Trainer::_compute_log_likelihood(std::vector<Sentence*> &dataset){
 			// if(dataset.size() == 0){
@@ -298,28 +347,37 @@ namespace npycrf {
 		}
 		// デバッグ用
 		void Trainer::remove_all_data(){
-			int max_sentence_length = _dataset->get_max_sentence_length();
-			wchar_t* wrapped_character_ids = new wchar_t[max_sentence_length + 2];	// <bow>と<eow>を追加
-			for(int data_index = 0;data_index < _dataset->_sentence_sequences_train.size();data_index++){
+			for(int data_index = 0;data_index < _dataset_u->get_num_training_data();data_index++){
 				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 					return;
 				}
-				Sentence* sentence = _dataset->_sentence_sequences_train[data_index];
+				Sentence* sentence = _dataset_u->_sentence_sequences_train[data_index];
 				// 古い分割をモデルから削除
-				if(_added_to_npylm_train[data_index] == true){
+				if(_added_to_npylm_u[data_index] == true){
 					for(int t = 2;t < sentence->get_num_segments();t++){
 						_model->_npylm->remove_customer_at_time_t(sentence, t);
 					}
 				}
 			}
-			delete[] wrapped_character_ids;
+			for(int data_index = 0;data_index < _dataset_l->get_num_training_data();data_index++){
+				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+					return;
+				}
+				Sentence* sentence = _dataset_l->_sentence_sequences_train[data_index];
+				// 古い分割をモデルから削除
+				if(_added_to_npylm_l[data_index] == true){
+					for(int t = 2;t < sentence->get_num_segments();t++){
+						_model->_npylm->remove_customer_at_time_t(sentence, t);
+					}
+				}
+			}
 		}
 		void Trainer::print_segmentation_train(int num_to_print){
-			_print_segmentation(num_to_print, _dataset->_sentence_sequences_train, _rand_indices_train);
+			_print_segmentation(num_to_print, _dataset_u->_sentence_sequences_train, _rand_indices_train_u);
 		}
 		void Trainer::print_segmentation_dev(int num_to_print){
-			shuffle(_rand_indices_dev.begin(), _rand_indices_dev.end(), sampler::mt);
-			_print_segmentation(num_to_print, _dataset->_sentence_sequences_dev, _rand_indices_dev);
+			shuffle(_rand_indices_dev_u.begin(), _rand_indices_dev_u.end(), sampler::mt);
+			_print_segmentation(num_to_print, _dataset_u->_sentence_sequences_dev, _rand_indices_dev_u);
 		}
 		void Trainer::_print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices){
 			num_to_print = std::min((int)dataset.size(), num_to_print);

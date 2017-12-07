@@ -7,11 +7,11 @@ using namespace npycrf::crf;
 
 namespace npycrf {
 	namespace python {
-		Model::Model(model::NPYLM* py_npylm, model::CRF* py_crf, double lambda_0, int max_word_length, int max_sentence_length){
+		Model::Model(model::NPYLM* py_npylm, model::CRF* py_crf, double lambda_0){
 			_set_locale();
 			_npylm = py_npylm->_npylm;
 			_crf = py_crf->_crf;
-			_lattice = new Lattice(_npylm, _crf, lambda_0, max_word_length, max_sentence_length);
+			_lattice = new Lattice(_npylm, _crf, lambda_0);
 		}
 		Model::~Model(){
 

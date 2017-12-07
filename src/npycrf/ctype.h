@@ -283,6 +283,8 @@
 #define CTYPE_SUPPLEMENTARY_PRIVATE_USE_AREA_A 279
 #define CTYPE_SUPPLEMENTARY_PRIVATE_USE_AREA_B 280
 
+#define CTYPE_NUM_TYPES 281
+
 namespace npycrf {
     namespace ctype {
         unsigned int get_type(wchar_t c);

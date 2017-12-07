@@ -23,8 +23,8 @@ namespace npycrf {
 			std::vector<Sentence*> _sentence_sequences_dev;
 			Dataset(Corpus* corpus, Dictionary* dict, double train_split, int seed);
 			~Dataset();
-			int get_num_sentences_train();
-			int get_num_sentences_dev();
+			int get_num_training_data();
+			int get_num_validation_data();
 			int get_max_sentence_length();
 			int get_average_sentence_length();
 			int detect_hash_collision(int max_word_length);
