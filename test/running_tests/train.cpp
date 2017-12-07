@@ -13,15 +13,23 @@ using std::endl;
 
 void run_training_loop(){
 	std::string filename = "../../dataset/test.txt";
-	Corpus* corpus = new Corpus();
-	corpus->add_textfile(filename);
+	Corpus* corpus_npycrf = new Corpus();
+	corpus_npycrf->add_textfile(filename);
+	
+	Corpus* corpus_crf = new Corpus();
+	std::vector<std::wstring> word_str_vec = {L"iii", L"iiiqqq", L"nnnvvv", L"pppyyy", L"ppp", L"pppnnn", L"vvvfff", L"uuubbb", L"bbbhhh", L"bbbiii", L"aaaxxx", L"yyyppp", L"jjjqqq", L"tttiii"};
+	corpus_crf->add_true_segmentation(word_str_vec);
+
+	Dictionary* dict = new Dictionary();
+
 	int seed = 0;
-	Dataset* dataset = new Dataset(corpus, 1, seed);
+	Dataset* dataset_crf = new Dataset(corpus_crf, dict, 1, seed);
+	Dataset* dataset_npycrf = new Dataset(corpus_npycrf, dict, 1, seed);
 
 	double lambda_0 = 1;
 	int max_word_length = 12;
-	int max_sentence_length = dataset->get_max_sentence_length();
-	double g0 = 1.0 / (double)dataset->_dict->get_num_characters();
+	int max_sentence_length = std::max(dataset_crf->get_max_sentence_length(), dataset_npycrf->get_max_sentence_length());
+	double g0 = 1.0 / (double)dict->get_num_characters();
 	double initial_lambda_a = 4;
 	double initial_lambda_b = 1;
 	double vpylm_beta_stop = 4;
@@ -52,7 +60,7 @@ void run_training_loop(){
 	Model* model = new Model(py_npylm, py_crf, lambda_0, max_word_length, dataset->get_max_sentence_length());
 	Dictionary* dictionary = dataset->_dict;
 	dictionary->save("npylm.dict");
-	Trainer* trainer = new Trainer(dataset, model);
+	Trainer* trainer = new Trainer(dataset_crf, dataset_npycrf, model);
 
 	for(int epoch = 1;epoch < 200;epoch++){
 	    auto start_time = std::chrono::system_clock::now();
@@ -73,6 +81,11 @@ void run_training_loop(){
 			cout << "log_likelihood: " << trainer->compute_log_likelihood_dev() << endl;
 		}
 	}
+	delete dict;
+	delete dataset_crf;
+	delete dataset_npycrf;
+	delete trainer;
+	delete model;
 }
 
 int main(int argc, char *argv[]){

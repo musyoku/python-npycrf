@@ -19,10 +19,10 @@ namespace npycrf {
 		void Corpus::add_sentence(std::wstring sentence_str){
 			_sentence_str_list.push_back(sentence_str);
 		}
-		int Corpus::get_num_sentences(){
+		int Corpus::get_num_unsupervised_data(){
 			return _sentence_str_list.size();
 		}
-		int Corpus::get_num_true_segmentations(){
+		int Corpus::get_num_supervised_data(){
 			return _word_sequence_list.size();
 		}
 		void Corpus::_before_add_true_segmentation(boost::python::list &py_word_str_list, std::vector<std::wstring> &word_str_vec){

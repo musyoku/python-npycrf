@@ -13,7 +13,8 @@ namespace npycrf {
 		private:
 			std::vector<int> _rand_indices_train;
 			std::vector<int> _rand_indices_dev;
-			Dataset* _dataset;
+			Dataset* _dataset_crf;		// CRFの学習用教師データ
+			Dataset* _dataset_npycrf;	// NPYCRFの学習用教師なしデータ
 			Dictionary* _dict;
 			Model* _model;
 			solver::SGD* _sgd;
@@ -27,7 +28,7 @@ namespace npycrf {
 			double _compute_perplexity(std::vector<Sentence*> &dataset);
 			double _compute_log_likelihood(std::vector<Sentence*> &dataset);
 		public:
-			Trainer(Dataset* dataset, Model* model);
+			Trainer(Dataset* dataset_crf, Dataset* dataset_npycrf, Model* model);
 			void remove_all_data();
 			void gibbs();
 			void sgd(bool pure_crf);

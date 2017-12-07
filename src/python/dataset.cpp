@@ -7,27 +7,28 @@
 
 namespace npycrf {
 	namespace python {
-		Dataset::Dataset(Corpus* corpus, double train_split, int seed){
-			_dict = new Dictionary();
+		Dataset::Dataset(Corpus* corpus, Dictionary* dict, double train_split, int seed){
 			_corpus = corpus;
 			_max_sentence_length = 0;
 			_avg_sentence_length = 0;
 			int sum_sentence_length = 0;
-			std::vector<int> rand_indices;
-			for(int i = 0;i < corpus->get_num_sentences();i++){
-				rand_indices.push_back(i);
-			}
+
 			// まず教師なし学習用のデータをtrain/devに振り分ける
+			_num_unsupervised_data = corpus->get_num_unsupervised_data();
+			std::vector<int> rand_indices_u;
+			for(int i = 0;i < _num_unsupervised_data;i++){
+				rand_indices_u.push_back(i);
+			}
 			sampler::set_seed(seed);
-			shuffle(rand_indices.begin(), rand_indices.end(), sampler::mt);	// データをシャッフル
+			shuffle(rand_indices_u.begin(), rand_indices_u.end(), sampler::mt);	// データをシャッフル
 			train_split = std::min(1.0, std::max(0.0, train_split));
-			int num_train_data = corpus->get_num_sentences() * train_split;
-			for(int i = 0;i < rand_indices.size();i++){
-				std::wstring &sentence_str = corpus->_sentence_str_list[rand_indices[i]];
+			int num_train_data = _num_unsupervised_data * train_split;
+			for(int i = 0;i < rand_indices_u.size();i++){
+				std::wstring &sentence_str = corpus->_sentence_str_list[rand_indices_u[i]];
 				if(i < num_train_data){
-					_add_words_to_dataset(sentence_str, _sentence_sequences_train);
+					_add_words_to_dataset(sentence_str, _sentence_sequences_train, dict);
 				}else{
-					_add_words_to_dataset(sentence_str, _sentence_sequences_dev);
+					_add_words_to_dataset(sentence_str, _sentence_sequences_dev, dict);
 				}
 				// 統計
 				if(_max_sentence_length == 0 || sentence_str.size() > _max_sentence_length){
@@ -35,9 +36,17 @@ namespace npycrf {
 				}
 				sum_sentence_length += sentence_str.size();
 			}
-			// 教師分割データがあればすべてtrainに追加
-			_num_supervised_data = corpus->get_num_true_segmentations();
-			for(int i = 0;i < corpus->get_num_true_segmentations();i++){
+			
+			// 教師あり学習用のデータをtrain/devに振り分ける
+			_num_supervised_data = corpus->get_num_supervised_data();
+			std::vector<int> rand_indices_l;
+			shuffle(rand_indices_l.begin(), rand_indices_l.end(), sampler::mt);	// データをシャッフル
+			train_split = std::min(1.0, std::max(0.0, train_split));
+			int num_train_data = _num_supervised_data * train_split;
+			for(int i = 0;i < _num_supervised_data;i++){
+				rand_indices_l.push_back(i);
+			}
+			for(int i = 0;i < rand_indices_l.size();i++){
 				// 分割から元の文を復元
 				std::vector<std::wstring> &words = corpus->_word_sequence_list[i];
 				std::vector<int> segmentation;
@@ -50,13 +59,17 @@ namespace npycrf {
 				int* character_ids = new int[sentence_str.size()];
 				for(int i = 0;i < sentence_str.size();i++){
 					wchar_t character = sentence_str[i];
-					int character_id = _dict->add_character(character);
+					int character_id = dict->add_character(character);
 					character_ids[i] = character_id;
 				}
 				// データセットに追加
 				Sentence* sentence = new Sentence(sentence_str, character_ids, true);
 				sentence->split(segmentation);		// 分割
-				_sentence_sequences_train.push_back(sentence);
+				if(i < num_train_data){
+					_sentence_sequences_train.push_back(sentence);
+				}else{
+					_sentence_sequences_dev.push_back(sentence);
+				}
 				// 統計
 				if(_max_sentence_length == 0 || sentence_str.size() > _max_sentence_length){
 					_max_sentence_length = sentence_str.size();
@@ -74,7 +87,6 @@ namespace npycrf {
 				Sentence* sentence = _sentence_sequences_dev[n];
 				delete sentence;
 			}
-			delete _dict;
 		}
 		int Dataset::get_num_sentences_train(){
 			return _sentence_sequences_train.size();
@@ -85,13 +97,13 @@ namespace npycrf {
 		int Dataset::get_num_sentences_supervised(){
 			return _num_supervised_data;
 		}
-		void Dataset::_add_words_to_dataset(std::wstring &sentence_str, std::vector<Sentence*> &dataset){
+		void Dataset::_add_words_to_dataset(std::wstring &sentence_str, std::vector<Sentence*> &dataset, Dictionary* dict){
 			assert(sentence_str.size() > 0);
 			// 構成文字を辞書に追加し、文字IDに変換
 			int* character_ids = new int[sentence_str.size()];
 			for(int i = 0;i < sentence_str.size();i++){
 				wchar_t character = sentence_str[i];
-				int character_id = _dict->add_character(character);
+				int character_id = dict->add_character(character);
 				character_ids[i] = character_id;
 			}
 			Sentence* sentence = new Sentence(sentence_str, character_ids);
@@ -136,9 +148,6 @@ namespace npycrf {
 					}
 				}
 			}
-		}
-		Dictionary &Dataset::get_dict_obj(){
-			return *_dict;
 		}
 	}
 }

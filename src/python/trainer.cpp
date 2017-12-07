@@ -7,8 +7,9 @@
 
 namespace npycrf {
 	namespace python {
-		Trainer::Trainer(Dataset* dataset, Model* model){
-			_dataset = dataset;
+		Trainer::Trainer(Dataset* dataset_crf, Dataset* dataset_npycrf, Model* model){
+			_dataset_crf = dataset_crf;
+			_dataset_npycrf = dataset_npycrf;
 			_model = model;
 			_dict = dataset->_dict;
 			_sgd = new solver::SGD(model->_crf);
@@ -24,6 +25,12 @@ namespace npycrf {
 			}
 			_num_segmentation_rejection = 0;
 			_num_segmentation_acceptance = 0;
+
+			int max_word_length = model->_npylm->_max_word_length;
+			int max_sentence_length = std::max(dataset_crf->get_max_sentence_length(), dataset_npycrf->get_max_sentence_length());
+			model->_npylm->reserve(max_word_length, max_sentence_length);
+			model->_lattice->reserve(max_word_length, max_sentence_length);
+	
 		}
 
 		// HPYLM,VPYLMのdとthetaをサンプリング
