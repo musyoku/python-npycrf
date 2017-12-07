@@ -93,6 +93,7 @@ def main():
 	parser.add_argument("--crf-feature-x-identical-2-start", type=int, default=-3)
 	parser.add_argument("--crf-feature-x-identical-2-end", type=int, default=1)
 	parser.add_argument("--crf-prior-sigma", type=float, default=1.0)
+	parser.add_argument("--crf-learning-rate", type=float, default=0.001)
 
 	args = parser.parse_args()
 
@@ -112,7 +113,6 @@ def main():
 	# 同時に辞書が更新される
 	dataset_l = nlp.dataset(corpus_l, dictionary, args.train_dev_split, args.seed)	# 教師あり
 	dataset_u = nlp.dataset(corpus_u, dictionary, args.train_dev_split, args.seed)	# 教師なし
-
 
 	# 辞書を保存
 	dictionary.save(os.path.join(args.working_directory, "npycrf.dict"))
@@ -163,26 +163,34 @@ def main():
 		num_checked_words = trainer.detect_hash_collision(args.max_word_length)
 		print("衝突はありません (総単語数 {})".format(num_checked_words))
 
-	# 学習ループ
+	learning_rate = args.crf_learning_rate
+	batchsize = 32
+
+	# 初期化
+	trainer.add_labelded_data_to_npylm()
+	trainer.sgd(learning_rate, batchsize, pure_crf=True)
+
 	for epoch in range(1, args.epochs + 1):
 		start = time.time()
-		trainer.gibbs()				# ギブスサンプリング
+
+		# 学習
+		trainer.gibbs(include_labeled_data=True)		# NPYLMのパラメータをギブスサンプリング
+		trainer.sgd()	# CRFを最適化
+
+		# 各種サンプリング
 		trainer.sample_hpylm_vpylm_hyperparameters()	# HPYLMとVPYLMのハイパーパラメータの更新
-		trainer.sample_lambda()		# λの更新
+		trainer.sample_npylm_lambda()		# λの更新
 
 		# p(k|VPYLM)の推定は数イテレーション後にやるほうが精度が良い
 		if epoch > 3:
 			trainer.update_p_k_given_vpylm()
 			
-		model.save(os.path.join(args.working_directory, "nlp.model"))
-
 		# ログ
 		elapsed_time = time.time() - start
 		printr("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
 		if epoch % 10 == 0:
 			printr("")
 			trainer.print_segmentation_train(10)
-			print("ppl_dev: {}".format(trainer.compute_perplexity_dev()))
 
 if __name__ == "__main__":
 	main()

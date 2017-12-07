@@ -33,10 +33,11 @@ BOOST_PYTHON_MODULE(npycrf){
 	.def("compute_perplexity_dev", &Trainer::compute_perplexity_dev)
 	.def("compute_log_likelihood_train", &Trainer::compute_log_likelihood_train)
 	.def("compute_log_likelihood_dev", &Trainer::compute_log_likelihood_dev)
+	.def("add_labelded_data_to_npylm", &Trainer::add_labelded_data_to_npylm)
 	.def("sgd", &Trainer::sgd, (arg("learning_rate"), arg("batchsize")=32, arg("pure_crf")=false))
 	.def("gibbs", &Trainer::gibbs, (arg("include_labeled_data")=false));
 
-	boost::python::class_<Model>("model", boost::python::init<model::NPYLM*, model::CRF*>((args("npylm", "crf"))))
+	boost::python::class_<Model>("npycrf", boost::python::init<model::NPYLM*, model::CRF*>((args("npylm", "crf"))))
 	.def("parse", &Model::python_parse);
 
 	boost::python::class_<model::CRF>("crf", boost::python::init<int, int, int, int, int, int, int, int, int, double>((args("num_character_ids", "feature_x_unigram_start", "feature_x_unigram_end", "feature_x_bigram_start", "feature_x_bigram_end", "feature_x_identical_1_start", "feature_x_identical_1_end", "feature_x_identical_2_start", "feature_x_identical_2_end", "sigma"))))

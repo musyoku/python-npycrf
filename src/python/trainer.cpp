@@ -269,12 +269,15 @@ namespace npycrf {
 		void Trainer::sgd(double learning_rate, int batchsize, bool pure_crf){
 			_sgd->clear_grads();
 			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
-			int total_batches = _rand_indices_train_l.size() / batchsize + (_rand_indices_train_l.size() % batchsize) ? 1 : 0;
+			int total_batches = ((double)_rand_indices_train_l.size() / (double)batchsize) + (_rand_indices_train_l.size() % batchsize) ? 1 : 0;
 			std::cout << "total_batches: " << total_batches << std::endl;
 			Lattice* lattice = _npycrf->_lattice;
+			bool original_mode = lattice->get_pure_crf_mode();
+			lattice->set_pure_crf_mode(pure_crf);
 			for(int b = 0;b < total_batches;b++){
 				int size = std::min(batchsize, (int)(_rand_indices_train_l.size() - batchsize * b));
 				for(int i = 0;i < size;i++){
+					assert(lattice->get_pure_crf_mode() == true);
 					int data_index = _rand_indices_train_l[i + batchsize * b];
 					std::cout << "data_index: " << data_index << std::endl;
 					Sentence* sentence = _dataset_l->_sentences_train[data_index];
@@ -286,6 +289,7 @@ namespace npycrf {
 				}
 				_sgd->update(learning_rate / (double)size);	// 勾配の平均をとるため学習率を調整
 			}
+			lattice->set_pure_crf_mode(original_mode);
 		}
 		double Trainer::compute_perplexity_train(){
 			return _compute_perplexity(_dataset_u->_sentences_train);

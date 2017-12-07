@@ -1073,18 +1073,18 @@ namespace npycrf {
 				double p_0_0 = _compute_p_z_case_0_0(sentence_length, t, pc_s);
 				// std::cout << "0-0*: " << p_0_0 << std::endl;
 				assert(std::abs(p_0_0 - pz_s[t][0][0]) < 1e-12);
-			#endif
-			if(1 < t && t < sentence_length){
-				if(pz_s[t][0][0] <= 0){
-					std::cout << "t: " << t << std::endl;
-					std::cout << "1-1: " << pz_s[t][1][1] << std::endl;
-					std::cout << "1-0: " << pz_s[t][1][0] << std::endl;
-					std::cout << "0-1: " << pz_s[t][0][1] << std::endl;
-					std::cout << "0-0: " << pz_s[t][0][0] << std::endl;
-					std::cout << "*-* - 0-0: " << pz_s[t][1][1] + pz_s[t][1][0] + pz_s[t][0][1] << std::endl;
+				if(1 < t && t < sentence_length){
+					if(pz_s[t][0][0] <= 0){
+						std::cout << "t: " << t << std::endl;
+						std::cout << "1-1: " << pz_s[t][1][1] << std::endl;
+						std::cout << "1-0: " << pz_s[t][1][0] << std::endl;
+						std::cout << "0-1: " << pz_s[t][0][1] << std::endl;
+						std::cout << "0-0: " << pz_s[t][0][0] << std::endl;
+						std::cout << "*-* - 0-0: " << pz_s[t][1][1] + pz_s[t][1][0] + pz_s[t][0][1] << std::endl;
+					}
+					// assert(pz_s[t][0][0] > 0);
 				}
-				// assert(pz_s[t][0][0] > 0);
-			}
+			#endif
 		}
 		// 2つめの<eos>への遷移
 		pz_s[sentence_length + 1][0][0] = 0;
