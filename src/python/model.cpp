@@ -7,14 +7,14 @@ using namespace npycrf::crf;
 
 namespace npycrf {
 	namespace python {
-		Model::Model(model::NPYLM* py_npylm, model::CRF* py_crf, double lambda_0){
+		Model::Model(model::NPYLM* py_npylm, model::CRF* py_crf){
 			_set_locale();
 			_npylm = py_npylm->_npylm;
 			_crf = py_crf->_crf;
-			_lattice = new Lattice(_npylm, _crf, lambda_0);
+			_lattice = new Lattice(_npylm, _crf, 1);
 		}
 		Model::~Model(){
-
+			delete _lattice;
 		}
 		// 日本語周り
 		void Model::_set_locale(){

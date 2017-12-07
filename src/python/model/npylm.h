@@ -9,7 +9,6 @@ namespace npycrf {
 			public:
 				npylm::NPYLM* _npylm;
 				NPYLM(int max_word_length, 
-					  int max_sentence_length, 
 					  double g0, 
 					  double initial_lambda_a, 
 					  double initial_lambda_b, 

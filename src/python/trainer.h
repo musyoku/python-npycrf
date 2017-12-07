@@ -18,7 +18,7 @@ namespace npycrf {
 			Dataset* _dataset_l;	// CRFの学習用教師データ
 			Dataset* _dataset_u;	// NPYCRFの学習用教師なしデータ
 			Dictionary* _dict;
-			Model* _model;
+			Model* _npycrf;
 			solver::SGD* _sgd;
 			double* _vpylm_sampling_probability_table;
 			wchar_t* _vpylm_sampling_id_table;
@@ -29,7 +29,7 @@ namespace npycrf {
 			double _compute_log_likelihood(std::vector<Sentence*> &dataset);
 			void _gibbs_labeled();
 		public:
-			Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* model, double crf_regularization_constant);
+			Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* npycrf, double crf_regularization_constant);
 			void remove_all_data();
 			void add_labelded_data_to_npylm();
 			void gibbs(bool include_labeled_data = false);

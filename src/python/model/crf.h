@@ -9,7 +9,6 @@ namespace npycrf {
 			public:
 				crf::CRF* _crf;
 				CRF(int num_character_ids,		// 文字IDの総数
-					int num_character_types,	// 文字種の総数
 					int feature_x_unigram_start,
 					int feature_x_unigram_end,
 					int feature_x_bigram_start,

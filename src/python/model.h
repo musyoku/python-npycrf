@@ -16,7 +16,7 @@ namespace npycrf {
 			npylm::NPYLM* _npylm;
 			crf::CRF* _crf;
 			Lattice* _lattice;			// forward filtering-backward sampling
-			Model(model::NPYLM* py_npylm, model::CRF* py_crf, double lambda_0);
+			Model(model::NPYLM* py_npylm, model::CRF* py_crf);
 			~Model();
 			int get_max_word_length();
 			void set_initial_lambda_a(double lambda);

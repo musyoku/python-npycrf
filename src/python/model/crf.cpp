@@ -1,13 +1,13 @@
 #include <fstream>
 #include <iostream>
 #include "../../npycrf/common.h"
+#include "../../npycrf/ctype.h"
 #include "crf.h"
 
 namespace npycrf {
 	namespace python {
 		namespace model {
 			CRF::CRF(int num_character_ids,		// 文字IDの総数
-					 int num_character_types,	// 文字種の総数
 					 int feature_x_unigram_start,
 					 int feature_x_unigram_end,
 					 int feature_x_bigram_start,
@@ -19,7 +19,7 @@ namespace npycrf {
 					 double sigma)
 			{
 				_crf = new crf::CRF(num_character_ids, 
-									num_character_types,
+									CTYPE_NUM_TYPES,
 									feature_x_unigram_start,
 									feature_x_unigram_end,
 									feature_x_bigram_start,

@@ -13,7 +13,6 @@ SOURCES = 	src/python/*.cpp \
 
 install: ## npycrf.soを生成
 	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npycrf.so -O3
-	rm -rf run/npycrf.so
 
 install_ubuntu: ## npycrf.soを生成
 	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(SOFLAGS) src/python.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp $(LDFLAGS) -o run/npycrf.so -O3

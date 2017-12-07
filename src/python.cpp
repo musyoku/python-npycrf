@@ -1,5 +1,3 @@
-#include "python/model/crf.h"
-#include "python/model/npylm.h"
 #include "python/model.h"
 #include "python/dataset.h"
 #include "python/dictionary.h"
@@ -12,6 +10,7 @@ using boost::python::args;
 
 BOOST_PYTHON_MODULE(npycrf){
 	boost::python::class_<Dictionary>("dictionary")
+	.def("get_num_characters", &Dictionary::get_num_characters)
 	.def("save", &Dictionary::save)
 	.def("load", &Dictionary::load);
 
@@ -23,7 +22,7 @@ BOOST_PYTHON_MODULE(npycrf){
 	.def("get_size_train", &Dataset::get_size_train)
 	.def("get_size_dev", &Dataset::get_size_dev);
 
-	boost::python::class_<Trainer>("trainer", boost::python::init<Dataset*, Dataset*, Dictionary*, Model*, double>((args("dataset_labeled", "dataset_unlabeled", "dictionary", "model", "crf_regularization_constant"))))
+	boost::python::class_<Trainer>("trainer", boost::python::init<Dataset*, Dataset*, Dictionary*, Model*, double>((args("dataset_labeled", "dataset_unlabeled", "dictionary", "npycrf", "crf_regularization_constant"))))
 	.def("detect_hash_collision", &Trainer::detect_hash_collision)
 	.def("print_segmentation_train", &Trainer::print_segmentation_train)
 	.def("print_segmentation_dev", &Trainer::print_segmentation_dev)
@@ -37,7 +36,14 @@ BOOST_PYTHON_MODULE(npycrf){
 	.def("sgd", &Trainer::sgd, (arg("learning_rate"), arg("batchsize")=32, arg("pure_crf")=false))
 	.def("gibbs", &Trainer::gibbs, (arg("include_labeled_data")=false));
 
-	boost::python::class_<Model>("model", boost::python::init<model::NPYLM*, model::CRF*, double>((args("npylm", "crf", "lambda_0"))))
-	.def(boost::python::init<std::string>((arg("filename"))))
+	boost::python::class_<Model>("model", boost::python::init<model::NPYLM*, model::CRF*>((args("npylm", "crf"))))
 	.def("parse", &Model::python_parse);
+
+	boost::python::class_<model::CRF>("crf", boost::python::init<int, int, int, int, int, int, int, int, int, double>((args("num_character_ids", "feature_x_unigram_start", "feature_x_unigram_end", "feature_x_bigram_start", "feature_x_bigram_end", "feature_x_identical_1_start", "feature_x_identical_1_end", "feature_x_identical_2_start", "feature_x_identical_2_end", "sigma"))))
+	.def("save", &model::CRF::save)
+	.def("load", &model::CRF::load);
+
+	boost::python::class_<model::NPYLM>("npylm", boost::python::init<int, double, double, double, double, double>((args("max_word_length", "g0", "initial_lambda_a", "initial_lambda_b", "vpylm_beta_stop", "vpylm_beta_pass"))))
+	.def("save", &model::NPYLM::save)
+	.def("load", &model::NPYLM::load);
 }
