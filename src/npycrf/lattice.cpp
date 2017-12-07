@@ -225,9 +225,8 @@ namespace npycrf {
 	}
 	// alpha[t-k][j][i]自体は正規化されている場合があるが、alpha[t][k][j]の正規化はここでは行わない
 	// @args
-	// 	pw_h_tkji;  NPYLMによる確率計算の結果をpw_h_tkjiにキャッシュする
-	// NPYLMによる確率計算の結果をpw_h_tkjiにキャッシュする
-	// このキャッシュは後向き確率の計算時に使う
+	// 	pw_h_tkji;	NPYLMによる確率計算の結果をpw_h_tkjiにキャッシュする
+	// 				このキャッシュは後向き確率の計算時に使う
 	void Lattice::_sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double prod_scaling){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
@@ -1040,6 +1039,15 @@ namespace npycrf {
 				pc_s[t][k] = sum_probability / Zs;
 			}
 		}
+	}
+	// p(z_t, z_{t+1}|s)の計算
+	void Lattice::enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s){
+		_clear_word_id_cache();
+		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, true);
+		_enumerate_backward_variables(sentence, _beta, _pw_h, _scaling, true);
+		double _Zs = 1.0 / _scaling[sentence->size() + 1];
+		_enumerate_proportional_p_substring_given_sentence(_pc_s, sentence->size(), _alpha, _beta, _Zs);
+		_enumerate_marginal_p_path_given_sentence(pz_s, sentence->size(), _pc_s);
 	}
 	// p(z_t, z_{t+1}|s)の計算
 	// Zsは統合モデル上での文の確率

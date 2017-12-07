@@ -69,6 +69,7 @@ namespace npycrf {
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
 		double compute_normalizing_constant(Sentence* sentence, bool use_scaling = true);
 		double _compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji);
+		void enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s);
 		void _enumerate_marginal_p_path_given_sentence(double*** pz_s, int sentence_length, double** pc_s);
 		double _compute_p_z_case_1_1(int sentence_length, int t, double** pc_s);
 		double _compute_p_z_case_1_0(int sentence_length, int t, double** pc_s);

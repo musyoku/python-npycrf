@@ -1,6 +1,7 @@
 import argparse, sys, os, time, codecs, random
+from tabulate import tabulate
 import MeCab
-import npylm
+import npycrf as nlp
 
 class stdout:
 	BOLD = "\033[1m"
@@ -15,9 +16,10 @@ def printr(string):
 	sys.stdout.write(string)
 	sys.stdout.flush()
 
-def build_corpus(filepath, directory, semisupervised_split_ratio):
+def build_corpus(filepath, directory, semi_supervised_split_ratio):
 	assert filepath is not None or directory is not None
-	corpus = npylm.corpus()
+	corpus_l = nlp.corpus()	# 教師あり
+	corpus_u = nlp.corpus()	# 教師なし
 	sentence_list = []
 
 	if filepath is not None:
@@ -35,9 +37,9 @@ def build_corpus(filepath, directory, semisupervised_split_ratio):
 
 	random.shuffle(sentence_list)
 
-	semisupervised_split = int(len(sentence_list) * semisupervised_split_ratio)
-	sentence_list_l = sentence_list[:semisupervised_split]
-	sentence_list_u = sentence_list[semisupervised_split:]
+	semi_supervised_split = int(len(sentence_list) * semi_supervised_split_ratio)
+	sentence_list_l = sentence_list[:semi_supervised_split]
+	sentence_list_u = sentence_list[semi_supervised_split:]
 
 	tagger = MeCab.Tagger()
 	tagger.parse("")
@@ -50,12 +52,12 @@ def build_corpus(filepath, directory, semisupervised_split_ratio):
 				words.append(word)
 			m = m.next
 		if len(words) > 0:
-			corpus.add_true_segmentation(words)
+			corpus_l.add_true_segmentation(words)
 
 	for sentence_str in sentence_list_u:
-		corpus.add_sentence(sentence_str)
+		corpus_u.add_sentence(sentence_str)
 
-	return corpus
+	return corpus_l, corpus_u
 
 def main():
 	parser = argparse.ArgumentParser()
@@ -67,7 +69,7 @@ def main():
 	parser.add_argument("--epochs", "-e", type=int, default=100000, help="総epoch")
 	parser.add_argument("--working-directory", "-cwd", type=str, default="out", help="ワーキングディレクトリ")
 	parser.add_argument("--train-split", "-train-split", type=float, default=0.9, help="テキストデータの何割を訓練データにするか")
-	parser.add_argument("--semisupervised-split", "-ssl-split", type=float, default=0.1, help="テキストデータの何割を教師データにするか")
+	parser.add_argument("--semi_supervised-split", "-ssl-split", type=float, default=0.1, help="テキストデータの何割を教師データにするか")
 
 	parser.add_argument("--lambda-a", "-lam-a", type=float, default=4)
 	parser.add_argument("--lambda-b", "-lam-b", type=float, default=1)
@@ -82,20 +84,29 @@ def main():
 	except:
 		pass
 
-	# 訓練データを追加
-	corpus = build_corpus(args.train_filename, args.train_directory, args.semisupervised_split)
-	dataset = npylm.dataset(corpus, args.train_split, args.seed)
+	# 学習に用いるテキストデータを準備
+	corpus_l, corpus_u = build_corpus(args.train_filename, args.train_directory, args.semi_supervised_split)
 
-	print("#train", dataset.get_num_sentences_train())
-	print("#train (supervised)", dataset.get_num_sentences_supervised())
-	print("#dev", dataset.get_num_sentences_dev())
+	# 辞書
+	dictionary = nlp.dictionary()
 
-	# 単語辞書を保存
-	dictionary = dataset.get_dict()
-	dictionary.save(os.path.join(args.working_directory, "npylm.dict"))
+	# 訓練データ・検証データに分けてデータセットを作成
+	# 同時に辞書が更新される
+	dataset_l = nlp.dataset(corpus_l, dictionary, args.train_split, ars.seed)	# 教師あり
+	dataset_u = nlp.dataset(corpus_u, dictionary, args.train_split, ars.seed)	# 教師なし
+
+	# 確認
+	table = [
+		["Labeled", dataset_l.get_num_training_data(), dataset_l.get_num_training_data()],
+		["Unlabeled", dataset_u.get_num_training_data(), dataset_u.get_num_training_data()]
+	]
+	print(tabulate(table, headers=["Train", "Dev"]))
+
+	# 辞書を保存
+	dictionary.save(os.path.join(args.working_directory, "npycrf.dict"))
 
 	# モデル
-	model = npylm.model(
+	model = nlp.model(
 		dataset, 
 		args.max_word_length)	# 可能な単語の最大長を指定
 
@@ -106,7 +117,7 @@ def main():
 	model.set_vpylm_beta_pass(args.vpylm_beta_pass);
 
 	# 学習の準備
-	trainer = npylm.trainer(
+	trainer = nlp.trainer(
 		dataset, model, 
 		# NPYLMでは通常、新しい分割結果をもとに単語nグラムモデルを更新する
 		# Falseを渡すと分割結果の単語列としての確率が以前の分割のそれよりも下回っている場合に確率的に棄却する
@@ -131,7 +142,7 @@ def main():
 		if epoch > 3:
 			trainer.update_p_k_given_vpylm()
 			
-		model.save(os.path.join(args.working_directory, "npylm.model"))
+		model.save(os.path.join(args.working_directory, "nlp.model"))
 
 		# ログ
 		elapsed_time = time.time() - start

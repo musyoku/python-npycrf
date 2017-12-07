@@ -279,19 +279,13 @@ namespace npycrf {
 					int data_index = _rand_indices_train_l[i + batchsize * b];
 					std::cout << "data_index: " << data_index << std::endl;
 					Sentence* sentence = _dataset_l->_sentence_sequences_train[data_index];
-
 					// 周辺確率を求める
-					lattice->_clear_word_id_cache();
-					lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
-					lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
-					double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
-					lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
-					lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
-
+					double*** pz_s = lattice->_pz_s;
+					lattice->enumerate_marginal_p_path_given_sentence(sentence, pz_s);
 					// 更新
-					_sgd->backward(sentence, lattice->_pz_s);
+					_sgd->backward(sentence, pz_s);
 				}
-				_sgd->update(learning_rate / (double)size);	// 勾配の平均をついでにとる
+				_sgd->update(learning_rate / (double)size);	// 勾配の平均をとるため学習率を調整
 			}
 		}
 		double Trainer::compute_perplexity_train(){
