@@ -32,7 +32,7 @@ namespace npycrf {
 			Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* model, double crf_regularization_constant);
 			void remove_all_data();
 			void add_labelded_data_to_npylm();
-			void gibbs(bool with_labeled_data = false);
+			void gibbs(bool include_labeled_data = false);
 			void sgd(double learning_rate, int batchsize = 32, bool pure_crf = false);
 			void sample_hpylm_vpylm_hyperparameters();
 			void sample_npylm_lambda();
@@ -44,6 +44,7 @@ namespace npycrf {
 			double compute_log_likelihood_dev();
 			void print_segmentation_train(int num_to_print);
 			void print_segmentation_dev(int num_to_print);
+			int detect_hash_collision(int max_word_length);
 		};
 	}
 }

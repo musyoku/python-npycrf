@@ -3,6 +3,7 @@
 #include <iostream>
 #include "../npycrf/sampler.h"
 #include "../npycrf/wordtype.h"
+#include "../npycrf/hash.h"
 #include "trainer.h"
 
 namespace npycrf {
@@ -23,7 +24,7 @@ namespace npycrf {
 				_rand_indices_train_u.push_back(data_index);
 				_added_to_npylm_u[data_index] = false;
 			}
-			for(int data_index = 0;data_index < dataset_u->_sentence_sequences_dev.size();data_index++){
+			for(int data_index = 0;data_index < dataset_u->_sentences_dev.size();data_index++){
 				_rand_indices_dev_u.push_back(data_index);
 			}
 			
@@ -34,7 +35,7 @@ namespace npycrf {
 				_rand_indices_train_l.push_back(data_index);
 				_added_to_npylm_l[data_index] = false;
 			}
-			for(int data_index = 0;data_index < dataset_l->_sentence_sequences_dev.size();data_index++){
+			for(int data_index = 0;data_index < dataset_l->_sentences_dev.size();data_index++){
 				_rand_indices_dev_l.push_back(data_index);
 			}
 
@@ -79,8 +80,8 @@ namespace npycrf {
 					}
 				}
 			};
-			enumerate_words(_dataset_l->_sentence_sequences_train);
-			enumerate_words(_dataset_u->_sentence_sequences_train);
+			enumerate_words(_dataset_l->_sentences_train);
+			enumerate_words(_dataset_u->_sentences_train);
 			for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
 				double lambda = sampler::gamma(a_for_type[type], b_for_type[type]);
 				npylm->_lambda_for_type[type] = lambda;
@@ -179,7 +180,7 @@ namespace npycrf {
 			delete[] wrapped_character_ids;
 		}
 		// 単語分割のギブスサンプリング
-		void Trainer::gibbs(bool with_labeled_data){
+		void Trainer::gibbs(bool include_labeled_data){
 			// 教師なしデータでモデルパラメータを更新
 			std::vector<int> segments;		// 分割の一時保存用
 			shuffle(_rand_indices_train_u.begin(), _rand_indices_train_u.end(), sampler::mt);		// データをシャッフル
@@ -190,8 +191,7 @@ namespace npycrf {
 				// 訓練データを一つ取り出す
 				int data_index = _rand_indices_train_u[i];
 				assert(data_index < _dataset_u->get_num_training_data());
-				Sentence* sentence = _dataset_u->_sentence_sequences_train[data_index];
-				assert(sentence->is_supervised() == false);
+				Sentence* sentence = _dataset_u->_sentences_train[data_index];
 
 				// モデルに追加されているかチェック
 				if(_added_to_npylm_u[data_index] == true){
@@ -231,7 +231,7 @@ namespace npycrf {
 			// 客数チェック
 			assert(_model->_npylm->_hpylm->_root->_num_tables <= _model->_npylm->_vpylm->get_num_customers());
 
-			if(with_labeled_data){
+			if(include_labeled_data){
 				_gibbs_labeled();
 			}
 		}
@@ -248,8 +248,7 @@ namespace npycrf {
 				// 訓練データを一つ取り出す
 				int data_index = _rand_indices_train_l[i];
 				assert(data_index < _dataset_l->get_num_training_data());
-				Sentence* sentence = _dataset_l->_sentence_sequences_train[data_index];
-				assert(sentence->is_supervised() == true);
+				Sentence* sentence = _dataset_l->_sentences_train[data_index];
 
 				// 教師あり
 				// モデルに追加されているかチェック
@@ -278,7 +277,7 @@ namespace npycrf {
 				for(int i = 0;i < size;i++){
 					int data_index = _rand_indices_train_l[i + batchsize * b];
 					std::cout << "data_index: " << data_index << std::endl;
-					Sentence* sentence = _dataset_l->_sentence_sequences_train[data_index];
+					Sentence* sentence = _dataset_l->_sentences_train[data_index];
 					// 周辺確率を求める
 					double*** pz_s = lattice->_pz_s;
 					lattice->enumerate_marginal_p_path_given_sentence(sentence, pz_s);
@@ -289,10 +288,10 @@ namespace npycrf {
 			}
 		}
 		double Trainer::compute_perplexity_train(){
-			return _compute_perplexity(_dataset_u->_sentence_sequences_train);
+			return _compute_perplexity(_dataset_u->_sentences_train);
 		}
 		double Trainer::compute_perplexity_dev(){
-			return _compute_perplexity(_dataset_u->_sentence_sequences_dev);
+			return _compute_perplexity(_dataset_u->_sentences_dev);
 		}
 		double Trainer::_compute_perplexity(std::vector<Sentence*> &dataset){
 			if(dataset.size() == 0){
@@ -315,10 +314,10 @@ namespace npycrf {
 			return ppl;
 		}
 		double Trainer::compute_log_likelihood_train(){
-			return _compute_log_likelihood(_dataset_u->_sentence_sequences_train);
+			return _compute_log_likelihood(_dataset_u->_sentences_train);
 		}
 		double Trainer::compute_log_likelihood_dev(){
-			return _compute_log_likelihood(_dataset_u->_sentence_sequences_dev);
+			return _compute_log_likelihood(_dataset_u->_sentences_dev);
 		}
 		double Trainer::_compute_log_likelihood(std::vector<Sentence*> &dataset){
 			// if(dataset.size() == 0){
@@ -346,7 +345,7 @@ namespace npycrf {
 				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 					return;
 				}
-				Sentence* sentence = _dataset_u->_sentence_sequences_train[data_index];
+				Sentence* sentence = _dataset_u->_sentences_train[data_index];
 				// 古い分割をモデルから削除
 				if(_added_to_npylm_u[data_index] == true){
 					for(int t = 2;t < sentence->get_num_segments();t++){
@@ -358,7 +357,7 @@ namespace npycrf {
 				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
 					return;
 				}
-				Sentence* sentence = _dataset_l->_sentence_sequences_train[data_index];
+				Sentence* sentence = _dataset_l->_sentences_train[data_index];
 				// 古い分割をモデルから削除
 				if(_added_to_npylm_l[data_index] == true){
 					for(int t = 2;t < sentence->get_num_segments();t++){
@@ -368,12 +367,12 @@ namespace npycrf {
 			}
 		}
 		void Trainer::print_segmentation_train(int num_to_print){
-			_print_segmentation(num_to_print, _dataset_u->_sentence_sequences_train, _rand_indices_train_u);
-			_print_segmentation(num_to_print, _dataset_l->_sentence_sequences_train, _rand_indices_train_l);
+			_print_segmentation(num_to_print, _dataset_u->_sentences_train, _rand_indices_train_u);
+			_print_segmentation(num_to_print, _dataset_l->_sentences_train, _rand_indices_train_l);
 		}
 		void Trainer::print_segmentation_dev(int num_to_print){
 			shuffle(_rand_indices_dev_u.begin(), _rand_indices_dev_u.end(), sampler::mt);
-			_print_segmentation(num_to_print, _dataset_u->_sentence_sequences_dev, _rand_indices_dev_u);
+			_print_segmentation(num_to_print, _dataset_u->_sentences_dev, _rand_indices_dev_u);
 		}
 		void Trainer::_print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices){
 			num_to_print = std::min((int)dataset.size(), num_to_print);
@@ -389,6 +388,54 @@ namespace npycrf {
 				sentence->dump_words();
 				delete sentence;
 			}
+		}
+		int Trainer::detect_hash_collision(int max_word_length){
+			std::unordered_map<id, std::wstring> pool;
+			auto exec = [&pool, &max_word_length](Sentence* sentence){
+				for(int t = 1;t <= sentence->size();t++){
+					for(int k = 1;k <= std::min(t, max_word_length);k++){
+						id word_id = sentence->get_substr_word_id(t - k, t - 1);
+						std::wstring word = sentence->get_substr_word_str(t - k, t - 1);
+						assert(word_id == hash_wstring(word));
+						auto itr = pool.find(word_id);
+						if(itr == pool.end()){
+							pool[word_id] = word;
+						}else{
+							assert(itr->second == word);
+						}
+					}
+				}
+			};
+			int step = 0;
+			for(Sentence* sentence: _dataset_u->_sentences_train){
+				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+					return 0;
+				}
+				exec(sentence);
+				step++;
+			}
+			for(Sentence* sentence: _dataset_u->_sentences_dev){
+				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+					return 0;
+				}
+				exec(sentence);
+				step++;
+			}
+			for(Sentence* sentence: _dataset_l->_sentences_train){
+				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+					return 0;
+				}
+				exec(sentence);
+				step++;
+			}
+			for(Sentence* sentence: _dataset_l->_sentences_dev){
+				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+					return 0;
+				}
+				exec(sentence);
+				step++;
+			}
+			return pool.size();
 		}
 	}
 }

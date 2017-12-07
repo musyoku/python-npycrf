@@ -34,10 +34,6 @@ namespace npycrf {
 		_start[2] = 0;
 		_start[3] = _sentence_str.size();
 		_num_segments = 4;
-		_supervised = false;
-	}
-	Sentence::Sentence(std::wstring sentence, int* character_ids, bool supervised): Sentence(sentence, character_ids){
-		_supervised = supervised;
 	}
 	Sentence::~Sentence(){
 		delete[] _character_ids;
@@ -48,9 +44,6 @@ namespace npycrf {
 	Sentence* Sentence::copy(){
 		Sentence* sentence = new Sentence(_sentence_str, _character_ids);
 		return sentence;
-	}
-	bool Sentence::is_supervised(){
-		return _supervised;
 	}
 	int Sentence::size(){
 		return _sentence_str.size();

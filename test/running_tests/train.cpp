@@ -17,11 +17,21 @@ using std::endl;
 void run_training_loop(){
 	std::string filename = "../../dataset/test.txt";
 	Corpus* corpus_u = new Corpus();
-	corpus_u->add_textfile(filename);
+
+	std::wifstream ifs(filename.c_str());
+	std::wstring sentence_str;
+	assert(ifs.fail() == false);
+	while (getline(ifs, sentence_str)){
+		if (sentence_str.empty()){
+			continue;
+		}
+		std::vector<std::wstring> words = {sentence_str};
+		corpus_u->add_words(words);
+	}
 	
 	Corpus* corpus_l = new Corpus();
 	std::vector<std::wstring> word_str_vec = {L"iii", L"iiiqqq", L"nnnvvv", L"pppyyy", L"ppp", L"pppnnn", L"vvvfff", L"uuubbb", L"bbbhhh", L"bbbiii", L"aaaxxx", L"yyyppp", L"jjjqqq", L"tttiii"};
-	corpus_l->add_true_segmentation(word_str_vec);
+	corpus_l->add_words(word_str_vec);
 
 	Dictionary* dict = new Dictionary();
 
