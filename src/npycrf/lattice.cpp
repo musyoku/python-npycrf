@@ -507,7 +507,7 @@ namespace npycrf {
 
 		_alpha[0][0][0] = 1;
 		_scaling[0] = 0;
-		_clear_word_id_cache(_substring_word_id_cache, size);
+		_clear_word_id_cache();
 		forward_filtering(sentence, use_scaling);
 		backward_sampling(sentence, segments);
 	}
@@ -732,7 +732,7 @@ namespace npycrf {
 
 		_alpha[0][0][0] = 0;
 		_scaling[0] = 0;
-		_clear_word_id_cache(_substring_word_id_cache, size);
+		_clear_word_id_cache();
 		viterbi_forward(sentence);
 		viterbi_backward(sentence, segments);
 	}
@@ -741,7 +741,7 @@ namespace npycrf {
 	double Lattice::compute_normalizing_constant(Sentence* sentence, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
-		_clear_word_id_cache(_substring_word_id_cache, size);
+		_clear_word_id_cache();
 		// 前向き確率を求める
 		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);
 		// <eos>へ到達する確率を全部足す
@@ -766,7 +766,7 @@ namespace npycrf {
 	double Lattice::_compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
-		_clear_word_id_cache(_substring_word_id_cache, size);
+		_clear_word_id_cache();
 		// 後向き確率を求める
 		_enumerate_backward_variables(sentence, beta, pw_h_tkji, NULL, false);
 		double px = _beta[0][1][1];
@@ -778,7 +778,7 @@ namespace npycrf {
 	// double Lattice::compute_marginal_log_p_sentence(Sentence* sentence, bool use_scaling){
 	// 	assert(sentence->size() <= _max_sentence_length);
 	// 	int size = sentence->size() + 1;
-	// 	_clear_word_id_cache(_substring_word_id_cache, size);
+	// 	_clear_word_id_cache();
 	// 	// 前向き確率を求める
 	// 	_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);
 	// 	// <eos>へ到達する確率を全部足す
@@ -1150,10 +1150,10 @@ namespace npycrf {
 			}
 		}
 	}
-	void Lattice::_clear_word_id_cache(id** substring_word_id_cache, int size){
-		for(int t = 0;t < size;t++){
-			for(int k = 0;k < _max_word_length + 1;k++){
-				substring_word_id_cache[t][k] = 0;
+	void Lattice::_clear_word_id_cache(){
+		for(int t = 0;t <= _max_sentence_length;t++){
+			for(int k = 0;k <= _max_word_length;k++){
+				_substring_word_id_cache[t][k] = 0;
 			}
 		}
 	}

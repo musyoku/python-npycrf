@@ -78,6 +78,6 @@ namespace npycrf {
 		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* scaling, bool use_scaling = true);
 		void _enumerate_backward_variables(Sentence* sentence, double*** beta, double**** pw_h_tkji, double* scaling, bool use_scaling = true);
 		void _clear_pw_h_tkji(double**** pw_h_tkji);
-		void _clear_word_id_cache(id** substring_word_id_cache, int size);
+		void _clear_word_id_cache();
 	};
 } // namespace npylm

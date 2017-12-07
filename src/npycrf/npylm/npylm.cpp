@@ -380,6 +380,13 @@ namespace npycrf {
 				#ifdef __DEBUG__
 					id a = hash_substring_ptr(characters, substr_t_start_index, substr_t_end_index);
 					if(a != word_id){
+						for(int i = substr_t_start_index;i <= substr_t_end_index;i++){
+							std::wcout << characters[i];
+						}
+						std::cout << std::endl;
+						std::cout << "character_ids_length: " << character_ids_length << std::endl;
+						std::cout << "substr_t_start_index: " << substr_t_start_index << std::endl;
+						std::cout << "substr_t_end_index: " << substr_t_end_index << std::endl;
 						std::cout << word_ids[0] << ", " << word_ids[1] << ", " << word_ids[2] << ", " << std::endl;
 						std::cout << word_id << std::endl;
 						std::cout << a << std::endl;

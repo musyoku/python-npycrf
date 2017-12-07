@@ -29,7 +29,7 @@ namespace npycrf {
 			double _compute_log_likelihood(std::vector<Sentence*> &dataset);
 			void _gibbs_labeled();
 		public:
-			Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* model);
+			Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* model, double crf_regularization_constant);
 			void remove_all_data();
 			void add_labelded_data_to_npylm();
 			void gibbs(bool with_labeled_data = false);

@@ -9,6 +9,7 @@ namespace npycrf {
 		class SGD {
 		public:
 			crf::CRF* _crf;
+			double _regularization_constant;
 			double _grad_bias;
 			double* _grad_w_label;			// (y_i), (y_{i-1}, y_i)
 			double* _grad_w_unigram;		// (y_i, i, x_i), (y_{i-1}, y_i, i, x_i)
@@ -17,7 +18,7 @@ namespace npycrf {
 			double* _grad_w_identical_2;	// (y_i, i), (y_{i-1}, y_i, i)
 			double* _grad_w_unigram_type;	// (y_i, type), (y_{i-1}, y_i, type)
 			double* _grad_w_bigram_type;	// (y_i, type, type), (y_{i-1}, y_i, type, type)
-			SGD(crf::CRF* crf);
+			SGD(crf::CRF* crf, double regularization_constant);
 			~SGD();
 			void clear_grads();
 			void update(double learning_rate);

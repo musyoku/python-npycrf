@@ -64,10 +64,11 @@ void run_training_loop(){
 
 	Model* model = new Model(py_npylm, py_crf, lambda_0);
 	dict->save("npylm.dict");
-	Trainer* trainer = new Trainer(dataset_l, dataset_u, dict, model);
-
-	double learning_rate = 0.0001;
+	double learning_rate = 0.001;
 	unsigned int batchsize = 32;
+	double crf_regularization_constant = 1;
+
+	Trainer* trainer = new Trainer(dataset_l, dataset_u, dict, model, crf_regularization_constant);
 	trainer->add_labelded_data_to_npylm();
 	trainer->sgd(learning_rate, batchsize, true);
 	for(int epoch = 1;epoch < 200;epoch++){

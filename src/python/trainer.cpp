@@ -7,12 +7,12 @@
 
 namespace npycrf {
 	namespace python {
-		Trainer::Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* model){
+		Trainer::Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* model, double crf_regularization_constant){
 			_dataset_l = dataset_l;
 			_dataset_u = dataset_u;
 			_dict = dict;
 			_model = model;
-			_sgd = new solver::SGD(model->_crf);
+			_sgd = new solver::SGD(model->_crf, crf_regularization_constant);
 			_vpylm_sampling_probability_table = new double[_dict->get_num_characters() + 1];	// </s>を含む
 			_vpylm_sampling_id_table = new wchar_t[_dict->get_num_characters() + 1];			// </s>を含む
 
@@ -281,6 +281,7 @@ namespace npycrf {
 					Sentence* sentence = _dataset_l->_sentence_sequences_train[data_index];
 
 					// 周辺確率を求める
+					lattice->_clear_word_id_cache();
 					lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 					lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 					double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
@@ -290,7 +291,7 @@ namespace npycrf {
 					// 更新
 					_sgd->backward(sentence, lattice->_pz_s);
 				}
-				_sgd->update(learning_rate / (double)size);
+				_sgd->update(learning_rate / (double)size);	// 勾配の平均をついでにとる
 			}
 		}
 		double Trainer::compute_perplexity_train(){
@@ -374,6 +375,7 @@ namespace npycrf {
 		}
 		void Trainer::print_segmentation_train(int num_to_print){
 			_print_segmentation(num_to_print, _dataset_u->_sentence_sequences_train, _rand_indices_train_u);
+			_print_segmentation(num_to_print, _dataset_l->_sentence_sequences_train, _rand_indices_train_l);
 		}
 		void Trainer::print_segmentation_dev(int num_to_print){
 			shuffle(_rand_indices_dev_u.begin(), _rand_indices_dev_u.end(), sampler::mt);

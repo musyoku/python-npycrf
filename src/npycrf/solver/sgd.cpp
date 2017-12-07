@@ -4,8 +4,9 @@
 
 namespace npycrf {
 	namespace solver {
-		SGD::SGD(crf::CRF* crf){
+		SGD::SGD(crf::CRF* crf, double regularization_constant){
 			_crf = crf;
+			_regularization_constant = regularization_constant;
 			_grad_w_label = new double[crf->_w_size_label_u + crf->_w_size_label_b];
 			_grad_w_unigram = new double[crf->_w_size_unigram_u + crf->_w_size_unigram_b];
 			_grad_w_bigram = new double[crf->_w_size_bigram_u + crf->_w_size_bigram_b];
@@ -49,46 +50,46 @@ namespace npycrf {
 		}
 		void SGD::update(double learning_rate){
 			for(int i = 0;i < _crf->_w_size_label_u + _crf->_w_size_label_b;i++){
-				if(_grad_w_label[i] > 0){
-					std::cout << "grad: label[" << i << "] <- " << _grad_w_label[i] << std::endl;
-				}
-				_crf->_w_label[i] += learning_rate * _grad_w_label[i];
+				_crf->_w_label[i] += learning_rate * _grad_w_label[i] - _regularization_constant * _crf->_w_label[i];
+				// if(_grad_w_label[i] > 0){
+				// 	std::cout << "label[" << i << "] = " << _crf->_w_label[i] << std::endl;
+				// }
 			}
 			for(int i = 0;i < _crf->_w_size_unigram_u + _crf->_w_size_unigram_b;i++){
-				if(_grad_w_unigram[i] > 0){
-					std::cout << "grad: unigram[" << i << "] <- " << _grad_w_unigram[i] << std::endl;
-				}
-				_crf->_w_unigram[i] += learning_rate * _grad_w_unigram[i];
+				_crf->_w_unigram[i] += learning_rate * _grad_w_unigram[i] - _regularization_constant * _crf->_w_unigram[i];
+				// if(_grad_w_unigram[i] > 0){
+				// 	std::cout << "unigram[" << i << "] = " << _crf->_w_unigram[i] << std::endl;
+				// }
 			}
 			for(int i = 0;i < _crf->_w_size_bigram_u + _crf->_w_size_bigram_b;i++){
-				if(_grad_w_bigram[i] > 0){
-					std::cout << "grad: bigram[" << i << "] <- " << _grad_w_bigram[i] << std::endl;
-				}
-				_crf->_w_bigram[i] += learning_rate * _grad_w_bigram[i];
+				_crf->_w_bigram[i] += learning_rate * _grad_w_bigram[i] - _regularization_constant * _crf->_w_bigram[i];
+				// if(_grad_w_bigram[i] > 0){
+				// 	std::cout << "bigram[" << i << "] = " << _crf->_w_bigram[i] << std::endl;
+				// }
 			}
 			for(int i = 0;i < _crf->_w_size_identical_1_u + _crf->_w_size_identical_1_b;i++){
-				if(_grad_w_identical_1[i] > 0){
-					std::cout << "grad: identical_1[" << i << "] <- " << _grad_w_identical_1[i] << std::endl;
-				}
-				_crf->_w_identical_1[i] += learning_rate * _grad_w_identical_1[i];
+				_crf->_w_identical_1[i] += learning_rate * _grad_w_identical_1[i] - _regularization_constant * _crf->_w_identical_1[i];
+				// if(_grad_w_identical_1[i] > 0){
+				// 	std::cout << "identical_1[" << i << "] = " << _crf->_w_identical_1[i] << std::endl;
+				// }
 			}
 			for(int i = 0;i < _crf->_w_size_identical_2_u + _crf->_w_size_identical_2_b;i++){
-				if(_grad_w_identical_2[i] > 0){
-					std::cout << "grad: identical_2[" << i << "] <- " << _grad_w_identical_2[i] << std::endl;
-				}
-				_crf->_w_identical_2[i] += learning_rate * _grad_w_identical_2[i];
+				_crf->_w_identical_2[i] += learning_rate * _grad_w_identical_2[i] - _regularization_constant * _crf->_w_identical_2[i];
+				// if(_grad_w_identical_2[i] > 0){
+				// 	std::cout << "identical_2[" << i << "] = " << _crf->_w_identical_2[i] << std::endl;
+				// }
 			}
 			for(int i = 0;i < _crf->_w_size_unigram_type_u + _crf->_w_size_unigram_type_b;i++){
-				if(_grad_w_unigram_type[i] > 0){
-					std::cout << "grad: unigram_type[" << i << "] <- " << _grad_w_unigram_type[i] << std::endl;
-				}
-				_crf->_w_unigram_type[i] += learning_rate * _grad_w_unigram_type[i];
+				_crf->_w_unigram_type[i] += learning_rate * _grad_w_unigram_type[i] - _regularization_constant * _crf->_w_unigram_type[i];
+				// if(_grad_w_unigram_type[i] > 0){
+				// 	std::cout << "unigram_type[" << i << "] = " << _crf->_w_unigram_type[i] << std::endl;
+				// }
 			}
 			for(int i = 0;i < _crf->_w_size_bigram_type_u + _crf->_w_size_bigram_type_b;i++){
-				if(_grad_w_bigram_type[i] > 0){
-					std::cout << "grad: bigram_type[" << i << "] <- " << _grad_w_bigram_type[i] << std::endl;
-				}
-				_crf->_w_bigram_type[i] += learning_rate * _grad_w_bigram_type[i];
+				_crf->_w_bigram_type[i] += learning_rate * _grad_w_bigram_type[i] - _regularization_constant * _crf->_w_bigram_type[i];
+				// if(_grad_w_bigram_type[i] > 0){
+				// 	std::cout << "bigram_type[" << i << "] = " << _crf->_w_bigram_type[i] << std::endl;
+				// }
 			}
 		}
 		// CRFの勾配計算について

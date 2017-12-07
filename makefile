@@ -11,17 +11,15 @@ SOURCES = 	src/python/*.cpp \
 			src/npycrf/crf/*.cpp \
 			src/npycrf/solver/*.cpp
 
-install: ## npylm.soを生成
-	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp $(LDFLAGS) -o run/npylm.so -O3
-	cp run/npylm.so run/semi-supervised/npylm.so
-	cp run/npylm.so run/unsupervised/npylm.so
-	rm -rf run/npylm.so
+install: ## npycrf.soを生成
+	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npycrf.so -O3
+	rm -rf run/npycrf.so
 
-install_ubuntu: ## npylm.soを生成
-	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(SOFLAGS) src/python.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp $(LDFLAGS) -o run/npylm.so -O3
-	cp run/npylm.so run/semi-supervised/npylm.so
-	cp run/npylm.so run/unsupervised/npylm.so
-	rm -rf run/npylm.so
+install_ubuntu: ## npycrf.soを生成
+	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(SOFLAGS) src/python.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp $(LDFLAGS) -o run/npycrf.so -O3
+	cp run/npycrf.so run/semi-supervised/npycrf.so
+	cp run/npycrf.so run/unsupervised/npycrf.so
+	rm -rf run/npycrf.so
 
 check_includes:	## Python.hの場所を確認
 	python3-config --includes
@@ -48,7 +46,7 @@ module_tests: ## 各モジュールのテスト.
 	./test/module_tests/npylm/hash
 
 running_tests:	## 運用テスト
-	$(CC) test/running_tests/train.cpp $(SOURCES)  -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O3 -Wall
+	$(CC) test/running_tests/train.cpp $(SOURCES)  -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 	$(CC) test/running_tests/likelihood.cpp $(SOURCES) -o test/running_tests/likelihood $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 	$(CC) test/running_tests/save.cpp $(SOURCES) -o test/running_tests/save $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 
