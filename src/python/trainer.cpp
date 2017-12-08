@@ -279,6 +279,9 @@ namespace npycrf {
 				int size = std::min(batchsize, (int)(_rand_indices_train_l.size() - batchsize * b));
 				for(int i = 0;i < size;i++){
 					assert(lattice->get_pure_crf_mode() == pure_crf);
+					if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+						return;		
+					}
 					int data_index = _rand_indices_train_l[i + batchsize * b];
 					// std::cout << "data_index: " << data_index << std::endl;
 					Sentence* sentence = _dataset_l->_sentences_train[data_index];
