@@ -39,7 +39,43 @@ namespace npycrf {
 			_x_range_bigram = feature_x_bigram_end - feature_x_bigram_start + 1;
 			_x_range_identical_1 = feature_x_identical_1_end - feature_x_identical_1_start + 1;
 			_x_range_identical_2 = feature_x_identical_2_end - feature_x_identical_2_start + 1;
-			
+
+			// (y_i), (y_{i-1}, y_i)
+			_w_size_label_u = 2;
+			_w_size_label_b = 2 * 2;
+			// (y_i, i, x_i), (y_{i-1}, y_i, i, x_i)
+			_w_size_unigram_u = 2 * _x_range_unigram * num_character_ids;
+			_w_size_unigram_b = 2 * 2 * _x_range_unigram * num_character_ids;
+			// (y_i, i, x_{i-1}, x_i), (y_{i-1}, y_i, i, x_{i-1}, x_i)
+			_w_size_bigram_u = 2 * _x_range_bigram * num_character_ids * num_character_ids;
+			_w_size_bigram_b = 2 * 2 * _x_range_bigram * num_character_ids * num_character_ids;
+			// (y_i, i), (y_{i-1}, y_i, i)
+			_w_size_identical_1_u = 2 * _x_range_identical_1;
+			_w_size_identical_1_b = 2 * 2 * _x_range_identical_1;
+			// (y_i, i), (y_{i-1}, y_i, i)
+			_w_size_identical_2_u = 2 * _x_range_identical_2;
+			_w_size_identical_2_b = 2 * 2 * _x_range_identical_2;
+			// (y_i, type)
+			_w_size_unigram_type_u = 2 * num_character_types;
+			_w_size_unigram_type_b = 2 * 2 * num_character_types;
+			// (y_i, type, type), (y_{i-1}, y_i, type, type)
+			_w_size_bigram_type_u = 2 * num_character_types * num_character_types;
+			_w_size_bigram_type_b = 2 * 2 * num_character_types * num_character_types;
+
+			_weight_size = _w_size_label_u + _w_size_label_b
+							 + _w_size_unigram_u + _w_size_unigram_b
+							 + _w_size_bigram_u + _w_size_bigram_b 
+							 + _w_size_identical_1_u + _w_size_identical_1_b 
+							 + _w_size_identical_2_u + _w_size_identical_2_b 
+							 + _w_size_unigram_type_u + _w_size_unigram_type_b 
+							 + _w_size_bigram_type_u + _w_size_bigram_type_b;
+
+			_weight = new double[_weight_size];
+			for(int i = 0;i < _weight_size;i++){
+				_weight[i] = sampler::normal(0, sigma);
+				// _weight[i] = 1;
+			}
+
 			_offset_w_label_u = 0;
 			_offset_w_label_b = _w_size_label_u;
 			_offset_w_unigram_u = _w_size_label_u + _w_size_label_b;
@@ -90,51 +126,9 @@ namespace npycrf {
 									+ _w_size_identical_2_u + _w_size_identical_2_b
 									+ _w_size_unigram_type_u + _w_size_unigram_type_b
 									+ _w_size_bigram_type_u;
-
-			// (y_i), (y_{i-1}, y_i)
-			_w_size_label_u = 2;
-			_w_size_label_b = 2 * 2;
-			// (y_i, i, x_i), (y_{i-1}, y_i, i, x_i)
-			_w_size_unigram_u = 2 * _x_range_unigram * num_character_ids;
-			_w_size_unigram_b = 2 * 2 * _x_range_unigram * num_character_ids;
-			// (y_i, i, x_{i-1}, x_i), (y_{i-1}, y_i, i, x_{i-1}, x_i)
-			_w_size_bigram_u = 2 * _x_range_bigram * num_character_ids * num_character_ids;
-			_w_size_bigram_b = 2 * 2 * _x_range_bigram * num_character_ids * num_character_ids;
-			// (y_i, i), (y_{i-1}, y_i, i)
-			_w_size_identical_1_u = 2 * _x_range_identical_1;
-			_w_size_identical_1_b = 2 * 2 * _x_range_identical_1;
-			// (y_i, i), (y_{i-1}, y_i, i)
-			_w_size_identical_2_u = 2 * _x_range_identical_2;
-			_w_size_identical_2_b = 2 * 2 * _x_range_identical_2;
-			// (y_i, type)
-			_w_size_unigram_type_u = 2 * num_character_types;
-			_w_size_unigram_type_b = 2 * 2 * num_character_types;
-			// (y_i, type, type), (y_{i-1}, y_i, type, type)
-			_w_size_bigram_type_u = 2 * num_character_types * num_character_types;
-			_w_size_bigram_type_b = 2 * 2 * num_character_types * num_character_types;
-
-			int weight_size = _w_size_label_u + _w_size_label_b
-							 + _w_size_unigram_u + _w_size_unigram_b
-							 + _w_size_bigram_u + _w_size_bigram_b 
-							 + _w_size_identical_1_u + _w_size_identical_1_b 
-							 + _w_size_identical_2_u + _w_size_identical_2_b 
-							 + _w_size_unigram_type_u + _w_size_unigram_type_b 
-							 + _w_size_bigram_type_u + _w_size_bigram_type_b;
-			std::cout << "weight_size = " << weight_size << std::endl;
-			_weight = new double[weight_size];
-			for(int i = 0;i < weight_size;i++){
-				_weight[i] = sampler::normal(0, sigma);
-				// _weight[i] = 0;
-			}
 		}
 		CRF::~CRF(){
-			delete[] _w_label;
-			delete[] _w_unigram;
-			delete[] _w_bigram;
-			delete[] _w_identical_1;
-			delete[] _w_identical_2;
-			delete[] _w_unigram_type;
-			delete[] _w_bigram_type;
+			delete[] _weight;
 		}
 		double CRF::bias(){
 			return _bias;

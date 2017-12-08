@@ -122,7 +122,118 @@ public:
 void test_indices(){
 	Variables* var = new Variables();
 	NPYCRF* model = var->model;
-	assert(false);
+	crf::CRF* crf = var->py_crf->_crf;
+	for(int i = 0;i < crf->_weight_size;i++){
+		crf->_weight[i] = 0;
+	}
+
+	// label
+	for(int y_i = 0;y_i <= 1;y_i++){
+		int k = crf->_index_w_label_u(y_i);
+		assert(crf->_weight[k] == 0);
+		crf->_weight[k] += 1;
+		for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
+			int k = crf->_index_w_label_b(y_i_1, y_i);
+			assert(crf->_weight[k] == 0);
+			crf->_weight[k] += 1;
+		}
+	}
+
+	// unigram
+	for(int y_i = 0;y_i <= 1;y_i++){
+		for(int x_i = 0;x_i < crf->_num_character_ids;x_i++){
+			for(int i = 1;i <= crf->_x_range_unigram;i++){
+				int k = crf->_index_w_unigram_u(y_i, i, x_i);
+				assert(crf->_weight[k] == 0);
+				crf->_weight[k] += 1;
+				for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
+					int k = crf->_index_w_unigram_b(y_i_1, y_i, i, x_i);
+					assert(crf->_weight[k] == 0);
+					crf->_weight[k] += 1;
+				}
+			}
+		}
+	}
+
+	// bigram
+	for(int y_i = 0;y_i <= 1;y_i++){
+		for(int x_i = 0;x_i < crf->_num_character_ids;x_i++){
+			for(int x_i_1 = 0;x_i_1 < crf->_num_character_ids;x_i_1++){
+				for(int i = 1;i <= crf->_x_range_bigram;i++){
+					int k = crf->_index_w_bigram_u(y_i, i, x_i_1, x_i);
+					assert(crf->_weight[k] == 0);
+					crf->_weight[k] += 1;
+					for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
+						int k = crf->_index_w_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
+						assert(crf->_weight[k] == 0);
+						crf->_weight[k] += 1;
+					}
+				}
+			}
+		}
+	}
+
+	// identical
+	for(int y_i = 0;y_i <= 1;y_i++){
+		for(int i = 1;i <= crf->_x_range_identical_1;i++){
+			int k = crf->_index_w_identical_1_u(y_i, i);
+			assert(crf->_weight[k] == 0);
+			crf->_weight[k] += 1;
+			for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
+				int k = crf->_index_w_identical_1_b(y_i_1, y_i, i);
+				assert(crf->_weight[k] == 0);
+				crf->_weight[k] += 1;
+			}
+		}
+	}
+
+	// identical
+	for(int y_i = 0;y_i <= 1;y_i++){
+		for(int i = 1;i <= crf->_x_range_identical_2;i++){
+			int k = crf->_index_w_identical_2_u(y_i, i);
+			assert(crf->_weight[k] == 0);
+			crf->_weight[k] += 1;
+			for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
+				int k = crf->_index_w_identical_2_b(y_i_1, y_i, i);
+				assert(crf->_weight[k] == 0);
+				crf->_weight[k] += 1;
+			}
+		}
+	}
+
+	// unigram type
+	for(int y_i = 0;y_i <= 1;y_i++){
+		for(int type_i = 0;type_i < crf->_num_character_types;type_i++){
+			int k = crf->_index_w_unigram_type_u(y_i, type_i);
+			assert(crf->_weight[k] == 0);
+			crf->_weight[k] += 1;
+			for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
+				int k = crf->_index_w_unigram_type_b(y_i_1, y_i, type_i);
+				assert(crf->_weight[k] == 0);
+				crf->_weight[k] += 1;
+			}
+		}
+	}
+
+	// bigram type
+	for(int y_i = 0;y_i <= 1;y_i++){
+		for(int type_i = 0;type_i < crf->_num_character_types;type_i++){
+			for(int type_i_1 = 0;type_i_1 < crf->_num_character_types;type_i_1++){
+				int k = crf->_index_w_bigram_type_u(y_i, type_i_1, type_i);
+				assert(crf->_weight[k] == 0);
+				crf->_weight[k] += 1;
+				for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
+					int k = crf->_index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
+					assert(crf->_weight[k] == 0);
+					crf->_weight[k] += 1;
+				}
+			}
+		}
+	}
+
+	for(int i = 0;i < crf->_weight_size;i++){
+		assert(crf->_weight[i] == 1);
+	}
 	delete var;
 }
 
@@ -344,6 +455,7 @@ void test_grad_unigram(){
 	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
+	lattice->_clear_word_id_cache();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
@@ -498,6 +610,7 @@ void test_grad_bigram(){
 	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
+	lattice->_clear_word_id_cache();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
@@ -514,17 +627,17 @@ void test_grad_bigram(){
 			for(int x_i_1 = 0;x_i_1 < token_ids.size();x_i_1++){
 				// cout << "index = " << crf->_index_w_bigram_u(0, pos, x_i_1, x_i) << ", pos = " << pos << ", x_i_1 = " << x_i_1 << ", x_i = " << x_i << endl;
 				// cout << "index = " << crf->_index_w_bigram_u(1, pos, x_i_1, x_i) << ", pos = " << pos << ", x_i_1 = " << x_i_1 << ", x_i = " << x_i << endl;
-				assert(pos == (crf->_index_w_bigram_u(0, pos, x_i_1, x_i) % (crf->_x_range_bigram * 2)) / 2 + 1);
-				assert(pos == (crf->_index_w_bigram_u(1, pos, x_i_1, x_i) % (crf->_x_range_bigram * 2)) / 2 + 1);
+				assert(pos == ((crf->_index_w_bigram_u(0, pos, x_i_1, x_i) - crf->_offset_w_bigram_u) % (crf->_x_range_bigram * 2)) / 2 + 1);
+				assert(pos == ((crf->_index_w_bigram_u(1, pos, x_i_1, x_i) - crf->_offset_w_bigram_u) % (crf->_x_range_bigram * 2)) / 2 + 1);
 			}
 		}
 	}
 
 	// sentence->dump_words();
 
-	for(int k = 0;k < crf->_w_size_bigram_u;k++){
+	for(int k = crf->_offset_w_bigram_u;k < crf->_offset_w_bigram_u + crf->_w_size_bigram_u;k++){
 		double grad = 0;
-		int pos = (k % (crf->_x_range_bigram * 2)) / 2 + 1;
+		int pos = ((k - crf->_offset_w_bigram_u) % (crf->_x_range_bigram * 2)) / 2 + 1;
 		int t_start = std::max(1, -(crf->_x_bigram_start + pos - 1) + 2);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_bigram_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
@@ -556,12 +669,12 @@ void test_grad_bigram(){
 		}
 
 		if(k > 0){
-			crf->_w_bigram[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_bigram[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -575,22 +688,22 @@ void test_grad_bigram(){
 
 	}
 
-	crf->_w_bigram[crf->_w_size_unigram_u - 1] -= 1e-8;
+	crf->_weight[crf->_w_size_unigram_u + crf->_offset_w_bigram_u - 1] -= 1e-8;
 
 	for(int pos = 1;pos <= crf->_x_range_bigram;pos++){
 		for(int x_i = 0;x_i < token_ids.size();x_i++){
 			for(int x_i_1 = 0;x_i_1 < token_ids.size();x_i_1++){
-				assert(pos == ((crf->_index_w_bigram_b(0, 0, pos, x_i_1, x_i) - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
-				assert(pos == ((crf->_index_w_bigram_b(0, 1, pos, x_i_1, x_i) - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
-				assert(pos == ((crf->_index_w_bigram_b(1, 0, pos, x_i_1, x_i) - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
-				assert(pos == ((crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i) - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
+				assert(pos == ((crf->_index_w_bigram_b(0, 0, pos, x_i_1, x_i) - crf->_offset_w_bigram_b) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
+				assert(pos == ((crf->_index_w_bigram_b(0, 1, pos, x_i_1, x_i) - crf->_offset_w_bigram_b) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
+				assert(pos == ((crf->_index_w_bigram_b(1, 0, pos, x_i_1, x_i) - crf->_offset_w_bigram_b) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
+				assert(pos == ((crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i) - crf->_offset_w_bigram_b) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1);
 			}
 		}
 	}
 	
-	for(int k = crf->_w_size_bigram_u;k < crf->_w_size_bigram_u + crf->_w_size_bigram_b;k++){
+	for(int k = crf->_offset_w_bigram_b;k < crf->_offset_w_bigram_b + crf->_w_size_bigram_b;k++){
 		double grad = 0;
-		int pos = ((k - crf->_w_size_bigram_u) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1;
+		int pos = ((k - crf->_offset_w_bigram_b) % (crf->_x_range_bigram * 2 * 2)) / 4 + 1;
 		int t_start = std::max(1, -(crf->_x_bigram_start + pos - 1) + 2);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_bigram_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
@@ -622,12 +735,12 @@ void test_grad_bigram(){
 		}
 
 		if(k > 0){
-			crf->_w_bigram[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_bigram[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -649,6 +762,7 @@ void test_grad_identical_1(){
 	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
+	lattice->_clear_word_id_cache();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
@@ -663,15 +777,15 @@ void test_grad_identical_1(){
 	for(int pos = 1;pos <= crf->_x_range_identical_1;pos++){
 		// cout << "index = " << crf->_index_w_identical_1_u(0, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
 		// cout << "index = " << crf->_index_w_identical_1_u(1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
-		assert(pos == crf->_index_w_identical_1_u(0, pos) / 2 + 1);
-		assert(pos == crf->_index_w_identical_1_u(1, pos) / 2 + 1);
+		assert(pos == (crf->_index_w_identical_1_u(0, pos) - crf->_offset_w_identical_1_u) / 2 + 1);
+		assert(pos == (crf->_index_w_identical_1_u(1, pos) - crf->_offset_w_identical_1_u) / 2 + 1);
 	}
 
 	// sentence->dump_words();
 
-	for(int k = 0;k < crf->_w_size_identical_1_u;k++){
+	for(int k = crf->_offset_w_identical_1_u;k < crf->_offset_w_identical_1_u + crf->_w_size_identical_1_u;k++){
 		double grad = 0;
-		int pos = k / 2 + 1;
+		int pos = (k - crf->_offset_w_identical_1_u) / 2 + 1;
 		int t_start = std::max(1, -(crf->_x_identical_1_start + pos - 1) + 2);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_1_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
@@ -703,12 +817,12 @@ void test_grad_identical_1(){
 		}
 
 		if(k > 0){
-			crf->_w_identical_1[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_identical_1[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -722,21 +836,21 @@ void test_grad_identical_1(){
 
 	}
 
-	crf->_w_identical_1[crf->_w_size_identical_1_u - 1] -= 1e-8;
+	crf->_weight[crf->_w_size_identical_1_u + crf->_offset_w_identical_1_u - 1] -= 1e-8;
 
 	for(int pos = 1;pos <= crf->_x_range_identical_1;pos++){
-		assert(pos == (crf->_index_w_identical_1_b(0, 0, pos) - crf->_w_size_identical_1_u) / 4 + 1);
-		assert(pos == (crf->_index_w_identical_1_b(0, 1, pos) - crf->_w_size_identical_1_u) / 4 + 1);
-		assert(pos == (crf->_index_w_identical_1_b(1, 0, pos) - crf->_w_size_identical_1_u) / 4 + 1);
-		assert(pos == (crf->_index_w_identical_1_b(1, 1, pos) - crf->_w_size_identical_1_u) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_1_b(0, 0, pos) - crf->_offset_w_identical_1_b) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_1_b(0, 1, pos) - crf->_offset_w_identical_1_b) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_1_b(1, 0, pos) - crf->_offset_w_identical_1_b) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_1_b(1, 1, pos) - crf->_offset_w_identical_1_b) / 4 + 1);
 	}
 	
-	for(int k = crf->_w_size_identical_1_u;k < crf->_w_size_identical_1_u + crf->_w_size_identical_1_b;k++){
+	for(int k = crf->_offset_w_identical_1_b;k < crf->_offset_w_identical_1_b + crf->_w_size_identical_1_b;k++){
 		double grad = 0;
 		int yt_1 = 1;
 		int yt = 1;
 		int i = 2;
-		int pos = (k - crf->_w_size_identical_1_u) / 4 + 1;
+		int pos = (k - crf->_offset_w_identical_1_b) / 4 + 1;
 		int t_start = std::max(1, -(crf->_x_identical_1_start + pos - 1) + 2);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_1_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
@@ -768,12 +882,12 @@ void test_grad_identical_1(){
 		}
 
 		if(k > 0){
-			crf->_w_identical_1[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_identical_1[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -797,6 +911,7 @@ void test_grad_identical_2(){
 	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
+	lattice->_clear_word_id_cache();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
@@ -811,18 +926,18 @@ void test_grad_identical_2(){
 	for(int pos = 1;pos <= crf->_x_range_identical_2;pos++){
 		// cout << "index = " << crf->_index_w_identical_2_u(0, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
 		// cout << "index = " << crf->_index_w_identical_2_u(1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
-		assert(pos == crf->_index_w_identical_2_u(0, pos) / 2 + 1);
-		assert(pos == crf->_index_w_identical_2_u(1, pos) / 2 + 1);
+		assert(pos == (crf->_index_w_identical_2_u(0, pos) - crf->_offset_w_identical_2_u) / 2 + 1);
+		assert(pos == (crf->_index_w_identical_2_u(1, pos) - crf->_offset_w_identical_2_u) / 2 + 1);
 	}
 
 	// sentence->dump_words();
 
-	for(int k = 0;k < crf->_w_size_identical_2_u;k++){
+	for(int k = crf->_offset_w_identical_2_u;k < crf->_offset_w_identical_2_u + crf->_w_size_identical_2_u;k++){
 		double grad = 0;
 		int yt_1 = 1;
 		int yt = 1;
 		int i = 2;
-		int pos = k / 2 + 1;
+		int pos = (k - crf->_offset_w_identical_2_u) / 2 + 1;
 		int t_start = std::max(1, -(crf->_x_identical_2_start + pos - 1) + 3);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_2_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
@@ -854,12 +969,12 @@ void test_grad_identical_2(){
 		}
 
 		if(k > 0){
-			crf->_w_identical_2[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_identical_2[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -873,21 +988,21 @@ void test_grad_identical_2(){
 
 	}
 
-	crf->_w_identical_2[crf->_w_size_identical_2_u - 1] -= 1e-8;
+	crf->_weight[crf->_w_size_identical_2_u + crf->_offset_w_identical_2_u - 1] -= 1e-8;
 
 	for(int pos = 1;pos <= crf->_x_range_identical_2;pos++){
-		assert(pos == (crf->_index_w_identical_2_b(0, 0, pos) - crf->_w_size_identical_2_u) / 4 + 1);
-		assert(pos == (crf->_index_w_identical_2_b(0, 1, pos) - crf->_w_size_identical_2_u) / 4 + 1);
-		assert(pos == (crf->_index_w_identical_2_b(1, 0, pos) - crf->_w_size_identical_2_u) / 4 + 1);
-		assert(pos == (crf->_index_w_identical_2_b(1, 1, pos) - crf->_w_size_identical_2_u) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_2_b(0, 0, pos) - crf->_offset_w_identical_2_b) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_2_b(0, 1, pos) - crf->_offset_w_identical_2_b) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_2_b(1, 0, pos) - crf->_offset_w_identical_2_b) / 4 + 1);
+		assert(pos == (crf->_index_w_identical_2_b(1, 1, pos) - crf->_offset_w_identical_2_b) / 4 + 1);
 	}
 	
-	for(int k = crf->_w_size_identical_2_u;k < crf->_w_size_identical_2_u + crf->_w_size_identical_2_b;k++){
+	for(int k = crf->_offset_w_identical_2_u;k < crf->_offset_w_identical_2_u + crf->_w_size_identical_2_b;k++){
 		double grad = 0;
 		int yt_1 = 1;
 		int yt = 1;
 		int i = 2;
-		int pos = (k - crf->_w_size_identical_2_u) / 4 + 1;
+		int pos = (k - crf->_offset_w_identical_2_u) / 4 + 1;
 		int t_start = std::max(1, -(crf->_x_identical_2_start + pos - 1) + 3);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_identical_2_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
@@ -919,12 +1034,12 @@ void test_grad_identical_2(){
 		}
 
 		if(k > 0){
-			crf->_w_identical_2[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_identical_2[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -947,6 +1062,7 @@ void test_grad_character_type_unigram(){
 	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
+	lattice->_clear_word_id_cache();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
@@ -960,7 +1076,7 @@ void test_grad_character_type_unigram(){
 
 	// sentence->dump_words();
 
-	for(int k = 0;k < crf->_w_size_unigram_type_u;k++){
+	for(int k = crf->_offset_w_unigram_type_u;k < crf->_offset_w_unigram_type_u + crf->_w_size_unigram_type_u;k++){
 		double grad = 0;
 		int yt_1 = 1;
 		int yt = 1;
@@ -993,12 +1109,12 @@ void test_grad_character_type_unigram(){
 		}
 
 		if(k > 0){
-			crf->_w_unigram_type[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_unigram_type[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -1012,9 +1128,9 @@ void test_grad_character_type_unigram(){
 
 	}
 
-	crf->_w_unigram_type[crf->_w_size_unigram_type_u - 1] -= 1e-8;
+	crf->_weight[crf->_w_size_unigram_type_u + crf->_offset_w_unigram_type_u - 1] -= 1e-8;
 	
-	for(int k = crf->_w_size_unigram_type_u;k < crf->_w_size_unigram_type_u + crf->_w_size_unigram_type_b;k++){
+	for(int k = crf->_offset_w_unigram_type_u;k < crf->_offset_w_unigram_type_u + crf->_w_size_unigram_type_b;k++){
 		double grad = 0;
 		int yt_1 = 1;
 		int yt = 1;
@@ -1047,12 +1163,12 @@ void test_grad_character_type_unigram(){
 		}
 
 		if(k > 0){
-			crf->_w_unigram_type[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_unigram_type[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -1075,6 +1191,7 @@ void test_grad_character_type_bigram(){
 	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
+	lattice->_clear_word_id_cache();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
@@ -1100,9 +1217,9 @@ void test_grad_character_type_bigram(){
 		}
 	}
 
-	for(int k = 0;k < crf->_w_size_bigram_type_u;k++){
-		unsigned int type_i = k / (281 * 2);
-		unsigned int type_i_1 = k % (281 * 2) / 2;
+	for(int k = crf->_offset_w_bigram_type_u;k < crf->_offset_w_bigram_type_u + crf->_w_size_bigram_type_u;k++){
+		unsigned int type_i = (k - crf->_offset_w_bigram_type_u) / (281 * 2);
+		unsigned int type_i_1 = (k - crf->_offset_w_bigram_type_u) % (281 * 2) / 2;
 		if(type_i != CTYPE_HIRAGANA || type_i_1 != CTYPE_HIRAGANA){
 			continue;
 		}
@@ -1141,12 +1258,12 @@ void test_grad_character_type_bigram(){
 		}
 
 		if(k > 0){
-			crf->_w_bigram_type[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_bigram_type[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -1160,25 +1277,25 @@ void test_grad_character_type_bigram(){
 
 	}
 
-	crf->_w_bigram_type[crf->_w_size_bigram_type_u - 1] -= 1e-8;
+	crf->_weight[crf->_w_size_bigram_type_u + crf->_offset_w_bigram_type_u - 1] -= 1e-8;
 	
 	for(int type_i = 0;type_i < 281;type_i++){
 		for(int type_i_1 = 0;type_i_1 < 281;type_i_1++){
-			assert(type_i == (crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
-			assert(type_i == (crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
-			assert(type_i == (crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
-			assert(type_i == (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) / (281 * 4));
-			assert(type_i_1 == (crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
-			assert(type_i_1 == (crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
-			assert(type_i_1 == (crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
-			assert(type_i_1 == (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) - crf->_w_size_bigram_type_u) % (281 * 4) / 4);
+			assert(type_i == (crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) - crf->_offset_w_bigram_type_b) / (281 * 4));
+			assert(type_i == (crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) - crf->_offset_w_bigram_type_b) / (281 * 4));
+			assert(type_i == (crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) - crf->_offset_w_bigram_type_b) / (281 * 4));
+			assert(type_i == (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) - crf->_offset_w_bigram_type_b) / (281 * 4));
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) - crf->_offset_w_bigram_type_b) % (281 * 4) / 4);
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) - crf->_offset_w_bigram_type_b) % (281 * 4) / 4);
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) - crf->_offset_w_bigram_type_b) % (281 * 4) / 4);
+			assert(type_i_1 == (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) - crf->_offset_w_bigram_type_b) % (281 * 4) / 4);
 		}
 	}
 
 
-	for(int k = crf->_w_size_bigram_type_u;k < crf->_w_size_bigram_type_u + crf->_w_size_bigram_type_b;k++){
-		unsigned int type_i = k / (281 * 4);
-		unsigned int type_i_1 = k % (281 * 4) / 4;
+	for(int k = crf->_offset_w_bigram_type_b;k < crf->_offset_w_bigram_type_b + crf->_w_size_bigram_type_b;k++){
+		unsigned int type_i = (k - crf->_offset_w_bigram_type_b) / (281 * 4);
+		unsigned int type_i_1 = (k - crf->_offset_w_bigram_type_b) % (281 * 4) / 4;
 		if(type_i != CTYPE_HIRAGANA || type_i_1 != CTYPE_HIRAGANA){
 			continue;
 		}
@@ -1216,12 +1333,12 @@ void test_grad_character_type_bigram(){
 		}
 
 		if(k > 0){
-			crf->_w_bigram_type[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_bigram_type[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -1244,6 +1361,7 @@ void test_grad_label(){
 	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
+	lattice->_clear_word_id_cache();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
@@ -1257,7 +1375,7 @@ void test_grad_label(){
 
 	// sentence->dump_words();
 
-	for(int k = 0;k < crf->_w_size_label_u;k++){
+	for(int k = crf->_offset_w_label_u;k < crf->_offset_w_label_u + crf->_w_size_label_u;k++){
 		double grad = 0;
 		int yt_1 = 1;
 		int yt = 1;
@@ -1288,12 +1406,12 @@ void test_grad_label(){
 		}
 
 		if(k > 0){
-			crf->_w_label[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_label[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -1308,9 +1426,9 @@ void test_grad_label(){
 		}
 		assert(std::abs(true_grad - grad) < 1e-4);
 	}
-	crf->_w_label[crf->_w_size_label_u - 1] -= 1e-8;
+	crf->_weight[crf->_w_size_label_u + crf->_offset_w_label_u - 1] -= 1e-8;
 
-	for(int k = crf->_w_size_label_u;k < crf->_w_size_label_u + crf->_w_size_label_b;k++){
+	for(int k = crf->_offset_w_label_b;k < crf->_offset_w_label_b + crf->_w_size_label_b;k++){
 		double grad = 0;
 		int yt_1 = 1;
 		int yt = 1;
@@ -1341,12 +1459,12 @@ void test_grad_label(){
 		}
 
 		if(k > 0){
-			crf->_w_label[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_label[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;

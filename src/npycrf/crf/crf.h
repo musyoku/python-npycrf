@@ -12,14 +12,14 @@ namespace npycrf {
 	namespace crf {
 		class CRF {
 		private:
-			int _num_character_ids;
-			int _num_character_types;
 			friend class boost::serialization::access;
 			template <class Archive>
 			void serialize(Archive &archive, unsigned int version);
 			void save(boost::archive::binary_oarchive &archive, unsigned int version) const;
 			void load(boost::archive::binary_iarchive &archive, unsigned int version);
 		public:
+			int _num_character_ids;
+			int _num_character_types;
 			// y ∈ {0,1}
 			// x ∈ Z
 			// i ∈ Z
@@ -50,6 +50,7 @@ namespace npycrf {
 			int _w_size_unigram_type_b;	// (y_{i-1}, y_i, type)
 			int _w_size_bigram_type_u;	// (y_i, type, type)
 			int _w_size_bigram_type_b;	// (y_{i-1}, y_i, type, type)
+			int _weight_size;
 			double _bias;
 			double* _weight;
 			int _offset_w_label_u;
@@ -86,6 +87,10 @@ namespace npycrf {
 			);
 			CRF(){};
 			~CRF();
+			// 以下、iは左端を1とした番号
+			// 例）
+			// i=1,   2,   3, 4,   5
+			//   t-2, t-1, t, t+1, t+2
 			int _index_w_label_u(int y_i);
 			int _index_w_label_b(int y_i_1, int y_i);
 			int _index_w_unigram_u(int y_i, int i, int x_i);

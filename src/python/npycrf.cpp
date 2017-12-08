@@ -58,6 +58,12 @@ namespace npycrf {
 			#ifdef __DEBUG__
 				double __Zs = _lattice->_compute_normalizing_constant_backward(sentence, _lattice->_beta, _lattice->_pw_h);
 				double ___Zs = _lattice->compute_normalizing_constant(sentence, false);
+				if(std::abs(1 - Zs / __Zs) >= 1e-14){
+					std::cout << std::abs(1 - Zs / __Zs) << std::endl;
+				}
+				if(std::abs(1 - Zs / ___Zs) >= 1e-14){
+					std::cout << std::abs(1 - Zs / ___Zs) << std::endl;
+				}
 				assert(std::abs(1 - Zs / __Zs) < 1e-14);
 				assert(std::abs(1 - Zs / ___Zs) < 1e-14);
 			#endif 
