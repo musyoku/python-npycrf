@@ -28,6 +28,7 @@ namespace npycrf {
 				std::vector<int> segmentation;
 				std::wstring sentence_str;
 				for(auto word_str: words){
+					assert(word_str.size() > 0);
 					sentence_str += word_str;
 					segmentation.push_back(word_str.size());
 				}

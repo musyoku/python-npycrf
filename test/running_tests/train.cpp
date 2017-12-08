@@ -1,5 +1,7 @@
-#include  <iostream>
+#include <iostream>
 #include <chrono>
+#include <sstream>
+#include <utility>
 #include "../../src/npycrf/sampler.h"
 #include "../../src/npycrf/ctype.h"
 #include "../../src/python/model.h"
@@ -14,25 +16,60 @@ using std::cout;
 using std::flush;
 using std::endl;
 
-void run_training_loop(){
-	std::string filename = "../../dataset/test.txt";
-	Corpus* corpus_u = new Corpus();
+std::vector<std::wstring> explode(std::wstring const &s, wchar_t delim){
+    std::vector<std::wstring> result;
+    std::wistringstream iss(s);
 
-	std::wifstream ifs(filename.c_str());
+    for (std::wstring token; std::getline(iss, token, delim);){
+		std::wstring word = std::move(token);
+		if(word.size() > 0){
+			result.push_back(word);
+		}
+    }
+    return result;
+}
+
+void run_training_loop(){
+	setlocale(LC_CTYPE, "ja_JP.UTF-8");
+	std::ios_base::sync_with_stdio(false);
+	std::locale default_loc("ja_JP.UTF-8");
+	std::locale::global(default_loc);
+	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
+	std::wcout.imbue(ctype_default);
+	std::wcin.imbue(ctype_default);
+	
+	Corpus* corpus_u = new Corpus();
+	std::string filename_u = "../../dataset/aozora/kokoro.txt";
+	std::wifstream ifs_u(filename_u.c_str());
 	std::wstring sentence_str;
-	assert(ifs.fail() == false);
-	while (getline(ifs, sentence_str)){
+	assert(ifs_u.fail() == false);
+	while(getline(ifs_u, sentence_str)){
 		if (sentence_str.empty()){
 			continue;
 		}
+		std::wcout << sentence_str << std::endl;
 		std::vector<std::wstring> words = {sentence_str};
 		corpus_u->add_words(words);
 	}
+	ifs_u.close();
 	
 	Corpus* corpus_l = new Corpus();
-	std::vector<std::wstring> word_str_vec = {L"iii", L"iiiqqq", L"nnnvvv", L"pppyyy", L"ppp", L"pppnnn", L"vvvfff", L"uuubbb", L"bbbhhh", L"bbbiii", L"aaaxxx", L"yyyppp", L"jjjqqq", L"tttiii"};
-	corpus_l->add_words(word_str_vec);
+	std::string filename_l = "../../dataset/mecab.txt";
 
+	std::wifstream ifs_l(filename_l.c_str());
+	assert(ifs_l.fail() == false);
+	while(getline(ifs_l, sentence_str)){
+		if (sentence_str.empty()){
+			continue;
+		}
+		std::vector<std::wstring> words = explode(sentence_str, L' ');
+		for(auto word: words){
+			std::wcout << word << L" ";
+		}
+		std::wcout << std::endl;
+		corpus_l->add_words(words);
+	}
+	
 	Dictionary* dict = new Dictionary();
 
 	int seed = 0;
@@ -47,7 +84,7 @@ void run_training_loop(){
 	double initial_lambda_b = 1;
 	double vpylm_beta_stop = 4;
 	double vpylm_beta_pass = 1;
-	model::NPYLM* py_npylm = new model::NPYLM(max_word_length, max_sentence_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
+	model::NPYLM* py_npylm = new model::NPYLM(max_word_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
 
 	int num_character_ids = dict->get_num_characters();
 	int num_character_types = CTYPE_NUM_TYPES;
@@ -61,7 +98,6 @@ void run_training_loop(){
 	int feature_x_identical_2_end = 1;
 	double sigma = 1;
 	model::CRF* py_crf = new model::CRF(num_character_ids,
-										num_character_types,
 										feature_x_unigram_start,
 										feature_x_unigram_end,
 										feature_x_bigram_start,
@@ -72,7 +108,7 @@ void run_training_loop(){
 										feature_x_identical_2_end,
 										sigma);
 
-	Model* model = new Model(py_npylm, py_crf, lambda_0);
+	Model* model = new Model(py_npylm, py_crf);
 	dict->save("npylm.dict");
 	double learning_rate = 0.001;
 	unsigned int batchsize = 32;

@@ -212,6 +212,7 @@ namespace npycrf {
 					
 					#ifdef __DEBUG__
 						// 正規化しない場合の結果と比較
+						std::cout << sentence->size() << std::endl;
 						std::vector<int> a = segments;
 						sampler::mt.seed(seed);
 						_npycrf->_lattice->blocked_gibbs(sentence, segments, false);
@@ -267,14 +268,14 @@ namespace npycrf {
 			}
 		}
 		void Trainer::sgd(double learning_rate, int batchsize, bool pure_crf){
-			_sgd->clear_grads();
 			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
-			int total_batches = ((double)_rand_indices_train_l.size() / (double)batchsize) + (_rand_indices_train_l.size() % batchsize) ? 1 : 0;
-			std::cout << "total_batches: " << total_batches << std::endl;
+			int total_batches = (double)_rand_indices_train_l.size() / (double)batchsize + ((_rand_indices_train_l.size() % batchsize) ? 1 : 0);
+			std::cout << "#batches: " << total_batches << std::endl;
 			Lattice* lattice = _npycrf->_lattice;
 			bool original_mode = lattice->get_pure_crf_mode();
 			lattice->set_pure_crf_mode(pure_crf);
 			for(int b = 0;b < total_batches;b++){
+				_sgd->clear_grads();
 				int size = std::min(batchsize, (int)(_rand_indices_train_l.size() - batchsize * b));
 				for(int i = 0;i < size;i++){
 					assert(lattice->get_pure_crf_mode() == true);

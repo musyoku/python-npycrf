@@ -3,6 +3,7 @@
 #include <iostream> 
 #include <cmath> 
 #include <cassert> 
+#include <cfloat>
 #include "../hash.h"
 #include "../sampler.h"
 #include "../wordtype.h"
@@ -288,7 +289,7 @@ namespace npycrf {
 				wrap_bow_eow(characters, substr_t_start_index, substr_t_end_index, token_ids);
 				int token_ids_length = substr_t_end_index - substr_t_start_index + 3;
 				// g0を計算
-				double pw = _vpylm->compute_p_w(token_ids, token_ids_length);
+				double pw = std::max(_vpylm->compute_p_w(token_ids, token_ids_length), std::numeric_limits<double>::min());
 
 				// 学習の最初のイテレーションでは文が丸ごと1単語になるので補正する意味はない
 				if(word_length > _max_word_length){
