@@ -27,6 +27,7 @@ namespace npycrf {
 			void set_lambda_0(double lambda_0);
 			double compute_log_proportional_p_y_given_sentence(Sentence* sentence);
 			double compute_normalizing_constant(Sentence* sentence);
+			double compute_log_normalizing_constant(Sentence* sentence);
 			double python_compute_normalizing_constant(std::wstring sentence_str, Dictionary* dictionary);
 			void parse(Sentence* sentence);
 			boost::python::list python_parse(std::wstring sentence_str, Dictionary* dictionary);

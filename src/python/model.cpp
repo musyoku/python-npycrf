@@ -54,14 +54,26 @@ namespace npycrf {
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
-			double px = _lattice->compute_normalizing_constant(sentence, true);
+			double Zs = _lattice->compute_normalizing_constant(sentence, true);
 			#ifdef __DEBUG__
-				double __px = _lattice->_compute_normalizing_constant_backward(sentence, _lattice->_beta, _lattice->_pw_h);
-				double ___px = _lattice->compute_normalizing_constant(sentence, false);
-				assert(std::abs(1 - px / __px) < 1e-14);
-				assert(std::abs(1 - px / ___px) < 1e-14);
+				double __Zs = _lattice->_compute_normalizing_constant_backward(sentence, _lattice->_beta, _lattice->_pw_h);
+				double ___Zs = _lattice->compute_normalizing_constant(sentence, false);
+				assert(std::abs(1 - Zs / __Zs) < 1e-14);
+				assert(std::abs(1 - Zs / ___Zs) < 1e-14);
 			#endif 
-			return px;
+			return Zs;
+		}
+		// 分配関数の計算
+		double Model::compute_log_normalizing_constant(Sentence* sentence){
+			// キャッシュの再確保
+			_lattice->reserve(_npylm->_max_word_length, sentence->size());
+			_npylm->reserve(sentence->size());
+			double log_Zs = _lattice->compute_log_normalizing_constant(sentence, true);
+			#ifdef __DEBUG__
+				double _Zs = _lattice->compute_normalizing_constant(sentence, false);
+				assert(std::abs(1 - log_Zs / log(_Zs)) < 1e-14);
+			#endif 
+			return log_Zs;
 		}
 		double Model::python_compute_normalizing_constant(std::wstring sentence_str, Dictionary* dictionary){
 			// キャッシュの再確保

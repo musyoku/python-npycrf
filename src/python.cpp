@@ -31,8 +31,10 @@ BOOST_PYTHON_MODULE(npycrf){
 	.def("update_p_k_given_vpylm", &Trainer::update_p_k_given_vpylm)
 	.def("compute_perplexity_train", &Trainer::compute_perplexity_train)
 	.def("compute_perplexity_dev", &Trainer::compute_perplexity_dev)
-	.def("compute_log_likelihood_train", &Trainer::compute_log_likelihood_train)
-	.def("compute_log_likelihood_dev", &Trainer::compute_log_likelihood_dev)
+	.def("compute_log_likelihood_labelded_train", &Trainer::compute_log_likelihood_labelded_train)
+	.def("compute_log_likelihood_unlabelded_train", &Trainer::compute_log_likelihood_unlabelded_train)
+	.def("compute_log_likelihood_labeled_dev", &Trainer::compute_log_likelihood_labeled_dev)
+	.def("compute_log_likelihood_unlabeled_dev", &Trainer::compute_log_likelihood_unlabeled_dev)
 	.def("add_labelded_data_to_npylm", &Trainer::add_labelded_data_to_npylm)
 	.def("sgd", &Trainer::sgd, (arg("learning_rate"), arg("batchsize")=32, arg("pure_crf")=false))
 	.def("gibbs", &Trainer::gibbs, (arg("include_labeled_data")=false));

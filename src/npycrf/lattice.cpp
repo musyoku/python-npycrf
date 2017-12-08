@@ -772,6 +772,31 @@ namespace npycrf {
 		assert(px > 0);
 		return px;
 	}
+	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
+	// use_scaling=trueならアンダーフローを防ぐ
+	double Lattice::compute_log_normalizing_constant(Sentence* sentence, bool use_scaling){
+		assert(sentence->size() <= _max_sentence_length);
+		int size = sentence->size() + 1;
+		_clear_word_id_cache();
+		// 前向き確率を求める
+		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);
+		// <eos>へ到達する確率を全部足す
+		int t = sentence->size() + 1;	// <eos>
+		int k = 1;	// <eos>の長さは1
+		if(use_scaling){
+			// スケーリング係数を使う場合は逆数の積がそのまま文の確率になる
+			double log_px = 0;
+			for(int m = 1;m <= t;m++){
+				log_px += log(1.0 / _scaling[m]);
+			}
+			return log_px;
+		}
+		double px = 0;
+		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+			px += _alpha[t][k][j];
+		}
+		return log(px);
+	}
 	// 可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// use_scaling=trueならアンダーフローを防ぐ
 	// double Lattice::compute_marginal_log_p_sentence(Sentence* sentence, bool use_scaling){

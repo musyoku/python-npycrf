@@ -80,10 +80,9 @@ public:
 		double initial_lambda_b = 1;
 		double vpylm_beta_stop = 4;
 		double vpylm_beta_pass = 1;
-		py_npylm = new python::model::NPYLM(max_word_length, max_sentence_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
+		py_npylm = new python::model::NPYLM(max_word_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
 
 		int num_character_ids = 8;
-		int num_character_types = 281;
 		int feature_x_unigram_start = -2;
 		int feature_x_unigram_end = 2;
 		int feature_x_bigram_start = -2;
@@ -93,9 +92,9 @@ public:
 		int feature_x_identical_2_start = -3;
 		int feature_x_identical_2_end = 1;
 		double sigma = 1.0;
-		py_crf = new python::model::CRF(num_character_ids, num_character_types, feature_x_unigram_start, feature_x_unigram_end, feature_x_bigram_start, feature_x_bigram_end, feature_x_identical_1_start, feature_x_identical_1_end, feature_x_identical_2_start, feature_x_identical_2_end, sigma);
+		py_crf = new python::model::CRF(num_character_ids, feature_x_unigram_start, feature_x_unigram_end, feature_x_bigram_start, feature_x_bigram_end, feature_x_identical_1_start, feature_x_identical_1_end, feature_x_identical_2_start, feature_x_identical_2_end, sigma);
 
-		model = new Model(py_npylm, py_crf, lambda_0, max_word_length, 100);
+		model = new Model(py_npylm, py_crf);
 		Lattice* lattice = model->_lattice;
 		npylm::NPYLM* npylm = model->_npylm;
 		lattice->reserve(max_word_length, 100);
@@ -122,14 +121,20 @@ public:
 
 void assert_test_compute_normalizing_constant(Sentence* sentence, Lattice* lattice, Model* model){
 	double zs_u = lattice->compute_normalizing_constant(sentence, true);
+	double log_zs_u = lattice->compute_log_normalizing_constant(sentence, true);
 	double zs_n = lattice->compute_normalizing_constant(sentence, false);
+	double log_zs_n = lattice->compute_log_normalizing_constant(sentence, false);
 	double zs_b = lattice->_compute_normalizing_constant_backward(sentence, lattice->_beta, lattice->_pw_h);
 	double propotional_log_py_x = model->compute_log_proportional_p_y_given_sentence(sentence);
 	double log_py_x_u = propotional_log_py_x - log(zs_u);
+	double log_py_x_u_ = propotional_log_py_x - log_zs_u;
 	double log_py_x_n = propotional_log_py_x - log(zs_n);
+	double log_py_x_n_ = propotional_log_py_x - log_zs_n;
 	double log_py_x_b = propotional_log_py_x - log(zs_b);
 	assert(std::abs(log_py_x_u - log_py_x_n) < 1e-12);
 	assert(std::abs(log_py_x_u - log_py_x_b) < 1e-12);
+	assert(std::abs(log_py_x_u - log_py_x_u_) < 1e-12);
+	assert(std::abs(log_py_x_u - log_py_x_n_) < 1e-12);
 }
 
 void test_compute_normalizing_constant(bool pure_crf_mode){
@@ -190,7 +195,7 @@ void test_scaling(bool pure_crf_mode){
 	lattice::_init_array(alpha, seq_capacity + 1, word_capacity, word_capacity);
 	lattice::_init_array(beta, seq_capacity + 1, word_capacity, word_capacity);
 	lattice->_clear_pw_h_tkji(lattice->_pw_h);
-	lattice->_clear_word_id_cache(lattice->_substring_word_id_cache, sentence->size() + 1);
+	lattice->_clear_word_id_cache();
 	lattice->_enumerate_forward_variables(sentence, alpha, lattice->_pw_h, NULL, false);
 	lattice->_enumerate_backward_variables(sentence, beta, lattice->_pw_h, NULL, false);
 
@@ -232,7 +237,7 @@ void test_enumerate_proportional_p_substring_given_sentence(bool pure_crf_mode){
 	int seq_capacity = lattice->_max_sentence_length + 1;
 	int word_capacity = lattice->_max_word_length + 1;
 	lattice->_clear_pw_h_tkji(lattice->_pw_h);
-	lattice->_clear_word_id_cache(lattice->_substring_word_id_cache, sentence->size() + 1);
+	lattice->_clear_word_id_cache();
 	lattice::_init_array(alpha, seq_capacity + 1, word_capacity, word_capacity);
 	lattice::_init_array(beta, seq_capacity + 1, word_capacity, word_capacity);
 	lattice->_enumerate_forward_variables(sentence, alpha, lattice->_pw_h, NULL, false);
@@ -284,7 +289,7 @@ void test_enumerate_marginal_p_path_given_sentence(bool pure_crf_mode){
 	int seq_capacity = lattice->_max_sentence_length + 1;
 	int word_capacity = lattice->_max_word_length + 1;
 	lattice->_clear_pw_h_tkji(lattice->_pw_h);
-	lattice->_clear_word_id_cache(lattice->_substring_word_id_cache, sentence->size() + 1);
+	lattice->_clear_word_id_cache();
 	lattice::_init_array(alpha, seq_capacity + 1, word_capacity, word_capacity);
 	lattice::_init_array(beta, seq_capacity + 1, word_capacity, word_capacity);
 	lattice::_init_array(pc_s, seq_capacity, word_capacity);

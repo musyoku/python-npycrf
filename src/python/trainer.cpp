@@ -321,31 +321,39 @@ namespace npycrf {
 			ppl = exp(-ppl / num_sentences);
 			return ppl;
 		}
-		double Trainer::compute_log_likelihood_train(){
-			return _compute_log_likelihood(_dataset_u->_sentences_train);
+		double Trainer::compute_log_likelihood_labelded_train(){
+			return _compute_log_likelihood(_dataset_l->_sentences_train, true);
 		}
-		double Trainer::compute_log_likelihood_dev(){
-			return _compute_log_likelihood(_dataset_u->_sentences_dev);
+		double Trainer::compute_log_likelihood_unlabelded_train(){
+			return _compute_log_likelihood(_dataset_u->_sentences_train, false);
 		}
-		double Trainer::_compute_log_likelihood(std::vector<Sentence*> &dataset){
-			// if(dataset.size() == 0){
-			// 	return 0;
-			// }
-			// double sum_log_likelihood = 0;
-			// int num_sentences = dataset.size();
-			// for(int data_index = 0;data_index < num_sentences;data_index++){
-			// 	if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
-			// 		return 0;		
-			// 	}
-			// 	Sentence* sentence = dataset[data_index];
-			// 	double log_px = _npycrf->_lattice->compute_marginal_log_p_sentence(sentence, true);
-			// 	#ifdef __DEBUG__
-			// 		double _log_px = _npycrf->_lattice->compute_marginal_log_p_sentence(sentence, false);
-			// 		assert(abs(log_px - _log_px) < 1e-8);
-			// 	#endif
-			// 	sum_log_likelihood += log_px;
-			// }
-			// return sum_log_likelihood;
+		double Trainer::compute_log_likelihood_labeled_dev(){
+			return _compute_log_likelihood(_dataset_l->_sentences_dev, true);
+		}
+		double Trainer::compute_log_likelihood_unlabeled_dev(){
+			return _compute_log_likelihood(_dataset_u->_sentences_dev, false);
+		}
+		double Trainer::_compute_log_likelihood(std::vector<Sentence*> &dataset, bool labeled){
+			if(dataset.size() == 0){
+				return 0;
+			}
+			std::vector<int> segments;		// 分割の一時保存用
+			double sum_log_likelihood = 0;
+			int num_sentences = dataset.size();
+			for(int data_index = 0;data_index < num_sentences;data_index++){
+				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
+					return 0;		
+				}
+				Sentence* sentence = dataset[data_index]->copy();
+				if(labeled == false){	// 教師なしデータの場合は最尤分解を求める
+					_npycrf->parse(sentence);
+				}
+				double log_py_s = _npycrf->compute_log_proportional_p_y_given_sentence(sentence);
+				double log_Zs = _npycrf->compute_log_normalizing_constant(sentence);
+				sum_log_likelihood += log_py_s - log_Zs;
+				delete sentence;
+			}
+			return sum_log_likelihood;
 		}
 		// デバッグ用
 		void Trainer::remove_all_data(){

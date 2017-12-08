@@ -122,6 +122,7 @@ def main():
 		["Labeled", dataset_l.get_size_train(), dataset_l.get_size_dev()],
 		["Unlabeled", dataset_u.get_size_train(), dataset_u.get_size_dev()]
 	]
+	printb("Data:")
 	print(tabulate(table, headers=["Train", "Dev"]))
 
 	num_character_ids = dictionary.get_num_characters()
@@ -191,7 +192,19 @@ def main():
 		if epoch % 10 == 0:
 			printr("")
 			trainer.print_segmentation_train(10)
+
+		printr("")
 		trainer.print_segmentation_train(10)
+		ll_l_train = trainer.compute_log_likelihood_labelded_train()
+		ll_u_train = trainer.compute_log_likelihood_unlabelded_train()
+		ll_l_dev = 0
+		ll_u_dev = 0
+		table = [
+			["Labeled", ll_l_train, ll_l_dev],
+			["Unlabeled", ll_u_train, ll_u_dev]
+		]
+		printb("Likelihood:")
+		print(tabulate(table, headers=["Train", "Dev"]))
 
 if __name__ == "__main__":
 	main()

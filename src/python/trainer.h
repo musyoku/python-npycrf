@@ -26,7 +26,7 @@ namespace npycrf {
 			bool* _added_to_npylm_l;
 			void _print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices);
 			double _compute_perplexity(std::vector<Sentence*> &dataset);
-			double _compute_log_likelihood(std::vector<Sentence*> &dataset);
+			double _compute_log_likelihood(std::vector<Sentence*> &dataset, bool labelded = false);
 			void _gibbs_labeled();
 		public:
 			Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* npycrf, double crf_regularization_constant);
@@ -40,8 +40,10 @@ namespace npycrf {
 			void update_p_k_given_vpylm();
 			double compute_perplexity_train();
 			double compute_perplexity_dev();
-			double compute_log_likelihood_train();
-			double compute_log_likelihood_dev();
+			double compute_log_likelihood_labelded_train();
+			double compute_log_likelihood_unlabelded_train();
+			double compute_log_likelihood_labeled_dev();
+			double compute_log_likelihood_unlabeled_dev();
 			void print_segmentation_train(int num_to_print);
 			void print_segmentation_dev(int num_to_print);
 			int detect_hash_collision(int max_word_length);
