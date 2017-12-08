@@ -15,10 +15,7 @@ install: ## npycrf.soを生成
 	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npycrf.so -O3
 
 install_ubuntu: ## npycrf.soを生成
-	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(SOFLAGS) src/python.cpp src/python/*.cpp src/python/model/*.cpp src/npycrf/npylm/*.cpp src/npycrf/npylm/lm/*.cpp src/npycrf/crf/*.cpp $(LDFLAGS) -o run/npycrf.so -O3
-	cp run/npycrf.so run/semi-supervised/npycrf.so
-	cp run/npycrf.so run/unsupervised/npycrf.so
-	rm -rf run/npycrf.so
+	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npycrf.so -O3
 
 check_includes:	## Python.hの場所を確認
 	python3-config --includes
