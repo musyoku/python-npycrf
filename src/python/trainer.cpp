@@ -8,7 +8,7 @@
 
 namespace npycrf {
 	namespace python {
-		Trainer::Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, Model* npycrf, double crf_regularization_constant){
+		Trainer::Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, NPYCRF* npycrf, double crf_regularization_constant){
 			_dataset_l = dataset_l;
 			_dataset_u = dataset_u;
 			_dict = dict;

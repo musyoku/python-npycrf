@@ -1,4 +1,4 @@
-#include "python/model.h"
+#include "python/npycrf.h"
 #include "python/dataset.h"
 #include "python/dictionary.h"
 #include "python/trainer.h"
@@ -22,7 +22,7 @@ BOOST_PYTHON_MODULE(npycrf){
 	.def("get_size_train", &Dataset::get_size_train)
 	.def("get_size_dev", &Dataset::get_size_dev);
 
-	boost::python::class_<Trainer>("trainer", boost::python::init<Dataset*, Dataset*, Dictionary*, Model*, double>((args("dataset_labeled", "dataset_unlabeled", "dictionary", "npycrf", "crf_regularization_constant"))))
+	boost::python::class_<Trainer>("trainer", boost::python::init<Dataset*, Dataset*, Dictionary*, NPYCRF*, double>((args("dataset_labeled", "dataset_unlabeled", "dictionary", "npycrf", "crf_regularization_constant"))))
 	.def("detect_hash_collision", &Trainer::detect_hash_collision)
 	.def("print_segmentation_train", &Trainer::print_segmentation_train)
 	.def("print_segmentation_dev", &Trainer::print_segmentation_dev)
