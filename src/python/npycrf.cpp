@@ -7,17 +7,17 @@ using namespace npycrf::crf;
 
 namespace npycrf {
 	namespace python {
-		Model::Model(model::NPYLM* py_npylm, model::CRF* py_crf){
+		NPYCRF::NPYCRF(model::NPYLM* py_npylm, model::CRF* py_crf){
 			_set_locale();
 			_npylm = py_npylm->_npylm;
 			_crf = py_crf->_crf;
 			_lattice = new Lattice(_npylm, _crf, 1);
 		}
-		Model::~Model(){
+		NPYCRF::~NPYCRF(){
 			delete _lattice;
 		}
 		// 日本語周り
-		void Model::_set_locale(){
+		void NPYCRF::_set_locale(){
 			setlocale(LC_CTYPE, "ja_JP.UTF-8");
 			std::ios_base::sync_with_stdio(false);
 			std::locale default_loc("ja_JP.UTF-8");
@@ -26,31 +26,31 @@ namespace npycrf {
 			std::wcout.imbue(ctype_default);
 			std::wcin.imbue(ctype_default);
 		}
-		int Model::get_max_word_length(){
+		int NPYCRF::get_max_word_length(){
 			return _npylm->_max_word_length;
 		}
-		void Model::set_initial_lambda_a(double lambda){
+		void NPYCRF::set_initial_lambda_a(double lambda){
 			_npylm->_lambda_a = lambda;
 			_npylm->sample_lambda_with_initial_params();
 		}
-		void Model::set_initial_lambda_b(double lambda){
+		void NPYCRF::set_initial_lambda_b(double lambda){
 			_npylm->_lambda_b = lambda;
 			_npylm->sample_lambda_with_initial_params();
 		}
-		void Model::set_vpylm_beta_stop(double stop){
+		void NPYCRF::set_vpylm_beta_stop(double stop){
 			_npylm->_vpylm->_beta_stop = stop;
 		}
-		void Model::set_vpylm_beta_pass(double pass){
+		void NPYCRF::set_vpylm_beta_pass(double pass){
 			_npylm->_vpylm->_beta_pass = pass;
 		}
-		double Model::get_lambda_0(){
+		double NPYCRF::get_lambda_0(){
 			return _lattice->_lambda_0;
 		}
-		void Model::set_lambda_0(double lambda_0){
+		void NPYCRF::set_lambda_0(double lambda_0){
 			_lattice->_lambda_0 = lambda_0;
 		}
 		// 分配関数の計算
-		double Model::compute_normalizing_constant(Sentence* sentence){
+		double NPYCRF::compute_normalizing_constant(Sentence* sentence){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
@@ -64,7 +64,7 @@ namespace npycrf {
 			return Zs;
 		}
 		// 分配関数の計算
-		double Model::compute_log_normalizing_constant(Sentence* sentence){
+		double NPYCRF::compute_log_normalizing_constant(Sentence* sentence){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
@@ -75,7 +75,7 @@ namespace npycrf {
 			#endif 
 			return log_Zs;
 		}
-		double Model::python_compute_normalizing_constant(std::wstring sentence_str, Dictionary* dictionary){
+		double NPYCRF::python_compute_normalizing_constant(std::wstring sentence_str, Dictionary* dictionary){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
 			_npylm->reserve(sentence_str.size());
@@ -95,14 +95,14 @@ namespace npycrf {
 		}
 		// sentenceは分割済みの必要がある
 		// 比例のままの確率を返す
-		double Model::compute_log_proportional_p_y_given_sentence(Sentence* sentence){
+		double NPYCRF::compute_log_proportional_p_y_given_sentence(Sentence* sentence){
 			_npylm->reserve(sentence->size());	// キャッシュの再確保
 			double log_crf = _crf->compute_log_p_y_given_sentence(sentence);
 			double log_npylm = _npylm->compute_log_p_y_given_sentence(sentence);
 			double log_py_x = log_crf + get_lambda_0() * log_npylm;
 			return log_py_x;
 		}
-		void Model::parse(Sentence* sentence){
+		void NPYCRF::parse(Sentence* sentence){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
@@ -110,7 +110,7 @@ namespace npycrf {
 			_lattice->viterbi_decode(sentence, segments);
 			sentence->split(segments);
 		}
-		boost::python::list Model::python_parse(std::wstring sentence_str, Dictionary* dictionary){
+		boost::python::list NPYCRF::python_parse(std::wstring sentence_str, Dictionary* dictionary){
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
 			_npylm->reserve(sentence_str.size());

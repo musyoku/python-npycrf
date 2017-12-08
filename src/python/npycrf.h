@@ -9,15 +9,15 @@
 
 namespace npycrf {
 	namespace python {
-		class Model{
+		class NPYCRF{
 		private:
 			void _set_locale();
 		public:
 			npylm::NPYLM* _npylm;
 			crf::CRF* _crf;
 			Lattice* _lattice;			// forward filtering-backward sampling
-			Model(model::NPYLM* py_npylm, model::CRF* py_crf);
-			~Model();
+			NPYCRF(model::NPYLM* py_npylm, model::CRF* py_crf);
+			~NPYCRF();
 			int get_max_word_length();
 			void set_initial_lambda_a(double lambda);
 			void set_initial_lambda_b(double lambda);

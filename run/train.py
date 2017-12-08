@@ -122,8 +122,7 @@ def main():
 		["Labeled", dataset_l.get_size_train(), dataset_l.get_size_dev()],
 		["Unlabeled", dataset_u.get_size_train(), dataset_u.get_size_dev()]
 	]
-	printb("Data:")
-	print(tabulate(table, headers=["Train", "Dev"]))
+	print(tabulate(table, headers=["Data", "Train", "Dev"]))
 
 	num_character_ids = dictionary.get_num_characters()
 	print(tabulate([["#characters", num_character_ids]]))
@@ -203,8 +202,7 @@ def main():
 			["Labeled", ll_l_train, ll_l_dev],
 			["Unlabeled", ll_u_train, ll_u_dev]
 		]
-		printb("Likelihood:")
-		print(tabulate(table, headers=["Train", "Dev"]))
+		print(tabulate(table, headers=["Likelihood", "Train", "Dev"]))
 
 if __name__ == "__main__":
 	main()
