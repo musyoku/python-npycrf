@@ -4,7 +4,7 @@
 #include <utility>
 #include "../../src/npycrf/sampler.h"
 #include "../../src/npycrf/ctype.h"
-#include "../../src/python/model.h"
+#include "../../src/python/npycrf.h"
 #include "../../src/python/dataset.h"
 #include "../../src/python/dictionary.h"
 #include "../../src/python/trainer.h"
@@ -113,7 +113,7 @@ void run_training_loop(){
 										feature_x_identical_2_end,
 										sigma);
 
-	Model* model = new Model(py_npylm, py_crf);
+	NPYCRF* model = new NPYCRF(py_npylm, py_crf);
 	dict->save("npylm.dict");
 	double learning_rate = 0.001;
 	unsigned int batchsize = 32;
@@ -135,11 +135,11 @@ void run_training_loop(){
 		}
 		if(epoch % 10 == 0){
 			trainer->print_segmentation_train(10);
-			cout << "ppl: " << trainer->compute_perplexity_train() << endl;
+			// cout << "ppl: " << trainer->compute_perplexity_train() << endl;
 			trainer->print_segmentation_dev(10);
-			cout << "ppl: " << trainer->compute_perplexity_dev() << endl;
-			cout << "log_likelihood: " << trainer->compute_log_likelihood_train() << endl;
-			cout << "log_likelihood: " << trainer->compute_log_likelihood_dev() << endl;
+			// cout << "ppl: " << trainer->compute_perplexity_dev() << endl;
+			// cout << "log_likelihood: " << trainer->compute_log_likelihood_train() << endl;
+			// cout << "log_likelihood: " << trainer->compute_log_likelihood_dev() << endl;
 		}
 	}
 	delete dict;

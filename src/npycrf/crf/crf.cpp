@@ -40,61 +40,91 @@ namespace npycrf {
 			_x_range_identical_1 = feature_x_identical_1_end - feature_x_identical_1_start + 1;
 			_x_range_identical_2 = feature_x_identical_2_end - feature_x_identical_2_start + 1;
 			
+			_offset_w_label_u = 0;
+			_offset_w_label_b = _w_size_label_u;
+			_offset_w_unigram_u = _w_size_label_u + _w_size_label_b;
+			_offset_w_unigram_b = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u;
+			_offset_w_bigram_u = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b;
+			_offset_w_bigram_b = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b
+									+ _w_size_bigram_u;
+			_offset_w_identical_1_u = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b
+									+ _w_size_bigram_u + _w_size_bigram_b;
+			_offset_w_identical_1_b = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b
+									+ _w_size_bigram_u + _w_size_bigram_b
+									+ _w_size_identical_1_u;
+			_offset_w_identical_2_u = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b
+									+ _w_size_bigram_u + _w_size_bigram_b
+									+ _w_size_identical_1_u + _w_size_identical_1_b;
+			_offset_w_identical_2_b = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b
+									+ _w_size_bigram_u + _w_size_bigram_b
+									+ _w_size_identical_1_u + _w_size_identical_1_b
+									+ _w_size_identical_2_u;
+			_offset_w_unigram_type_u = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b
+									+ _w_size_bigram_u + _w_size_bigram_b
+									+ _w_size_identical_1_u + _w_size_identical_1_b
+									+ _w_size_identical_2_u + _w_size_identical_2_b;
+			_offset_w_unigram_type_b = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b
+									+ _w_size_bigram_u + _w_size_bigram_b
+									+ _w_size_identical_1_u + _w_size_identical_1_b
+									+ _w_size_identical_2_u + _w_size_identical_2_b
+									+ _w_size_unigram_type_u;
+			_offset_w_bigram_type_u = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b
+									+ _w_size_bigram_u + _w_size_bigram_b
+									+ _w_size_identical_1_u + _w_size_identical_1_b
+									+ _w_size_identical_2_u + _w_size_identical_2_b
+									+ _w_size_unigram_type_u + _w_size_unigram_type_b;
+			_offset_w_bigram_type_b = _w_size_label_u + _w_size_label_b
+									+ _w_size_unigram_u + _w_size_unigram_b
+									+ _w_size_bigram_u + _w_size_bigram_b
+									+ _w_size_identical_1_u + _w_size_identical_1_b
+									+ _w_size_identical_2_u + _w_size_identical_2_b
+									+ _w_size_unigram_type_u + _w_size_unigram_type_b
+									+ _w_size_bigram_type_u;
+
 			// (y_i), (y_{i-1}, y_i)
 			_w_size_label_u = 2;
 			_w_size_label_b = 2 * 2;
-			_w_label = new double[_w_size_label_u + _w_size_label_b];
-			for(int i = 0;i < _w_size_label_u + _w_size_label_b;i++){
-				_w_label[i] = sampler::normal(0, sigma);
-				// _w_label[i] = 0;
-			}
 			// (y_i, i, x_i), (y_{i-1}, y_i, i, x_i)
 			_w_size_unigram_u = 2 * _x_range_unigram * num_character_ids;
 			_w_size_unigram_b = 2 * 2 * _x_range_unigram * num_character_ids;
-			_w_unigram = new double[_w_size_unigram_u + _w_size_unigram_b];
-			for(int i = 0;i < _w_size_unigram_u + _w_size_unigram_b;i++){
-				_w_unigram[i] = sampler::normal(0, sigma);
-				// _w_unigram[i] = 0;
-			}
 			// (y_i, i, x_{i-1}, x_i), (y_{i-1}, y_i, i, x_{i-1}, x_i)
 			_w_size_bigram_u = 2 * _x_range_bigram * num_character_ids * num_character_ids;
 			_w_size_bigram_b = 2 * 2 * _x_range_bigram * num_character_ids * num_character_ids;
-			_w_bigram = new double[_w_size_bigram_u + _w_size_bigram_b];
-			for(int i = 0;i < _w_size_bigram_u + _w_size_bigram_b;i++){
-				_w_bigram[i] = sampler::normal(0, sigma);
-				// _w_bigram[i] = 0;
-			}
 			// (y_i, i), (y_{i-1}, y_i, i)
 			_w_size_identical_1_u = 2 * _x_range_identical_1;
 			_w_size_identical_1_b = 2 * 2 * _x_range_identical_1;
-			_w_identical_1 = new double[_w_size_identical_1_u + _w_size_identical_1_b];
-			for(int i = 0;i < _w_size_identical_1_u + _w_size_identical_1_b;i++){
-				_w_identical_1[i] = sampler::normal(0, sigma);
-				// _w_identical_1[i] = 0;
-			}
 			// (y_i, i), (y_{i-1}, y_i, i)
 			_w_size_identical_2_u = 2 * _x_range_identical_2;
 			_w_size_identical_2_b = 2 * 2 * _x_range_identical_2;
-			_w_identical_2 = new double[_w_size_identical_2_u + _w_size_identical_2_b];
-			for(int i = 0;i < _w_size_identical_2_u + _w_size_identical_2_b;i++){
-				_w_identical_2[i] = sampler::normal(0, sigma);
-				// _w_identical_2[i] = 0;
-			}
 			// (y_i, type)
 			_w_size_unigram_type_u = 2 * num_character_types;
 			_w_size_unigram_type_b = 2 * 2 * num_character_types;
-			_w_unigram_type = new double[_w_size_unigram_type_u + _w_size_unigram_type_b];
-			for(int i = 0;i < _w_size_unigram_type_u + _w_size_unigram_type_b;i++){
-				_w_unigram_type[i] = sampler::normal(0, sigma);
-				// _w_unigram_type[i] = 0;
-			}
 			// (y_i, type, type), (y_{i-1}, y_i, type, type)
 			_w_size_bigram_type_u = 2 * num_character_types * num_character_types;
 			_w_size_bigram_type_b = 2 * 2 * num_character_types * num_character_types;
-			_w_bigram_type = new double[_w_size_bigram_type_u + _w_size_bigram_type_b];
-			for(int i = 0;i < _w_size_bigram_type_u + _w_size_bigram_type_b;i++){
-				_w_bigram_type[i] = sampler::normal(0, sigma);
-				// _w_bigram_type[i] = 0;
+
+			int weight_size = _w_size_label_u + _w_size_label_b
+							 + _w_size_unigram_u + _w_size_unigram_b
+							 + _w_size_bigram_u + _w_size_bigram_b 
+							 + _w_size_identical_1_u + _w_size_identical_1_b 
+							 + _w_size_identical_2_u + _w_size_identical_2_b 
+							 + _w_size_unigram_type_u + _w_size_unigram_type_b 
+							 + _w_size_bigram_type_u + _w_size_bigram_type_b;
+			std::cout << "weight_size = " << weight_size << std::endl;
+			_weight = new double[weight_size];
+			for(int i = 0;i < weight_size;i++){
+				_weight[i] = sampler::normal(0, sigma);
+				// _weight[i] = 0;
 			}
 		}
 		CRF::~CRF(){
@@ -112,26 +142,26 @@ namespace npycrf {
 		int CRF::_index_w_label_u(int y_i){
 			int index = y_i;
 			assert(index < _w_size_label_u);
-			return index;
+			return index + _offset_w_label_u;
 		}
 		int CRF::_index_w_label_b(int y_i_1, int y_i){
-			int index =  y_i_1 * 2 + y_i + _w_size_label_u;
-			assert(index < _w_size_label_u + _w_size_label_b);
-			return index;
+			int index =  y_i_1 * 2 + y_i;
+			assert(index < _w_size_label_b);
+			return index + _offset_w_label_b;
 		}
 		int CRF::_index_w_unigram_u(int y_i, int i, int x_i){
 			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_unigram);
 			int index = x_i * _x_range_unigram * 2 + (i - 1) * 2 + y_i;
 			assert(index < _w_size_unigram_u);
-			return index;
+			return index + _offset_w_unigram_u;
 		}
 		int CRF::_index_w_unigram_b(int y_i_1, int y_i, int i, int x_i){
 			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_unigram);
-			int index = x_i * _x_range_unigram * 2 * 2 + (i - 1) * 2 * 2 + y_i * 2 + y_i_1 + _w_size_unigram_u;
-			assert(_w_size_unigram_u <= index && index < _w_size_unigram_u + _w_size_unigram_b);
-			return index;
+			int index = x_i * _x_range_unigram * 2 * 2 + (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
+			assert(index < _w_size_unigram_b);
+			return index + _offset_w_unigram_b;
 		}
 		int CRF::_index_w_bigram_u(int y_i, int i, int x_i_1, int x_i){
 			assert(x_i_1 < _num_character_ids);
@@ -139,188 +169,188 @@ namespace npycrf {
 			assert(1 <= i && i <= _x_range_bigram);
 			int index = x_i * _num_character_ids * _x_range_bigram * 2 + x_i_1 * _x_range_bigram * 2 + (i - 1) * 2 + y_i;
 			assert(index < _w_size_bigram_u);
-			return index;
+			return index + _offset_w_bigram_u;
 		}
 		int CRF::_index_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
 			assert(x_i_1 < _num_character_ids);
 			assert(x_i < _num_character_ids);
 			assert(1 <= i && i <= _x_range_bigram);
-			int index = x_i * _num_character_ids * _x_range_bigram * 2 * 2 + x_i_1 * _x_range_bigram * 2 * 2 + (i - 1) * 2 * 2 + y_i * 2 + y_i_1 + _w_size_bigram_u;
-			assert(_w_size_bigram_u <= index && index < _w_size_bigram_u + _w_size_bigram_b);
-			return index;
+			int index = x_i * _num_character_ids * _x_range_bigram * 2 * 2 + x_i_1 * _x_range_bigram * 2 * 2 + (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
+			assert(index < _w_size_bigram_b);
+			return index + _offset_w_bigram_b;
 		}
 		int CRF::_index_w_identical_1_u(int y_i, int i){
 			assert(1 <= i && i <= _x_range_identical_1);
 			int index = (i - 1) * 2 + y_i;
 			assert(index < _w_size_identical_1_u);
-			return index;
+			return index + _offset_w_identical_1_u;
 		}
 		int CRF::_index_w_identical_1_b(int y_i_1, int y_i, int i){
 			assert(1 <= i && i <= _x_range_identical_1);
-			int index = (i - 1) * 2 * 2 + y_i * 2 + y_i_1 + _w_size_identical_1_u;
-			assert(_w_size_identical_1_u <= index && index < _w_size_identical_1_u + _w_size_identical_1_b);
-			return index;
+			int index = (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
+			assert(index < _w_size_identical_1_b);
+			return index + _offset_w_identical_1_b;
 		}
 		int CRF::_index_w_identical_2_u(int y_i, int i){
 			assert(1 <= i && i <= _x_range_identical_2);
 			int index = (i - 1) * 2 + y_i;
 			assert(index < _w_size_identical_2_u);
-			return index;
+			return index + _offset_w_identical_2_u;
 		}
 		int CRF::_index_w_identical_2_b(int y_i_1, int y_i, int i){
 			assert(1 <= i && i <= _x_range_identical_2);
-			int index = (i - 1) * 2 * 2 + y_i * 2 + y_i_1 + _w_size_identical_2_u;
-			assert(_w_size_identical_2_u <= index && index < _w_size_identical_2_u + _w_size_identical_2_b);
-			return index;
+			int index = (i - 1) * 2 * 2 + y_i * 2 + y_i_1;
+			assert(index < _w_size_identical_2_b);
+			return index + _offset_w_identical_2_b;
 		}
 		int CRF::_index_w_unigram_type_u(int y_i, int type_i){
 			int index = type_i * 2 + y_i;
 			assert(index < _w_size_unigram_type_u);
-			return index;
+			return index + _offset_w_unigram_type_u;
 		}
 		int CRF::_index_w_unigram_type_b(int y_i_1, int y_i, int type_i){
 			assert(type_i < _num_character_types);
-			int index = type_i * 2 * 2 + y_i * 2 + y_i_1 + _w_size_unigram_type_u;
-			assert(_w_size_unigram_type_u <= index && index < _w_size_unigram_type_u + _w_size_unigram_type_b);
-			return index;
+			int index = type_i * 2 * 2 + y_i * 2 + y_i_1;
+			assert(index < _w_size_unigram_type_b);
+			return index + _offset_w_unigram_type_b;
 		}
 		int CRF::_index_w_bigram_type_u(int y_i, int type_i_1, int type_i){
 			assert(type_i_1 < _num_character_types);
 			assert(type_i < _num_character_types);
 			int index = type_i * _num_character_types * 2 + type_i_1 * 2 + y_i;
 			assert(index < _w_size_bigram_type_u);
-			return index;
+			return index + _offset_w_bigram_type_u;
 		}
 		int CRF::_index_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
 			assert(type_i_1 < _num_character_types);
 			assert(type_i < _num_character_types);
-			int index = type_i * _num_character_types * 2 * 2 + type_i_1 * 2 * 2 + y_i * 2 + y_i_1 + _w_size_bigram_type_u;
-			assert(_w_size_bigram_type_u <= index && index < _w_size_bigram_type_u + _w_size_bigram_type_b);
-			return index;
+			int index = type_i * _num_character_types * 2 * 2 + type_i_1 * 2 * 2 + y_i * 2 + y_i_1;
+			assert(index < _w_size_bigram_type_b);
+			return index + _offset_w_bigram_type_b;
 		}
 		double CRF::w_label_u(int y_i){
 			int index = _index_w_label_u(y_i);
-			return _w_label[index];
+			return _weight[index];
 		}
 		double CRF::w_label_b(int y_i_1, int y_i){
 			int index = _index_w_label_b(y_i_1, y_i);
-			return _w_label[index];
+			return _weight[index];
 		}
 		double CRF::w_unigram_u(int y_i, int i, int x_i){
 			assert(x_i < _num_character_ids);
 			int index = _index_w_unigram_u(y_i, i, x_i);
-			return _w_unigram[index];
+			return _weight[index];
 		}
 		double CRF::w_unigram_b(int y_i_1, int y_i, int i, int x_i){
 			assert(x_i < _num_character_ids);
 			int index = _index_w_unigram_b(y_i_1, y_i, i, x_i);
-			return _w_unigram[index];
+			return _weight[index];
 		}
 		double CRF::w_bigram_u(int y_i, int i, int x_i_1, int x_i){
 			assert(x_i_1 < _num_character_ids);
 			assert(x_i < _num_character_ids);
 			int index = _index_w_bigram_u(y_i, i, x_i_1, x_i);
-			return _w_bigram[index];
+			return _weight[index];
 		}
 		double CRF::w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
 			assert(x_i_1 < _num_character_ids);
 			assert(x_i < _num_character_ids);
 			int index = _index_w_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
-			return _w_bigram[index];
+			return _weight[index];
 		}
 		double CRF::w_identical_1_u(int y_i, int i){
 			int index = _index_w_identical_1_u(y_i, i);
-			return _w_identical_1[index];
+			return _weight[index];
 		}
 		double CRF::w_identical_1_b(int y_i_1, int y_i, int i){
 			int index = _index_w_identical_1_b(y_i_1, y_i, i);
-			return _w_identical_1[index];
+			return _weight[index];
 		}
 		double CRF::w_identical_2_u(int y_i, int i){
 			int index = _index_w_identical_2_u(y_i, i);
-			return _w_identical_2[index];
+			return _weight[index];
 		}
 		double CRF::w_identical_2_b(int y_i_1, int y_i, int i){
 			int index = _index_w_identical_2_b(y_i_1, y_i, i);
-			return _w_identical_2[index];
+			return _weight[index];
 		}
 		double CRF::w_unigram_type_u(int y_i, int type_i){
 			assert(type_i < _num_character_types);
 			int index = _index_w_unigram_type_u(y_i, type_i);
-			return _w_unigram_type[index];
+			return _weight[index];
 		}
 		double CRF::w_unigram_type_b(int y_i_1, int y_i, int type_i){
 			assert(type_i < _num_character_types);
 			int index = _index_w_unigram_type_b(y_i_1, y_i, type_i);
-			return _w_unigram_type[index];
+			return _weight[index];
 		}
 		double CRF::w_bigram_type_u(int y_i, int type_i_1, int type_i){
 			assert(type_i_1 < _num_character_types);
 			assert(type_i < _num_character_types);
 			int index = _index_w_bigram_type_u(y_i, type_i_1, type_i);
-			return _w_bigram_type[index];
+			return _weight[index];
 		}
 		double CRF::w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
 			assert(type_i_1 < _num_character_types);
 			assert(type_i < _num_character_types);
 			int index = _index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
-			return _w_bigram_type[index];
+			return _weight[index];
 		}
 		void CRF::set_w_label_u(int y_i, double value){
 			int index = _index_w_label_u(y_i);
-			_w_label[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_label_b(int y_i_1, int y_i, double value){
 			int index = _index_w_label_b(y_i_1, y_i);
-			_w_label[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_unigram_u(int y_i, int i, int x_i, double value){
 			int index = _index_w_unigram_u(y_i, i, x_i);
-			_w_unigram[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_unigram_b(int y_i_1, int y_i, int i, int x_i, double value){
 			int index = _index_w_unigram_b(y_i_1, y_i, i, x_i);
-			_w_unigram[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_bigram_u(int y_i, int i, int x_i_1, int x_i, double value){
 			int index = _index_w_bigram_u(y_i, i, x_i_1, x_i);
-			_w_bigram[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i, double value){
 			int index = _index_w_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
-			_w_bigram[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_identical_1_u(int y_i, int i, double value){
 			int index = _index_w_identical_1_u(y_i, i);
-			_w_identical_1[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_identical_1_b(int y_i_1, int y_i, int i, double value){
 			int index = _index_w_identical_1_b(y_i_1, y_i, i);
-			_w_identical_1[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_identical_2_u(int y_i, int i, double value){
 			int index = _index_w_identical_2_u(y_i, i);
-			_w_identical_2[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_identical_2_b(int y_i_1, int y_i, int i, double value){
 			int index = _index_w_identical_2_b(y_i_1, y_i, i);
-			_w_identical_2[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_unigram_type_u(int y_i, int type_i, double value){
 			int index = _index_w_unigram_type_u(y_i, type_i);
-			_w_unigram_type[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_unigram_type_b(int y_i_1, int y_i, int type_i, double value){
 			int index = _index_w_unigram_type_b(y_i_1, y_i, type_i);
-			_w_unigram_type[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_bigram_type_u(int y_i, int type_i_1, int type_i, double value){
 			int index = _index_w_bigram_type_u(y_i, type_i_1, type_i);
-			_w_bigram_type[index] = value;
+			_weight[index] = value;
 		}
 		void CRF::set_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i, double value){
 			int index = _index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
-			_w_bigram_type[index] = value;
+			_weight[index] = value;
 		}
 		// γ(s, t) ∝ log{P(c_s^{t - 1}|・)}
 		// s、tはともに番号なので1から始まる

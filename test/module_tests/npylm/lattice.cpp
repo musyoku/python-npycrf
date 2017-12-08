@@ -2,7 +2,7 @@
 #include <chrono>
 #include "../../../src/npycrf/sampler.h"
 #include "../../../src/npycrf/ctype.h"
-#include "../../../src/python/model.h"
+#include "../../../src/python/npycrf.h"
 #include "../../../src/python/dataset.h"
 #include "../../../src/python/dictionary.h"
 #include "../../../src/python/trainer.h"
@@ -68,7 +68,7 @@ Sentence* generate_sentence_5(){
 
 class Variables {
 public:
-	Model* model;
+	NPYCRF* model;
 	python::model::NPYLM* py_npylm;
 	python::model::CRF* py_crf;
 	Variables(){
@@ -94,7 +94,7 @@ public:
 		double sigma = 1.0;
 		py_crf = new python::model::CRF(num_character_ids, feature_x_unigram_start, feature_x_unigram_end, feature_x_bigram_start, feature_x_bigram_end, feature_x_identical_1_start, feature_x_identical_1_end, feature_x_identical_2_start, feature_x_identical_2_end, sigma);
 
-		model = new Model(py_npylm, py_crf);
+		model = new NPYCRF(py_npylm, py_crf);
 		Lattice* lattice = model->_lattice;
 		npylm::NPYLM* npylm = model->_npylm;
 		lattice->reserve(max_word_length, 100);
@@ -119,7 +119,14 @@ public:
 	}
 };
 
-void assert_test_compute_normalizing_constant(Sentence* sentence, Lattice* lattice, Model* model){
+void test_indices(){
+	Variables* var = new Variables();
+	NPYCRF* model = var->model;
+	assert(false);
+	delete var;
+}
+
+void assert_test_compute_normalizing_constant(Sentence* sentence, Lattice* lattice, NPYCRF* model){
 	double zs_u = lattice->compute_normalizing_constant(sentence, true);
 	double log_zs_u = lattice->compute_log_normalizing_constant(sentence, true);
 	double zs_n = lattice->compute_normalizing_constant(sentence, false);
@@ -139,7 +146,7 @@ void assert_test_compute_normalizing_constant(Sentence* sentence, Lattice* latti
 
 void test_compute_normalizing_constant(bool pure_crf_mode){
 	Variables* var = new Variables();
-	Model* model = var->model;
+	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	lattice->set_pure_crf_mode(pure_crf_mode);
 
@@ -334,7 +341,7 @@ void test_enumerate_marginal_p_path_given_sentence(bool pure_crf_mode){
 
 void test_grad_unigram(){
 	Variables* var = new Variables();
-	Model* model = var->model;
+	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
@@ -352,16 +359,16 @@ void test_grad_unigram(){
 		for(int x_i = 0;x_i < token_ids.size();x_i++){
 			// cout << "index = " << crf->_index_w_unigram_u(0, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
 			// cout << "index = " << crf->_index_w_unigram_u(1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
-			assert(pos == (crf->_index_w_unigram_u(0, pos, x_i) % (crf->_x_range_unigram * 2)) / 2 + 1);
-			assert(pos == (crf->_index_w_unigram_u(1, pos, x_i) % (crf->_x_range_unigram * 2)) / 2 + 1);
+			assert(pos == ((crf->_index_w_unigram_u(0, pos, x_i) - crf->_offset_w_unigram_u) % (crf->_x_range_unigram * 2)) / 2 + 1);
+			assert(pos == ((crf->_index_w_unigram_u(1, pos, x_i) - crf->_offset_w_unigram_u) % (crf->_x_range_unigram * 2)) / 2 + 1);
 		}
 	}
 
 	// sentence->dump_words();
 
-	for(int k = 0;k < crf->_w_size_unigram_u;k++){
+	for(int k = crf->_offset_w_unigram_u;k < crf->_offset_w_unigram_u + crf->_w_size_unigram_u;k++){
 		double grad = 0;
-		int pos = (k % (crf->_x_range_unigram * 2)) / 2 + 1;
+		int pos = ((k - crf->_offset_w_unigram_u) % (crf->_x_range_unigram * 2)) / 2 + 1;
 		int t_start = std::max(1, -(crf->_x_unigram_start + pos - 1) + 1);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_unigram_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
@@ -392,12 +399,12 @@ void test_grad_unigram(){
 		}
 
 		if(k > 0){
-			crf->_w_unigram[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_unigram[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -412,7 +419,7 @@ void test_grad_unigram(){
 		}
 		assert(std::abs(true_grad - grad) < 1e-4);
 	}
-	crf->_w_unigram[crf->_w_size_unigram_u - 1] -= 1e-8;
+	crf->_weight[crf->_w_size_unigram_u + crf->_offset_w_unigram_u - 1] -= 1e-8;
 
 	for(int pos = 1;pos <= crf->_x_range_unigram;pos++){
 		for(int x_i = 0;x_i < token_ids.size();x_i++){
@@ -421,16 +428,16 @@ void test_grad_unigram(){
 			// cout << "index = " << crf->_index_w_unigram_b(0, 1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
 			// cout << "index = " << crf->_index_w_unigram_b(1, 1, pos, x_i) << ", pos = " << pos << ", x_i = " << x_i << endl;
 
-			assert(pos == ((crf->_index_w_unigram_b(0, 0, pos, x_i) - crf->_w_size_unigram_u) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1);
-			assert(pos == ((crf->_index_w_unigram_b(1, 0, pos, x_i) - crf->_w_size_unigram_u) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1);
-			assert(pos == ((crf->_index_w_unigram_b(0, 1, pos, x_i) - crf->_w_size_unigram_u) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1);
-			assert(pos == ((crf->_index_w_unigram_b(1, 1, pos, x_i) - crf->_w_size_unigram_u) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1);
+			assert(pos == ((crf->_index_w_unigram_b(0, 0, pos, x_i) - crf->_offset_w_unigram_b) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1);
+			assert(pos == ((crf->_index_w_unigram_b(1, 0, pos, x_i) - crf->_offset_w_unigram_b) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1);
+			assert(pos == ((crf->_index_w_unigram_b(0, 1, pos, x_i) - crf->_offset_w_unigram_b) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1);
+			assert(pos == ((crf->_index_w_unigram_b(1, 1, pos, x_i) - crf->_offset_w_unigram_b) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1);
 		}
 	}
 
-	for(int k = crf->_w_size_unigram_u;k < crf->_w_size_unigram_u + crf->_w_size_unigram_b;k++){
+	for(int k = crf->_offset_w_unigram_b;k < crf->_offset_w_unigram_b + crf->_w_size_unigram_b;k++){
 		double grad = 0;
-		int pos = ((k - crf->_w_size_unigram_u) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1;
+		int pos = ((k - crf->_offset_w_unigram_b) % (crf->_x_range_unigram * 2 * 2)) / 4 + 1;
 		int t_start = std::max(1, -(crf->_x_unigram_start + pos - 1) + 1);
 		int t_end = std::min(sentence->size() + 2, sentence->size() + 2 - (crf->_x_unigram_start + pos - 1));
 		// cout << "t_start = " << t_start << ", t_end = " << t_end << endl;
@@ -461,12 +468,12 @@ void test_grad_unigram(){
 		}
 
 		if(k > 0){
-			crf->_w_unigram[k] -= 1e-8;
+			crf->_weight[k] -= 1e-8;
 		}
 		double log_Zs = log(model->compute_normalizing_constant(sentence));
 		double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 		// cout << log_Zs << " == " << log_py << endl;
-		crf->_w_unigram[k] += 1e-8;
+		crf->_weight[k] += 1e-8;
 		double _log_Zs = log(model->compute_normalizing_constant(sentence));
 		double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 		// cout << _log_Zs << " == " << _log_py << endl;
@@ -488,7 +495,7 @@ void test_grad_unigram(){
 
 void test_grad_bigram(){
 	Variables* var = new Variables();
-	Model* model = var->model;
+	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
@@ -639,7 +646,7 @@ void test_grad_bigram(){
 
 void test_grad_identical_1(){
 	Variables* var = new Variables();
-	Model* model = var->model;
+	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
@@ -787,7 +794,7 @@ void test_grad_identical_1(){
 
 void test_grad_identical_2(){
 	Variables* var = new Variables();
-	Model* model = var->model;
+	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
@@ -937,7 +944,7 @@ void test_grad_identical_2(){
 
 void test_grad_character_type_unigram(){
 	Variables* var = new Variables();
-	Model* model = var->model;
+	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
@@ -1065,7 +1072,7 @@ void test_grad_character_type_unigram(){
 
 void test_grad_character_type_bigram(){
 	Variables* var = new Variables();
-	Model* model = var->model;
+	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
@@ -1234,7 +1241,7 @@ void test_grad_character_type_bigram(){
 
 void test_grad_label(){
 	Variables* var = new Variables();
-	Model* model = var->model;
+	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	Sentence* sentence = generate_sentence_4();
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
@@ -1370,7 +1377,8 @@ int main(int argc, char *argv[]){
 	token_ids[CHARACTER_ID_UNK] = token_ids.size();
 	token_ids[CHARACTER_ID_BOS] = token_ids.size();
 	token_ids[CHARACTER_ID_EOS] = token_ids.size();
-	
+	test_indices();
+	cout << "OK" << endl;
 	test_compute_normalizing_constant(true);
 	test_compute_normalizing_constant(false);
 	cout << "OK" << endl;

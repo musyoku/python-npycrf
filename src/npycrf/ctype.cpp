@@ -3,6 +3,30 @@
 namespace npycrf {
     namespace ctype {
         unsigned int get_type(wchar_t c){
+            if(0x3040 <= c && c <= 0x309F){
+                return CTYPE_HIRAGANA;      // ひらがな
+            }
+            if(0x30A0 <= c && c <= 0x30FF){
+                return CTYPE_KATAKANA;      // カタカナ
+            }
+            if(0x20000 <= c && c <= 0x2A6DF){
+                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B;
+            }
+            if(0x2A700 <= c && c <= 0x2B73F){
+                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C;
+            }
+            if(0x2B740 <= c && c <= 0x2B81F){
+                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D;
+            }
+            if(0x2B820 <= c && c <= 0x2CEAF){
+                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E;
+            }
+            if(0x2CEB0 <= c && c <= 0x2EBEF){
+                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F;
+            }
+            if(0x2F800 <= c && c <= 0x2FA1F){
+                return CTYPE_CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT;
+            }
             if(0x0000 <= c && c <= 0x007F){
                 return CTYPE_BASIC_LATIN;
             }
@@ -320,12 +344,6 @@ namespace npycrf {
             }
             if(0x3000 <= c && c <= 0x303F){
                 return CTYPE_CJK_SYMBOLS_AND_PUNCTUATION;
-            }
-            if(0x3040 <= c && c <= 0x309F){
-                return CTYPE_HIRAGANA;
-            }
-            if(0x30A0 <= c && c <= 0x30FF){
-                return CTYPE_KATAKANA;
             }
             if(0x3100 <= c && c <= 0x312F){
                 return CTYPE_BOPOMOFO;
@@ -812,24 +830,6 @@ namespace npycrf {
             }
             if(0x1F900 <= c && c <= 0x1F9FF){
                 return CTYPE_SUPPLEMENTAL_SYMBOLS_AND_PICTOGRAPHS;
-            }
-            if(0x20000 <= c && c <= 0x2A6DF){
-                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B;
-            }
-            if(0x2A700 <= c && c <= 0x2B73F){
-                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C;
-            }
-            if(0x2B740 <= c && c <= 0x2B81F){
-                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D;
-            }
-            if(0x2B820 <= c && c <= 0x2CEAF){
-                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E;
-            }
-            if(0x2CEB0 <= c && c <= 0x2EBEF){
-                return CTYPE_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F;
-            }
-            if(0x2F800 <= c && c <= 0x2FA1F){
-                return CTYPE_CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT;
             }
             if(0xE0000 <= c && c <= 0xE007F){
                 return CTYPE_TAGS;
