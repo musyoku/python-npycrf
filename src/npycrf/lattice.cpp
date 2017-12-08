@@ -990,18 +990,18 @@ namespace npycrf {
 			assert(p > 0);
 
 			#ifdef __DEBUG__
-				if(_pure_crf_mode){
+				if(_pure_crf_mode == false){
 					if(pw_h_tkji[t + i][i][k][j] > 0){
 						double _pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
 						assert(_pw_h == pw_h_tkji[t + i][i][k][j]);
 					}
-					if(value <= 0){
-						std::cout << value << std::endl;
-						std::cout << prod_scaling << std::endl;
-						// std::cout << pw_h << std::endl;
-						std::cout << beta[t + i][i][k] << std::endl;
-						std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
-					}
+				}
+				if(value <= 0){
+					std::cout << value << std::endl;
+					std::cout << prod_scaling << std::endl;
+					// std::cout << pw_h << std::endl;
+					std::cout << beta[t + i][i][k] << std::endl;
+					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
 			#endif
 

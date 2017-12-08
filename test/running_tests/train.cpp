@@ -55,19 +55,24 @@ void run_training_loop(){
 	
 	Corpus* corpus_l = new Corpus();
 	std::string filename_l = "../../dataset/mecab.txt";
-
+	int num_labelded_data = 100;
 	std::wifstream ifs_l(filename_l.c_str());
 	assert(ifs_l.fail() == false);
+	int i = 0;
 	while(getline(ifs_l, sentence_str)){
 		if (sentence_str.empty()){
 			continue;
 		}
+		i++;
 		std::vector<std::wstring> words = explode(sentence_str, L' ');
 		for(auto word: words){
 			std::wcout << word << L" ";
 		}
 		std::wcout << std::endl;
 		corpus_l->add_words(words);
+		if(i > num_labelded_data){
+			break;
+		}
 	}
 	
 	Dictionary* dict = new Dictionary();

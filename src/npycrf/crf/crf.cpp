@@ -45,56 +45,56 @@ namespace npycrf {
 			_w_size_label_b = 2 * 2;
 			_w_label = new double[_w_size_label_u + _w_size_label_b];
 			for(int i = 0;i < _w_size_label_u + _w_size_label_b;i++){
-				// _w_label[i] = sampler::normal(0, sigma);
-				_w_label[i] = 0;
+				_w_label[i] = sampler::normal(0, sigma);
+				// _w_label[i] = 0;
 			}
 			// (y_i, i, x_i), (y_{i-1}, y_i, i, x_i)
 			_w_size_unigram_u = 2 * _x_range_unigram * num_character_ids;
 			_w_size_unigram_b = 2 * 2 * _x_range_unigram * num_character_ids;
 			_w_unigram = new double[_w_size_unigram_u + _w_size_unigram_b];
 			for(int i = 0;i < _w_size_unigram_u + _w_size_unigram_b;i++){
-				// _w_unigram[i] = sampler::normal(0, sigma);
-				_w_unigram[i] = 0;
+				_w_unigram[i] = sampler::normal(0, sigma);
+				// _w_unigram[i] = 0;
 			}
 			// (y_i, i, x_{i-1}, x_i), (y_{i-1}, y_i, i, x_{i-1}, x_i)
 			_w_size_bigram_u = 2 * _x_range_bigram * num_character_ids * num_character_ids;
 			_w_size_bigram_b = 2 * 2 * _x_range_bigram * num_character_ids * num_character_ids;
 			_w_bigram = new double[_w_size_bigram_u + _w_size_bigram_b];
 			for(int i = 0;i < _w_size_bigram_u + _w_size_bigram_b;i++){
-				// _w_bigram[i] = sampler::normal(0, sigma);
-				_w_bigram[i] = 0;
+				_w_bigram[i] = sampler::normal(0, sigma);
+				// _w_bigram[i] = 0;
 			}
 			// (y_i, i), (y_{i-1}, y_i, i)
 			_w_size_identical_1_u = 2 * _x_range_identical_1;
 			_w_size_identical_1_b = 2 * 2 * _x_range_identical_1;
 			_w_identical_1 = new double[_w_size_identical_1_u + _w_size_identical_1_b];
 			for(int i = 0;i < _w_size_identical_1_u + _w_size_identical_1_b;i++){
-				// _w_identical_1[i] = sampler::normal(0, sigma);
-				_w_identical_1[i] = 0;
+				_w_identical_1[i] = sampler::normal(0, sigma);
+				// _w_identical_1[i] = 0;
 			}
 			// (y_i, i), (y_{i-1}, y_i, i)
 			_w_size_identical_2_u = 2 * _x_range_identical_2;
 			_w_size_identical_2_b = 2 * 2 * _x_range_identical_2;
 			_w_identical_2 = new double[_w_size_identical_2_u + _w_size_identical_2_b];
 			for(int i = 0;i < _w_size_identical_2_u + _w_size_identical_2_b;i++){
-				// _w_identical_2[i] = sampler::normal(0, sigma);
-				_w_identical_2[i] = 0;
+				_w_identical_2[i] = sampler::normal(0, sigma);
+				// _w_identical_2[i] = 0;
 			}
 			// (y_i, type)
 			_w_size_unigram_type_u = 2 * num_character_types;
 			_w_size_unigram_type_b = 2 * 2 * num_character_types;
 			_w_unigram_type = new double[_w_size_unigram_type_u + _w_size_unigram_type_b];
 			for(int i = 0;i < _w_size_unigram_type_u + _w_size_unigram_type_b;i++){
-				// _w_unigram_type[i] = sampler::normal(0, sigma);
-				_w_unigram_type[i] = 0;
+				_w_unigram_type[i] = sampler::normal(0, sigma);
+				// _w_unigram_type[i] = 0;
 			}
 			// (y_i, type, type), (y_{i-1}, y_i, type, type)
 			_w_size_bigram_type_u = 2 * num_character_types * num_character_types;
 			_w_size_bigram_type_b = 2 * 2 * num_character_types * num_character_types;
 			_w_bigram_type = new double[_w_size_bigram_type_u + _w_size_bigram_type_b];
 			for(int i = 0;i < _w_size_bigram_type_u + _w_size_bigram_type_b;i++){
-				// _w_bigram_type[i] = sampler::normal(0, sigma);
-				_w_bigram_type[i] = 0;
+				_w_bigram_type[i] = sampler::normal(0, sigma);
+				// _w_bigram_type[i] = 0;
 			}
 		}
 		CRF::~CRF(){
