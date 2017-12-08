@@ -144,7 +144,7 @@ namespace npycrf {
 			double _compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
 			double _compute_cost_unigram_and_bigram_type_features(int const* character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i);
 			double compute_log_p_y_given_sentence(Sentence* sentence);
-			void extract_features(Sentence* sentence);
+			FeatureIndices* extract_features(Sentence* sentence);
 		};
 	}
 }

@@ -132,7 +132,7 @@ void test_backward_unigram(bool pure_crf_mode){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
-	crf->extract_features(sentence);
+	sentence->_features = crf->extract_features(sentence);
 	double regularization_constant = 1.0;
 	solver::SGD* sgd = new solver::SGD(crf, regularization_constant);
 	sgd->_backward_unigram(sentence, lattice->_pz_s);

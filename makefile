@@ -24,7 +24,7 @@ check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
 
 module_tests: ## 各モジュールのテスト.
-	$(CC) test/module_tests/solver/sgd.cpp $(SOURCES) -o test/module_tests/solver/sgd $(INCLUDE) $(LDFLAGS) -O0 -g
+	$(CC) test/module_tests/solver/sgd.cpp $(SOURCES) -o test/module_tests/solver/sgd $(INCLUDE) $(LDFLAGS) -O3
 	./test/module_tests/solver/sgd
 	$(CC) test/module_tests/npylm/lattice.cpp $(SOURCES) -o test/module_tests/npylm/lattice $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm/lattice

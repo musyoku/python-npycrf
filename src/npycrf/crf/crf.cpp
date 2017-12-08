@@ -417,8 +417,7 @@ namespace npycrf {
 					true_cost += _compute_cost_identical_1_features(character_ids, character_ids_length, i, y_i_1, y_i);
 					true_cost += _compute_cost_identical_2_features(character_ids, character_ids_length, i, y_i_1, y_i);
 					true_cost += _compute_cost_unigram_and_bigram_type_features(character_ids, characters, character_ids_length, i, y_i_1, y_i);
-					std::cout << true_cost << " == " << cost << std::endl;
-					assert(true_cost == cost);
+					assert(std::abs(true_cost - cost) < 1e-12);
 				#endif
 			}
 			return cost;
@@ -487,10 +486,8 @@ namespace npycrf {
 		double CRF::_compute_cost_unigram_and_bigram_type_features(int const* character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i){
 			assert(i > 1);
 			double cost = 0;
-			wchar_t char_i = (i <= character_ids_length) ? characters[i - 1] : CHARACTER_ID_EOS;
-			wchar_t char_i_1 = (i - 1 <= character_ids_length) ? characters[i - 2] : CHARACTER_ID_EOS;
-			int type_i = (i <= character_ids_length) ? ctype::get_type(char_i) : CTYPE_UNKNOWN;
-			int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(char_i_1) : CTYPE_UNKNOWN;
+			int type_i = (i <= character_ids_length) ? ctype::get_type(characters[i - 1]) : CTYPE_UNKNOWN;
+			int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(characters[i - 2]) : CTYPE_UNKNOWN;
 			cost += w_unigram_type_u(y_i, type_i);
 			cost += w_unigram_type_b(y_i_1, y_i, type_i);
 			cost += w_bigram_type_u(y_i, type_i_1, type_i);
@@ -509,7 +506,7 @@ namespace npycrf {
 			log_py_s += compute_gamma(sentence, sentence->size() + 1, sentence->size() + 2);
 			return log_py_s;
 		}
-		void CRF::extract_features(Sentence* sentence){
+		FeatureIndices* CRF::extract_features(Sentence* sentence){
 			assert(sentence->_features == NULL);
 
 			int const* character_ids = sentence->_character_ids;
@@ -521,7 +518,7 @@ namespace npycrf {
 			int*** crf_feature_indices_u = new int**[character_ids_length + 3];
 
 			// ラベルunigram素性
-			for(int i = 2;i <= character_ids_length;i++){
+			for(int i = 2;i <= character_ids_length + 2;i++){	// 末尾に<eos>が2つ入る
 				num_crf_features_u[i] = new int[2];
 				crf_feature_indices_u[i] = new int*[2];
 				for(int y_i = 0;y_i <= 1;y_i++){
@@ -569,11 +566,10 @@ namespace npycrf {
 						}
 					}
 					// 文字種unigram・bigram素性
-					wchar_t char_i = (i <= character_ids_length) ? characters[i - 1] : CHARACTER_ID_EOS;
-					wchar_t char_i_1 = (i - 1 <= character_ids_length) ? characters[i - 2] : CHARACTER_ID_EOS;
-					int type_i = (i <= character_ids_length) ? ctype::get_type(char_i) : CTYPE_UNKNOWN;
-					int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(char_i_1) : CTYPE_UNKNOWN;
+					int type_i = (i <= character_ids_length) ? ctype::get_type(characters[i - 1]) : CTYPE_UNKNOWN;
+					int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(characters[i - 2]) : CTYPE_UNKNOWN;
 					indices_u.push_back(_index_w_unigram_type_u(y_i, type_i));
+					indices_u.push_back(_index_w_bigram_type_u(y_i, type_i_1, type_i));
 
 					num_crf_features_u[i][y_i] = indices_u.size();
 					crf_feature_indices_u[i][y_i] = new int[indices_u.size()];
@@ -597,7 +593,7 @@ namespace npycrf {
 			int**** crf_feature_indices_b = new int***[character_ids_length + 3];
 
 			// ラベルbigram素性
-			for(int i = 2;i <= character_ids_length;i++){
+			for(int i = 2;i <= character_ids_length + 2;i++){	// 末尾に<eos>が2つ入る
 				crf_feature_indices_b[i] = new int**[2];
 				for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
 					crf_feature_indices_b[i][y_i_1] = new int*[2];
@@ -646,10 +642,9 @@ namespace npycrf {
 							}
 						}
 						// 文字種unigram・bigram素性
-						wchar_t char_i = (i <= character_ids_length) ? characters[i - 1] : CHARACTER_ID_EOS;
-						wchar_t char_i_1 = (i - 1 <= character_ids_length) ? characters[i - 2] : CHARACTER_ID_EOS;
-						int type_i = (i <= character_ids_length) ? ctype::get_type(char_i) : CTYPE_UNKNOWN;
-						int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(char_i_1) : CTYPE_UNKNOWN;
+						int type_i = (i <= character_ids_length) ? ctype::get_type(characters[i - 1]) : CTYPE_UNKNOWN;
+						int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(characters[i - 2]) : CTYPE_UNKNOWN;
+						indices_b.push_back(_index_w_unigram_type_b(y_i_1, y_i, type_i));
 						indices_b.push_back(_index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i));
 
 						// 更新
@@ -666,7 +661,7 @@ namespace npycrf {
 			features->_num_features_b = num_crf_features_b;
 			features->_feature_indices_u = crf_feature_indices_u;
 			features->_feature_indices_b = crf_feature_indices_b;
-			sentence->_features = features;
+			return features;
 		}
 		
 		template <class Archive>

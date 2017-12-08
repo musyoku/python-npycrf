@@ -41,6 +41,9 @@ namespace npycrf {
 		delete[] _segments;
 		delete[] _start;
 		delete[] _word_ids;
+		if(_features != NULL){
+			delete _features;
+		}
 	}
 	Sentence* Sentence::copy(){
 		Sentence* sentence = new Sentence(_sentence_str, _character_ids);
