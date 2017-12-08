@@ -125,7 +125,7 @@ def main():
 	print(tabulate(table, headers=["Train", "Dev"]))
 
 	num_character_ids = dictionary.get_num_characters()
-	print(tabulate([["#characters", num_character_ids]], headers=["Train", "Dev"]))
+	print(tabulate([["#characters", num_character_ids]]))
 
 	# モデル
 	crf = nlp.crf(num_character_ids=num_character_ids,
@@ -174,8 +174,8 @@ def main():
 		start = time.time()
 
 		# 学習
-		trainer.gibbs(include_labeled_data=True)		# NPYLMのパラメータをギブスサンプリング
-		trainer.sgd()	# CRFを最適化
+		trainer.gibbs(include_labeled_data=True)	# NPYLMのパラメータをギブスサンプリング
+		trainer.sgd(learning_rate, batchsize)		# CRFを最適化
 
 		# 各種サンプリング
 		trainer.sample_hpylm_vpylm_hyperparameters()	# HPYLMとVPYLMのハイパーパラメータの更新

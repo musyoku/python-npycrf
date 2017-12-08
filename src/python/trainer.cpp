@@ -212,7 +212,7 @@ namespace npycrf {
 					
 					#ifdef __DEBUG__
 						// 正規化しない場合の結果と比較
-						std::cout << sentence->size() << std::endl;
+						// std::cout << sentence->size() << std::endl;
 						std::vector<int> a = segments;
 						sampler::mt.seed(seed);
 						_npycrf->_lattice->blocked_gibbs(sentence, segments, false);
@@ -270,7 +270,7 @@ namespace npycrf {
 		void Trainer::sgd(double learning_rate, int batchsize, bool pure_crf){
 			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
 			int total_batches = (double)_rand_indices_train_l.size() / (double)batchsize + ((_rand_indices_train_l.size() % batchsize) ? 1 : 0);
-			std::cout << "#batches: " << total_batches << std::endl;
+			// std::cout << "#batches: " << total_batches << std::endl;
 			Lattice* lattice = _npycrf->_lattice;
 			bool original_mode = lattice->get_pure_crf_mode();
 			lattice->set_pure_crf_mode(pure_crf);
@@ -280,7 +280,7 @@ namespace npycrf {
 				for(int i = 0;i < size;i++){
 					assert(lattice->get_pure_crf_mode() == pure_crf);
 					int data_index = _rand_indices_train_l[i + batchsize * b];
-					std::cout << "data_index: " << data_index << std::endl;
+					// std::cout << "data_index: " << data_index << std::endl;
 					Sentence* sentence = _dataset_l->_sentences_train[data_index];
 					// 周辺確率を求める
 					double*** pz_s = lattice->_pz_s;
