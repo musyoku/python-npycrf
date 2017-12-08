@@ -39,6 +39,24 @@ namespace npycrf {
 				_rand_indices_dev_l.push_back(data_index);
 			}
 
+			// CRF素性を展開
+			for(Sentence* sentence: dataset_l->_sentences_train){
+				assert(sentence->_features == NULL);
+				sentence->_features = npycrf->_crf->extract_features(sentence);
+			}
+			for(Sentence* sentence: dataset_l->_sentences_dev){
+				assert(sentence->_features == NULL);
+				sentence->_features = npycrf->_crf->extract_features(sentence);
+			}
+			for(Sentence* sentence: dataset_u->_sentences_train){
+				assert(sentence->_features == NULL);
+				sentence->_features = npycrf->_crf->extract_features(sentence);
+			}
+			for(Sentence* sentence: dataset_u->_sentences_dev){
+				assert(sentence->_features == NULL);
+				sentence->_features = npycrf->_crf->extract_features(sentence);
+			}
+
 			// 必要な領域を確保
 			int max_word_length = npycrf->_npylm->_max_word_length;
 			int max_sentence_length = std::max(dataset_l->get_max_sentence_length(), dataset_u->get_max_sentence_length());
@@ -192,6 +210,7 @@ namespace npycrf {
 				int data_index = _rand_indices_train_u[i];
 				assert(data_index < _dataset_u->get_size_train());
 				Sentence* sentence = _dataset_u->_sentences_train[data_index];
+				assert(sentence->_features != NULL);
 
 				// モデルに追加されているかチェック
 				if(_added_to_npylm_u[data_index] == true){
@@ -250,6 +269,7 @@ namespace npycrf {
 				int data_index = _rand_indices_train_l[i];
 				assert(data_index < _dataset_l->get_size_train());
 				Sentence* sentence = _dataset_l->_sentences_train[data_index];
+				assert(sentence->_features != NULL);
 
 				// 教師あり
 				// モデルに追加されているかチェック
@@ -285,6 +305,7 @@ namespace npycrf {
 					int data_index = _rand_indices_train_l[i + batchsize * b];
 					// std::cout << "data_index: " << data_index << std::endl;
 					Sentence* sentence = _dataset_l->_sentences_train[data_index];
+					assert(sentence->_features != NULL);
 					// 周辺確率を求める
 					double*** pz_s = lattice->_pz_s;
 					lattice->enumerate_marginal_p_path_given_sentence(sentence, pz_s);

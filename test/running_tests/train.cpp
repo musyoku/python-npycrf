@@ -79,7 +79,7 @@ void run_training_loop(){
 
 	int seed = 0;
 	Dataset* dataset_l = new Dataset(corpus_l, dict, 1, seed);
-	Dataset* dataset_u = new Dataset(corpus_u, dict, 1, seed);
+	Dataset* dataset_u = new Dataset(corpus_u, dict, 0.1, seed);
 
 	double lambda_0 = 1;
 	int max_word_length = 12;
