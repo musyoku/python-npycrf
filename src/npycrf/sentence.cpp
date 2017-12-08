@@ -16,6 +16,7 @@ namespace npycrf {
 		_segments = new int[size() + 3];
 		_start = new int[size() + 3];
 		_labels = new int[size() + 3];
+		_features = NULL;
 		for(int i = 0;i < size() + 3;i++){
 			_word_ids[i] = 0;
 			_segments[i] = 0;
@@ -169,4 +170,5 @@ namespace npycrf {
 		assert(t <= size() + 2);
 		return _labels[t];
 	}
+
 } // namespace npycrf

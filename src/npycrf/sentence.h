@@ -1,9 +1,12 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "crf/features.h"
 #include "common.h"
 
 // <bos>と<eos>は長さが0文字であることに注意
+// NPYLMでは先頭に<bos>が2つ、末尾に<eos>が1つ
+// CRFでは先頭に<bos>が1つ、末尾に<eos>が2つ
 
 namespace npycrf {
 	class Sentence {
@@ -15,6 +18,7 @@ namespace npycrf {
 		int* _character_ids;// _sentence_strの各文字のid. 実際に使われるのはこっち
 		id* _word_ids;		// <bos>2つと<eos>1つを含める
 		int* _labels;		// CRFのラベル. <bos>が1つ先頭に入り、<eos>が末尾に2つ入る. CRFに合わせて1スタート、[0]は<bos>
+		crf::FeatureIndices* _features;	// CRFの素性ID. 不変なのであらかじめ計算しておく.
 		std::wstring _sentence_str;	// 生の文データ
 		Sentence(std::wstring sentence, int* character_ids);
 		~Sentence();

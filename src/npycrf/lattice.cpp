@@ -239,7 +239,7 @@ namespace npycrf {
 		// <bos>から生成されている場合
 		if(j == 0){
 			double p = 0;
-			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
+			double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
@@ -258,7 +258,7 @@ namespace npycrf {
 		// i=0に相当
 		if(t - k - j == 0){
 			double p = 0;
-			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
+			double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
@@ -280,7 +280,7 @@ namespace npycrf {
 		double sum = 0;
 		for(int i = 1;i <= std::min(t - k - j, _max_word_length);i++){
 			double p = 0;
-			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
+			double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
@@ -526,7 +526,7 @@ namespace npycrf {
 			_word_ids[1] = ID_BOS;
 			_word_ids[2] = word_k_id;
 			double p = 0;
-			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
+			double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
@@ -546,7 +546,7 @@ namespace npycrf {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			double p = 0;
-			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
+			double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
@@ -570,7 +570,7 @@ namespace npycrf {
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			double p = 0;
-			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t - k + 1, t + 1);
+			double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
@@ -616,7 +616,7 @@ namespace npycrf {
 		for(int k = 1;k <= limit_k;k++){
 			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 				double p = 0;
-				double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t + 1, t + 2);
+				double potential = _crf->compute_gamma(sentence, t + 1, t + 2);
 				if(_pure_crf_mode){
 					p = exp(potential);
 				}else{
@@ -638,7 +638,7 @@ namespace npycrf {
 			}
 			if(t - k == 0){
 				double p = 0;
-				double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t + 1, t + 2);
+				double potential = _crf->compute_gamma(sentence, t + 1, t + 2);
 				if(_pure_crf_mode){
 					p = exp(potential);
 				}else{
@@ -878,7 +878,7 @@ namespace npycrf {
 		wchar_t const* characters = sentence->_characters;
 		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
-		double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t, t + 1);
+		double potential = _crf->compute_gamma(sentence, t, t + 1);
 		// double potential = 0;
 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 			double sum_prob = 0;
@@ -924,7 +924,7 @@ namespace npycrf {
 		wchar_t const* characters = sentence->_characters;
 		int const* character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
-		double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t + 1, t + 2);
+		double potential = _crf->compute_gamma(sentence, t + 1, t + 2);
 		// double potential = 0;
 		for(int k = 1;k <= std::min(t, _max_word_length);k++){
 			id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
@@ -958,7 +958,7 @@ namespace npycrf {
 		double beta_0_1_1 = 0;
 		for(int i = 1;i <= std::min(sentence->size(), _max_word_length);i++){
 			double p = 0;
-			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, 1, i + 1);
+			double potential = _crf->compute_gamma(sentence, 1, i + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
@@ -1001,7 +1001,7 @@ namespace npycrf {
 			_word_ids[1] = word_k_id;
 			_word_ids[2] = word_i_id;
 			double p = 0;
-			double potential = _crf->compute_gamma(character_ids, characters, character_ids_length, t + 1, t + i + 1);
+			double potential = _crf->compute_gamma(sentence, t + 1, t + i + 1);
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{

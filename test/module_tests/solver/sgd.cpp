@@ -132,6 +132,7 @@ void test_backward_unigram(bool pure_crf_mode){
 	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
+	crf->extract_features(sentence);
 	double regularization_constant = 1.0;
 	solver::SGD* sgd = new solver::SGD(crf, regularization_constant);
 	sgd->_backward_unigram(sentence, lattice->_pz_s);
@@ -1318,9 +1319,9 @@ int main(int argc, char *argv[]){
 	// test_backward_identical_1(false);
 	// test_backward_identical_1(true);
 	// cout << "OK" << endl;
-	test_backward_bigram(false);
-	test_backward_bigram(true);
-	cout << "OK" << endl;
+	// test_backward_bigram(false);
+	// test_backward_bigram(true);
+	// cout << "OK" << endl;
 	test_backward_unigram(false);
 	test_backward_unigram(true);
 	cout << "OK" << endl;

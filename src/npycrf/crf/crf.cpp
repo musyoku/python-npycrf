@@ -2,6 +2,7 @@
 #include "../ctype.h"
 #include "../sampler.h"
 #include "crf.h"
+#include "features.h"
 
 namespace npycrf {
 	namespace crf {
@@ -349,28 +350,28 @@ namespace npycrf {
 		// γ(s, t) ∝ log{P(c_s^{t - 1}|・)}
 		// s、tはともに番号なので1から始まる
 		// あるノードから別のノードを辿るV字型のパスのコストの合計
-		double CRF::compute_gamma(int const* character_ids, wchar_t const* characters, int character_ids_length, int s, int t){
+		double CRF::compute_gamma(Sentence* sentence, int s, int t){
 			if(t <= 1){
 				return 0;
 			}
-			if(s == character_ids_length + 1){	// P(<eos>|・)に相当するポテンシャル
+			if(s == sentence->size() + 1){	// P(<eos>|・)に相当するポテンシャル
 				assert(t == s + 1);
-				return compute_path_cost(character_ids, characters, character_ids_length, s, t, 1, 1);
+				return compute_path_cost(sentence, s, t, 1, 1);
 			}
-			assert(s <= character_ids_length);
-			assert(t <= character_ids_length + 1);
+			assert(s <= sentence->size());
+			assert(t <= sentence->size() + 1);
 			assert(s < t);
 			int repeat = t - s;
 			if(repeat == 1){
-				return compute_path_cost(character_ids, characters, character_ids_length, s, t, 1, 1);
+				return compute_path_cost(sentence, s, t, 1, 1);
 			}
-			double sum_cost = compute_path_cost(character_ids, characters, character_ids_length, s, s + 1, 1, 0) + compute_path_cost(character_ids, characters, character_ids_length, t - 1, t, 0, 1);
+			double sum_cost = compute_path_cost(sentence, s, s + 1, 1, 0) + compute_path_cost(sentence, t - 1, t, 0, 1);
 			if(repeat == 2){
 				return sum_cost;
 			}
 			for(int i = 0;i < repeat - 2;i++){
-				assert(s + i + 2 <= character_ids_length);
-				sum_cost += compute_path_cost(character_ids, characters, character_ids_length, s + i + 1, s + i + 2, 0, 0);
+				assert(s + i + 2 <= sentence->size());
+				sum_cost += compute_path_cost(sentence, s + i + 1, s + i + 2, 0, 0);
 			}
 			return sum_cost;
 		}
@@ -378,7 +379,10 @@ namespace npycrf {
 		// yはクラス（0か1）
 		// iはノードの位置（1スタートなので注意。インデックスではない.ただし実際は隣接ノードが取れるi>=2のみ可）
 		// i_1は本来引数にする必要はないがわかりやすさのため
-		double CRF::compute_path_cost(int const* character_ids, wchar_t const* characters, int character_ids_length, int i_1, int i, int y_i_1, int y_i){
+		double CRF::compute_path_cost(Sentence* sentence, int i_1, int i, int y_i_1, int y_i){
+			int const* character_ids = sentence->_character_ids;
+			wchar_t const* characters = sentence->_characters;
+			int character_ids_length = sentence->size();
 			assert(i_1 + 1 == i);
 			assert(2 <= i);
 			assert(i <= character_ids_length + 2);
@@ -388,12 +392,35 @@ namespace npycrf {
 			if(i == character_ids_length + 1){	// </s>
 				assert(y_i == 1);
 			}
-			cost += _compute_cost_label_features(y_i_1, y_i);
-			cost += _compute_cost_unigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
-			cost += _compute_cost_bigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
-			cost += _compute_cost_identical_1_features(character_ids, character_ids_length, i, y_i_1, y_i);
-			cost += _compute_cost_identical_2_features(character_ids, character_ids_length, i, y_i_1, y_i);
-			cost += _compute_cost_unigram_and_bigram_type_features(character_ids, characters, character_ids_length, i, y_i_1, y_i);
+			if(sentence->_features == NULL){
+				cost += _compute_cost_label_features(y_i_1, y_i);
+				cost += _compute_cost_unigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
+				cost += _compute_cost_bigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
+				cost += _compute_cost_identical_1_features(character_ids, character_ids_length, i, y_i_1, y_i);
+				cost += _compute_cost_identical_2_features(character_ids, character_ids_length, i, y_i_1, y_i);
+				cost += _compute_cost_unigram_and_bigram_type_features(character_ids, characters, character_ids_length, i, y_i_1, y_i);
+			}else{
+				FeatureIndices* features = sentence->_features;
+				for(int m = 0;m < features->_num_features_u[i][y_i];m++){
+					int k = features->_feature_indices_u[i][y_i][m];
+					cost += _weight[k];
+				}
+				for(int m = 0;m < features->_num_features_b[i][y_i_1][y_i];m++){
+					int k = features->_feature_indices_b[i][y_i_1][y_i][m];
+					cost += _weight[k];
+				}
+				#ifdef __DEBUG__
+					double true_cost = 0;
+					true_cost += _compute_cost_label_features(y_i_1, y_i);
+					true_cost += _compute_cost_unigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
+					true_cost += _compute_cost_bigram_features(character_ids, character_ids_length, i, y_i_1, y_i);
+					true_cost += _compute_cost_identical_1_features(character_ids, character_ids_length, i, y_i_1, y_i);
+					true_cost += _compute_cost_identical_2_features(character_ids, character_ids_length, i, y_i_1, y_i);
+					true_cost += _compute_cost_unigram_and_bigram_type_features(character_ids, characters, character_ids_length, i, y_i_1, y_i);
+					std::cout << true_cost << " == " << cost << std::endl;
+					assert(true_cost == cost);
+				#endif
+			}
 			return cost;
 		}
 		double CRF::_compute_cost_label_features(int y_i_1, int y_i){
@@ -419,7 +446,7 @@ namespace npycrf {
 			int r_start = std::max(2, i + _x_bigram_start);
 			int r_end = std::min(character_ids_length + 2, i + _x_bigram_end);
 			for(int r = r_start;r <= r_end;r++){
-				int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_bigram]
+				int pos = r - i - _x_bigram_start + 1;	// [1, _x_range_bigram]
 				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
 				int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
 				cost += w_bigram_u(y_i, pos, x_i_1, x_i);
@@ -475,13 +502,173 @@ namespace npycrf {
 			for(int i = 2;i < sentence->get_num_segments() - 1;i++){
 				int s = sentence->_start[i] + 1; // インデックスから番号へ
 				int t = s + sentence->_segments[i];
-				double gamma = compute_gamma(sentence->_character_ids, sentence->_characters, sentence->size(), s, t);
+				double gamma = compute_gamma(sentence, s, t);
 				log_py_s += gamma;
 			}
 			// <eos>
-			log_py_s += compute_gamma(sentence->_character_ids, sentence->_characters, sentence->size(), sentence->size() + 1, sentence->size() + 2);
+			log_py_s += compute_gamma(sentence, sentence->size() + 1, sentence->size() + 2);
 			return log_py_s;
 		}
+		void CRF::extract_features(Sentence* sentence){
+			assert(sentence->_features == NULL);
+
+			int const* character_ids = sentence->_character_ids;
+			wchar_t const* characters = sentence->_characters;
+			int character_ids_length = sentence->size();
+
+			// CRFのラベルunigram素性の数
+			int** num_crf_features_u = new int*[character_ids_length + 3];
+			int*** crf_feature_indices_u = new int**[character_ids_length + 3];
+
+			// ラベルunigram素性
+			for(int i = 2;i <= character_ids_length;i++){
+				num_crf_features_u[i] = new int[2];
+				crf_feature_indices_u[i] = new int*[2];
+				for(int y_i = 0;y_i <= 1;y_i++){
+					std::vector<int> indices_u;
+					int r_start, r_end;
+					// ラベル素性
+					indices_u.push_back(_index_w_label_u(y_i));
+					// 文字unigram素性
+					r_start = std::max(1, i + _x_unigram_start);
+					r_end = std::min(character_ids_length + 2, i + _x_unigram_end);	// <eos>2つを考慮
+					for(int r = r_start;r <= r_end;r++){
+						int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_unigram]
+						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+						indices_u.push_back(_index_w_unigram_u(y_i, pos, x_i));
+					}
+					// 文字bigram素性
+					r_start = std::max(2, i + _x_bigram_start);
+					r_end = std::min(character_ids_length + 2, i + _x_bigram_end);
+					for(int r = r_start;r <= r_end;r++){
+						int pos = r - i - _x_bigram_start + 1;	// [1, _x_range_bigram]
+						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+						int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+						indices_u.push_back(_index_w_bigram_u(y_i, pos, x_i_1, x_i));
+					}
+					// identical_1素性
+					r_start = std::max(2, i + _x_identical_1_start);
+					r_end = std::min(character_ids_length + 2, i + _x_identical_1_end);
+					for(int r = r_start;r <= r_end;r++){
+						int pos = r - i - _x_identical_1_start + 1;	// [1, _x_range_identical_1]
+						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+						int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+						if(x_i == x_i_1){
+							indices_u.push_back(_index_w_identical_1_u(y_i, pos));
+						}
+					}
+					// identical_2素性
+					r_start = std::max(3, i + _x_identical_2_start);
+					r_end = std::min(character_ids_length + 2, i + _x_identical_2_end);
+					for(int r = r_start;r <= r_end;r++){
+						int pos = r - i - _x_identical_2_start + 1;	// [1, _x_range_identical_2]
+						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+						int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : CHARACTER_ID_EOS;
+						if(x_i == x_i_2){
+							indices_u.push_back(_index_w_identical_2_u(y_i, pos));
+						}
+					}
+					// 文字種unigram・bigram素性
+					wchar_t char_i = (i <= character_ids_length) ? characters[i - 1] : CHARACTER_ID_EOS;
+					wchar_t char_i_1 = (i - 1 <= character_ids_length) ? characters[i - 2] : CHARACTER_ID_EOS;
+					int type_i = (i <= character_ids_length) ? ctype::get_type(char_i) : CTYPE_UNKNOWN;
+					int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(char_i_1) : CTYPE_UNKNOWN;
+					indices_u.push_back(_index_w_unigram_type_u(y_i, type_i));
+
+					num_crf_features_u[i][y_i] = indices_u.size();
+					crf_feature_indices_u[i][y_i] = new int[indices_u.size()];
+					for(int n = 0;n < indices_u.size();n++){
+						crf_feature_indices_u[i][y_i][n] = indices_u[n];
+					}
+				}
+			}
+
+			// CRFのラベルbigram素性の数
+			int*** num_crf_features_b = new int**[character_ids_length + 3];
+			for(int i = 0;i < character_ids_length + 3;i++){
+				num_crf_features_b[i] = new int*[2];
+				num_crf_features_b[i][0] = new int[2];
+				num_crf_features_b[i][1] = new int[2];
+				num_crf_features_b[i][0][0] = 0;
+				num_crf_features_b[i][0][1] = 0;
+				num_crf_features_b[i][1][0] = 0;
+				num_crf_features_b[i][1][1] = 0;
+			}
+			int**** crf_feature_indices_b = new int***[character_ids_length + 3];
+
+			// ラベルbigram素性
+			for(int i = 2;i <= character_ids_length;i++){
+				crf_feature_indices_b[i] = new int**[2];
+				for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
+					crf_feature_indices_b[i][y_i_1] = new int*[2];
+					for(int y_i = 0;y_i <= 1;y_i++){
+						std::vector<int> indices_b;
+						int r_start, r_end;
+						// ラベル素性
+						indices_b.push_back(_index_w_label_b(y_i_1, y_i));
+						// 文字unigram素性
+						r_start = std::max(1, i + _x_unigram_start);
+						r_end = std::min(character_ids_length + 2, i + _x_unigram_end);	// <eos>2つを考慮
+						for(int r = r_start;r <= r_end;r++){
+							int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_unigram]
+							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+							indices_b.push_back(_index_w_unigram_b(y_i_1, y_i, pos, x_i));
+						}
+						// 文字bigram素性
+						r_start = std::max(2, i + _x_bigram_start);
+						r_end = std::min(character_ids_length + 2, i + _x_bigram_end);
+						for(int r = r_start;r <= r_end;r++){
+							int pos = r - i - _x_bigram_start + 1;	// [1, _x_range_bigram]
+							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+							int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+							indices_b.push_back(_index_w_bigram_b(y_i_1, y_i, pos, x_i_1, x_i));
+						}
+						// identical_1素性
+						r_start = std::max(2, i + _x_identical_1_start);
+						r_end = std::min(character_ids_length + 2, i + _x_identical_1_end);
+						for(int r = r_start;r <= r_end;r++){
+							int pos = r - i - _x_identical_1_start + 1;	// [1, _x_range_identical_1]
+							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+							int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+							if(x_i == x_i_1){
+								indices_b.push_back(_index_w_identical_1_b(y_i_1, y_i, pos));
+							}
+						}
+						// identical_2素性
+						r_start = std::max(3, i + _x_identical_2_start);
+						r_end = std::min(character_ids_length + 2, i + _x_identical_2_end);
+						for(int r = r_start;r <= r_end;r++){
+							int pos = r - i - _x_identical_2_start + 1;	// [1, _x_range_identical_2]
+							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+							int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : CHARACTER_ID_EOS;
+							if(x_i == x_i_2){
+								indices_b.push_back(_index_w_identical_2_b(y_i_1, y_i, pos));
+							}
+						}
+						// 文字種unigram・bigram素性
+						wchar_t char_i = (i <= character_ids_length) ? characters[i - 1] : CHARACTER_ID_EOS;
+						wchar_t char_i_1 = (i - 1 <= character_ids_length) ? characters[i - 2] : CHARACTER_ID_EOS;
+						int type_i = (i <= character_ids_length) ? ctype::get_type(char_i) : CTYPE_UNKNOWN;
+						int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(char_i_1) : CTYPE_UNKNOWN;
+						indices_b.push_back(_index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i));
+
+						// 更新
+						num_crf_features_b[i][y_i_1][y_i] = indices_b.size();
+						crf_feature_indices_b[i][y_i_1][y_i] = new int[indices_b.size()];
+						for(int n = 0;n < indices_b.size();n++){
+							crf_feature_indices_b[i][y_i_1][y_i][n] = indices_b[n];
+						}
+					}
+				}
+			}
+			FeatureIndices* features = new FeatureIndices();
+			features->_num_features_u = num_crf_features_u;
+			features->_num_features_b = num_crf_features_b;
+			features->_feature_indices_u = crf_feature_indices_u;
+			features->_feature_indices_b = crf_feature_indices_b;
+			sentence->_features = features;
+		}
+		
 		template <class Archive>
 		void CRF::serialize(Archive &archive, unsigned int version)
 		{
@@ -495,5 +682,6 @@ namespace npycrf {
 		void CRF::load(boost::archive::binary_iarchive &archive, unsigned int version) {
 			
 		}
+		
 	}
 }
