@@ -26,12 +26,12 @@ namespace npycrf {
 			bool* _added_to_npylm_l;
 			void _print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices);
 			double _compute_perplexity(std::vector<Sentence*> &dataset);
-			double _compute_log_likelihood(std::vector<Sentence*> &dataset, bool labelded = false);
+			double _compute_log_likelihood(std::vector<Sentence*> &dataset, bool labeled = false);
 			void _gibbs_labeled();
 		public:
 			Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, NPYCRF* npycrf, double crf_regularization_constant);
 			void remove_all_data();
-			void add_labelded_data_to_npylm();
+			void add_labeled_data_to_npylm();
 			void gibbs(bool include_labeled_data = false);
 			void sgd(double learning_rate, int batchsize = 32, bool pure_crf = false);
 			void sample_hpylm_vpylm_hyperparameters();
@@ -40,8 +40,8 @@ namespace npycrf {
 			void update_p_k_given_vpylm();
 			double compute_perplexity_train();
 			double compute_perplexity_dev();
-			double compute_log_likelihood_labelded_train();
-			double compute_log_likelihood_unlabelded_train();
+			double compute_log_likelihood_labeled_train();
+			double compute_log_likelihood_unlabeled_train();
 			double compute_log_likelihood_labeled_dev();
 			double compute_log_likelihood_unlabeled_dev();
 			void print_segmentation_train(int num_to_print);

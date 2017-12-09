@@ -255,7 +255,7 @@ namespace npycrf {
 				_gibbs_labeled();
 			}
 		}
-		void Trainer::add_labelded_data_to_npylm(){
+		void Trainer::add_labeled_data_to_npylm(){
 			_gibbs_labeled();
 		}
 		// 教師ありデータでモデルパラメータを更新
@@ -342,10 +342,10 @@ namespace npycrf {
 			ppl = exp(-ppl / num_sentences);
 			return ppl;
 		}
-		double Trainer::compute_log_likelihood_labelded_train(){
+		double Trainer::compute_log_likelihood_labeled_train(){
 			return _compute_log_likelihood(_dataset_l->_sentences_train, true);
 		}
-		double Trainer::compute_log_likelihood_unlabelded_train(){
+		double Trainer::compute_log_likelihood_unlabeled_train(){
 			return _compute_log_likelihood(_dataset_u->_sentences_train, false);
 		}
 		double Trainer::compute_log_likelihood_labeled_dev(){
