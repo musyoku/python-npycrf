@@ -24,7 +24,8 @@ BOOST_PYTHON_MODULE(npycrf){
 
 	boost::python::class_<Trainer>("trainer", boost::python::init<Dataset*, Dataset*, Dictionary*, NPYCRF*, double>((args("dataset_labeled", "dataset_unlabeled", "dictionary", "npycrf", "crf_regularization_constant"))))
 	.def("detect_hash_collision", &Trainer::detect_hash_collision)
-	.def("print_segmentation_train", &Trainer::print_segmentation_train)
+	.def("print_segmentation_labeled_train", &Trainer::print_segmentation_labeled_train)
+	.def("print_segmentation_unlabeled_train", &Trainer::print_segmentation_unlabeled_train)
 	.def("print_segmentation_labeled_dev", &Trainer::print_segmentation_labeled_dev)
 	.def("print_segmentation_unlabeled_dev", &Trainer::print_segmentation_unlabeled_dev)
 	.def("sample_hpylm_vpylm_hyperparameters", &Trainer::sample_hpylm_vpylm_hyperparameters)

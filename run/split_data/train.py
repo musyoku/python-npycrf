@@ -156,9 +156,9 @@ def main():
 		elapsed_time = time.time() - start
 		print("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
 
-		trainer.print_segmentation_labeled_dev(10)	# ランダムに分割を表示
+		trainer.print_segmentation_unlabeled_train(10)	# ランダムに分割を表示
 		trainer.print_segmentation_unlabeled_dev(10)	# ランダムに分割を表示
-		
+
 		precision, recall = trainer.compute_precision_and_recall_labeled_dev()
 		f_measure = 2 * precision * recall / (precision + recall)
 		print(tabulate([["Labeled", precision, recall, f_measure]], headers=["Precision", "Recall", "F-measure"]))

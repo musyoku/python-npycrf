@@ -456,9 +456,11 @@ namespace npycrf {
 			result.append(mean_recall);
 			return result;
 		}
-		void Trainer::print_segmentation_train(int num_to_print){
-			_print_segmentation(num_to_print, _dataset_u->_sentences_train, _rand_indices_train_u);
+		void Trainer::print_segmentation_labeled_train(int num_to_print){
 			_print_segmentation(num_to_print, _dataset_l->_sentences_train, _rand_indices_train_l);
+		}
+		void Trainer::print_segmentation_unlabeled_train(int num_to_print){
+			_print_segmentation(num_to_print, _dataset_u->_sentences_train, _rand_indices_train_u);
 		}
 		void Trainer::print_segmentation_labeled_dev(int num_to_print){
 			shuffle(_rand_indices_dev_l.begin(), _rand_indices_dev_l.end(), sampler::mt);
