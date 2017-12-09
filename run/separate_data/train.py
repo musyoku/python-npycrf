@@ -158,13 +158,17 @@ def main():
 		if epoch % 10 == 0:
 			trainer.print_segmentation_train(10)	# ランダムに分割を表示
 
-			log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
-			log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()
-			table = [
-				["Labeled", log_likelihood_l],
-				["Unlabeled", log_likelihood_u]
-			]
-			print(tabulate(table, headers=["Log-likelihood", "Dev"]))
+			# log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
+			# log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()
+			# table = [
+			# 	["Labeled", log_likelihood_l],
+			# 	["Unlabeled", log_likelihood_u]
+			# ]
+			# print(tabulate(table, headers=["Log-likelihood", "Dev"]))
+
+		precision, recall = trainer.compute_precision_and_recall_labeled_dev()
+		f_measure = 2 * precision * recall / (precision + recall)
+		print(tabulate([["Labeled", precision, recall, f_measure]], headers=["Precision", "Recall", "F-measure"]))
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

@@ -403,6 +403,59 @@ namespace npycrf {
 				}
 			}
 		}
+		// 教師付き評価データの分割のF値を求める
+		boost::python::list Trainer::compute_precision_and_recall_labeled_dev(){
+			double mean_precision = 0;
+			double mean_recall = 0;
+			for(Sentence* sentence_true: _dataset_l->_sentences_dev){
+				if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+					break;
+				}
+				Sentence* sentence_estimated = sentence_true->copy();
+				_npycrf->parse(sentence_estimated);
+				int* labels_true = sentence_true->_labels;
+				int* labels_estimated = sentence_estimated->_labels;
+				int sentence_size = sentence_true->size();
+
+				// 一致する個数を調べる
+				int num_correct = 0;
+				bool continuing_word = true;
+				for(int i = 1;i <= sentence_size;i++){
+					if(labels_estimated[i] == 1){
+						if(labels_true[i] == 1 && continuing_word == true){
+							num_correct += 1;
+						}
+						continuing_word = true;
+						if(labels_true[i] != 1){
+							continuing_word = false;
+						}
+						continue;
+					}
+					if(labels_estimated[i] != labels_true[i]){
+						continuing_word = false;
+					}
+				}
+
+				// 精度を求める
+				// 分母はモデルによる分割の単語数になる
+				double precision = (double)num_correct / (double)(sentence_estimated->_num_segments - 3);
+
+				// 再現率を求める
+				// 分母は正解分割の単語数になる
+				double recall = (double)num_correct / (double)(sentence_true->_num_segments - 3);
+
+				mean_precision += precision;
+				mean_recall += recall;
+			}
+
+			mean_precision /= (double)_dataset_l->_sentences_dev.size();
+			mean_recall /= (double)_dataset_l->_sentences_dev.size();
+
+			boost::python::list result;
+			result.append(mean_precision);
+			result.append(mean_recall);
+			return result;
+		}
 		void Trainer::print_segmentation_train(int num_to_print){
 			_print_segmentation(num_to_print, _dataset_u->_sentences_train, _rand_indices_train_u);
 			_print_segmentation(num_to_print, _dataset_l->_sentences_train, _rand_indices_train_l);

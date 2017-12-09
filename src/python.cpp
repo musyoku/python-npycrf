@@ -35,6 +35,7 @@ BOOST_PYTHON_MODULE(npycrf){
 	.def("compute_log_likelihood_unlabeled_train", &Trainer::compute_log_likelihood_unlabeled_train)
 	.def("compute_log_likelihood_labeled_dev", &Trainer::compute_log_likelihood_labeled_dev)
 	.def("compute_log_likelihood_unlabeled_dev", &Trainer::compute_log_likelihood_unlabeled_dev)
+	.def("compute_precision_and_recall_labeled_dev", &Trainer::compute_precision_and_recall_labeled_dev)
 	.def("add_labeled_data_to_npylm", &Trainer::add_labeled_data_to_npylm)
 	.def("sgd", &Trainer::sgd, (arg("learning_rate"), arg("batchsize")=32, arg("pure_crf")=false))
 	.def("gibbs", &Trainer::gibbs, (arg("include_labeled_data")=false));
