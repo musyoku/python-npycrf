@@ -155,8 +155,6 @@ def main():
 		# ログ
 		elapsed_time = time.time() - start
 		print("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
-		if epoch % 10 == 0:
-			trainer.print_segmentation_train(10)	# ランダムに分割を表示
 
 			# log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
 			# log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()
@@ -166,6 +164,9 @@ def main():
 			# ]
 			# print(tabulate(table, headers=["Log-likelihood", "Dev"]))
 
+		trainer.print_segmentation_labeled_dev(10)	# ランダムに分割を表示
+		trainer.print_segmentation_unlabeled_dev(10)	# ランダムに分割を表示
+		
 		precision, recall = trainer.compute_precision_and_recall_labeled_dev()
 		f_measure = 2 * precision * recall / (precision + recall)
 		print(tabulate([["Labeled", precision, recall, f_measure]], headers=["Precision", "Recall", "F-measure"]))
