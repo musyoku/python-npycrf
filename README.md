@@ -65,7 +65,7 @@ make install
 読み込んだテキストから教師付きデータをランダムに選択する場合は`/run/split_data/train.py`を使います。
 
 ```
-python3 train.py -file dataset.txt  -ssl-split 0.1 -td-split 0.9 -neologd /usr/local/lib/mecab/dic/mecab-ipadic-neologd
+python3 train.py -file dataset.txt -ssl-split 0.1 -td-split 0.9 -neologd /usr/local/lib/mecab/dic/mecab-ipadic-neologd
 ```
 
 教師付きデータと教師なしデータをあらかじめ用意しておく場合は`/run/separate_data/train.py`を使います。
