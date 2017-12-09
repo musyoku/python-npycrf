@@ -90,7 +90,6 @@ def main():
 	print(tabulate(table, headers=["Data", "Train", "Dev"]))
 
 	num_character_ids = dictionary.get_num_characters()
-	print(tabulate([["#characters", num_character_ids]]))
 
 	# モデル
 	crf = nlp.crf(num_character_ids=num_character_ids,
@@ -112,6 +111,9 @@ def main():
 					vpylm_beta_pass=args.vpylm_beta_pass)
 
 	npycrf = nlp.npycrf(npylm=npylm, crf=crf)
+
+	num_features = crf.get_num_features()
+	print(tabulate([["#characters", num_character_ids], ["#features", num_features]]))
 
 	# 学習の準備
 	trainer = nlp.trainer(dataset_labeled=dataset_l, 

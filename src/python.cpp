@@ -43,6 +43,7 @@ BOOST_PYTHON_MODULE(npycrf){
 	.def("parse", &NPYCRF::python_parse);
 
 	boost::python::class_<model::CRF>("crf", boost::python::init<int, int, int, int, int, int, int, int, int, double>((args("num_character_ids", "feature_x_unigram_start", "feature_x_unigram_end", "feature_x_bigram_start", "feature_x_bigram_end", "feature_x_identical_1_start", "feature_x_identical_1_end", "feature_x_identical_2_start", "feature_x_identical_2_end", "sigma"))))
+	.def("get_num_features", &model::CRF::get_num_features)
 	.def("save", &model::CRF::save)
 	.def("load", &model::CRF::load);
 

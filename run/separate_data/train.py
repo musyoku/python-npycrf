@@ -1,4 +1,4 @@
-import argparse, sys, os, time, codecs, random
+import argparse, sys, os, time, codecs, random, re
 from tabulate import tabulate
 import MeCab
 import npycrf as nlp
@@ -21,17 +21,22 @@ def build_corpus(filepath, directory, supervised=False):
 	corpus = nlp.corpus()	# 教師あり
 	sentence_list = []
 
+	def preprocess(sentence):
+		sentence = re.sub(r"[0-9.,]+", "#", sentence);
+		sentence = sentence.strip()
+		return sentence
+
 	if filepath is not None:
 		with codecs.open(filepath, "r", "utf-8") as f:
 			for sentence_str in f:
-				sentence_str = sentence_str.strip()
+				sentence_str = preprocess(sentence_str)
 				sentence_list.append(sentence_str)
 
 	if directory is not None:
 		for filename in os.listdir(directory):
 			with codecs.open(os.path.join(directory, filename), "r", "utf-8") as f:
 				for sentence_str in f:
-					sentence_str = sentence_str.strip()
+					sentence_str = preprocess(sentence_str)
 					sentence_list.append(sentence_str)
 
 	if supervised:
@@ -85,7 +90,6 @@ def main():
 	print(tabulate(table, headers=["Data", "Train", "Dev"]))
 
 	num_character_ids = dictionary.get_num_characters()
-	print(tabulate([["#characters", num_character_ids]]))
 
 	# モデル
 	crf = nlp.crf(num_character_ids=num_character_ids,
@@ -108,6 +112,9 @@ def main():
 
 	npycrf = nlp.npycrf(npylm=npylm, crf=crf)
 
+	num_features = crf.get_num_features()
+	print(tabulate([["#characters", num_character_ids], ["#features", num_features]]))
+
 	# 学習の準備
 	trainer = nlp.trainer(dataset_labeled=dataset_l, 
 						dataset_unlabeled=dataset_u,
@@ -118,7 +125,7 @@ def main():
 	# 文字列の単語IDが衝突しているかどうかをチェック
 	# 時間の無駄なので一度したらしなくてよい
 	# メモリを大量に消費します
-	if True:
+	if False:
 		print("ハッシュの衝突を確認中 ...")
 		num_checked_words = trainer.detect_hash_collision(args.max_word_length)
 		print("衝突はありません (総単語数 {})".format(num_checked_words))

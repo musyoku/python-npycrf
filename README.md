@@ -2,7 +2,7 @@
 
 修正版NPYCRFのC++実装です。
 
-### Todo
+#### Todo
 
 - [x] NPYCRFの学習
 - [ ] CRF単体の学習
@@ -25,7 +25,7 @@
 
 macOSの場合、PythonとBoostはともにbrewでインストールする必要があります。
 
-### Python 3のインストール
+#### Python 3のインストール
 
 ```bash
 brew install python3
@@ -33,7 +33,7 @@ brew install python3
 
 `PYTHONPATH`を変更する必要があるかもしれません。
 
-### Boostのインストール
+#### Boostのインストール
 
 ```bash
 brew install boost-python --with-python3
@@ -41,7 +41,7 @@ brew install boost-python --with-python3
 
 ## Ubuntu
 
-### Boostのインストール
+#### Boostのインストール
 
 ```bash
 ./bootstrap.sh --with-python=python3 --with-python-version=3.5

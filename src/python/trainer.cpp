@@ -431,6 +431,9 @@ namespace npycrf {
 			auto exec = [&pool, &max_word_length](Sentence* sentence){
 				for(int t = 1;t <= sentence->size();t++){
 					for(int k = 1;k <= std::min(t, max_word_length);k++){
+						if (PyErr_CheckSignals() != 0) {		// ctrl+cが押されたかチェック
+							return;
+						}
 						id word_id = sentence->get_substr_word_id(t - k, t - 1);
 						std::wstring word = sentence->get_substr_word_str(t - k, t - 1);
 						assert(word_id == hash_wstring(word));

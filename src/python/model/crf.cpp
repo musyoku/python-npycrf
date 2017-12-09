@@ -40,6 +40,9 @@ namespace npycrf {
 			CRF::~CRF(){
 				delete _crf;
 			}
+			int CRF::get_num_features(){
+				return _crf->_weight_size;
+			}
 			bool CRF::load(std::string filename){
 				bool success = false;
 				std::ifstream ifs(filename);

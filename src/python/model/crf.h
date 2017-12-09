@@ -20,6 +20,7 @@ namespace npycrf {
 					double sigma);
 				CRF(std::string filename);
 				~CRF();
+				int get_num_features();
 				bool load(std::string filename);
 				bool save(std::string filename);
 			};
