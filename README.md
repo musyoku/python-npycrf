@@ -16,7 +16,38 @@
 - C++14
 - python3-config
 
-# ビルド
+# 準備
+
+## macOS
+
+macOSの場合、PythonとBoostはともにbrewでインストールする必要があります。
+
+### Python 3のインストール
+
+```bash
+brew install python3
+```
+
+`PYTHONPATH`を変更する必要があるかもしれません。
+
+### Boostのインストール
+
+```bash
+brew install boost-python --with-python3
+```
+
+## Ubuntu
+
+### Boostのインストール
+
+```bash
+./bootstrap.sh --with-python=python3 --with-python-version=3.5
+./b2 python=3.5 -d2 -j4 --prefix YOUR_BOOST_DIR install
+```
+
+Pythonのバージョンを自身のものと置き換えてください。
+
+## ビルド
 
 以下のコマンドで`npycrf.so`が`/run/`に生成されます。
 
