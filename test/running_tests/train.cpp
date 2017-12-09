@@ -133,14 +133,14 @@ void run_training_loop(){
 		if(epoch > 3){
 			trainer->update_p_k_given_vpylm();
 		}
-		if(epoch % 10 == 0){
+		// if(epoch % 10 == 0){
 			trainer->print_segmentation_train(10);
 			// cout << "ppl: " << trainer->compute_perplexity_train() << endl;
 			trainer->print_segmentation_dev(10);
 			// cout << "ppl: " << trainer->compute_perplexity_dev() << endl;
 			// cout << "log_likelihood: " << trainer->compute_log_likelihood_train() << endl;
 			// cout << "log_likelihood: " << trainer->compute_log_likelihood_dev() << endl;
-		}
+		// }
 	}
 	delete dict;
 	delete dataset_l;

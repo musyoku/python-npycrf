@@ -187,12 +187,10 @@ def main():
 			
 		# ログ
 		elapsed_time = time.time() - start
-		printr("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
+		print("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
 		if epoch % 10 == 0:
-			printr("")
 			trainer.print_segmentation_train(10)
 
-		printr("")
 		trainer.print_segmentation_train(10)
 		ll_l_train = trainer.compute_log_likelihood_labelded_train()
 		ll_u_train = trainer.compute_log_likelihood_unlabelded_train()

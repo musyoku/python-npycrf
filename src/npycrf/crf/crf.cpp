@@ -661,6 +661,7 @@ namespace npycrf {
 			features->_num_features_b = num_crf_features_b;
 			features->_feature_indices_u = crf_feature_indices_u;
 			features->_feature_indices_b = crf_feature_indices_b;
+			features->_seq_length = character_ids_length + 3;
 			return features;
 		}
 		

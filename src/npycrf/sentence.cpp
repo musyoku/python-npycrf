@@ -47,6 +47,9 @@ namespace npycrf {
 	}
 	Sentence* Sentence::copy(){
 		Sentence* sentence = new Sentence(_sentence_str, _character_ids);
+		if(_features != NULL){
+			sentence->_features = _features->copy();
+		}
 		return sentence;
 	}
 	int Sentence::size(){

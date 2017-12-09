@@ -42,7 +42,7 @@ module_tests: ## 各モジュールのテスト.
 	./test/module_tests/npylm/hash
 
 running_tests:	## 運用テスト
-	$(CC) test/running_tests/train.cpp $(SOURCES)  -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O3 -Wall
+	$(CC) test/running_tests/train.cpp $(SOURCES)  -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 	$(CC) test/running_tests/likelihood.cpp $(SOURCES) -o test/running_tests/likelihood $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 	$(CC) test/running_tests/save.cpp $(SOURCES) -o test/running_tests/save $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 
