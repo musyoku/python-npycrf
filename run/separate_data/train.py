@@ -186,7 +186,7 @@ if __name__ == "__main__":
 	parser.add_argument("--lambda-b", "-lam-b", type=float, default=1)
 	parser.add_argument("--vpylm-beta-stop", "-beta-stop", type=float, default=4)
 	parser.add_argument("--vpylm-beta-pass", "-beta-pass", type=float, default=1)
-	parser.add_argument("--max-word-length", "-l", type=int, default=16, help="可能な単語の最大長.")
+	parser.add_argument("--max-word-length", "-l", type=int, default=12, help="可能な単語の最大長.")
 
 	# CRF
 	# Input characters/numbers/letters locating at positions i−2, i−1, i, i+1, i+2
