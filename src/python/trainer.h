@@ -46,7 +46,8 @@ namespace npycrf {
 			double compute_log_likelihood_unlabeled_dev();
 			boost::python::list compute_precision_and_recall_labeled_dev();
 			void print_segmentation_train(int num_to_print);
-			void print_segmentation_dev(int num_to_print);
+			void print_segmentation_labeled_dev(int num_to_print);
+			void print_segmentation_unlabeled_dev(int num_to_print);
 			int detect_hash_collision(int max_word_length);
 		};
 	}

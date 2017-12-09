@@ -158,6 +158,8 @@ def main():
 		if epoch % 10 == 0:
 			trainer.print_segmentation_train(10)	# ランダムに分割を表示
 
+		trainer.print_segmentation_labelded_dev(10)	# ランダムに分割を表示
+		trainer.print_segmentation_unlabelded_dev(10)	# ランダムに分割を表示
 		precision, recall = trainer.compute_precision_and_recall_labeled_dev()
 		f_measure = 2 * precision * recall / (precision + recall)
 		print(tabulate([["Labeled", precision, recall, f_measure]], headers=["Precision", "Recall", "F-measure"]))

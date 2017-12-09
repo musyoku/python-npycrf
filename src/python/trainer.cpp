@@ -460,7 +460,11 @@ namespace npycrf {
 			_print_segmentation(num_to_print, _dataset_u->_sentences_train, _rand_indices_train_u);
 			_print_segmentation(num_to_print, _dataset_l->_sentences_train, _rand_indices_train_l);
 		}
-		void Trainer::print_segmentation_dev(int num_to_print){
+		void Trainer::print_segmentation_labeled_dev(int num_to_print){
+			shuffle(_rand_indices_dev_l.begin(), _rand_indices_dev_l.end(), sampler::mt);
+			_print_segmentation(num_to_print, _dataset_l->_sentences_dev, _rand_indices_dev_l);
+		}
+		void Trainer::print_segmentation_unlabeled_dev(int num_to_print){
 			shuffle(_rand_indices_dev_u.begin(), _rand_indices_dev_u.end(), sampler::mt);
 			_print_segmentation(num_to_print, _dataset_u->_sentences_dev, _rand_indices_dev_u);
 		}
