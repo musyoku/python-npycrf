@@ -7,6 +7,7 @@
 namespace npycrf {
 	namespace python {
 		Dataset::Dataset(Corpus* corpus, Dictionary* dict, double train_dev_split, int seed){
+			sampler::set_seed(seed);
 			_corpus = corpus;
 			_max_sentence_length = 0;
 			_avg_sentence_length = 0;

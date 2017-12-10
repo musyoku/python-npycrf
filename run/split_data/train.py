@@ -16,7 +16,7 @@ def printr(string):
 	sys.stdout.write(string)
 	sys.stdout.flush()
 
-def build_corpus(filepath, directory, semi_supervised_split_ratio):
+def build_corpus(filepath, directory, semi_supervised_split_ratio, neologd_path=None):
 	assert filepath is not None or directory is not None
 	corpus_l = nlp.corpus()	# 教師あり
 	corpus_u = nlp.corpus()	# 教師なし
@@ -42,7 +42,7 @@ def build_corpus(filepath, directory, semi_supervised_split_ratio):
 	sentence_list_u = sentence_list[semi_supervised_split:]
 
 	# 教師データはMeCabによる分割
-	tagger = MeCab.Tagger() if args.neologd_path is None else MeCab.Tagger("-d " + args.neologd_path)
+	tagger = MeCab.Tagger() if neologd_path is None else MeCab.Tagger("-d " + neologd_path)
 	tagger.parse("")	# バグ回避のため空データを分割
 	for sentence_str in sentence_list_l:
 		m = tagger.parseToNode(sentence_str)	# 形態素解析
@@ -68,7 +68,7 @@ def main():
 		pass
 
 	# 学習に用いるテキストデータを準備
-	corpus_l, corpus_u = build_corpus(args.train_filename, args.train_directory, args.semi_supervised_split)
+	corpus_l, corpus_u = build_corpus(args.train_filename, args.train_directory, args.semi_supervised_split, args.neologd_path)
 
 	# 辞書
 	dictionary = nlp.dictionary()
@@ -79,7 +79,7 @@ def main():
 	dataset_u = nlp.dataset(corpus_u, dictionary, args.train_dev_split, args.seed)	# 教師なし
 
 	# 辞書を保存
-	dictionary.save(os.path.join(args.working_directory, "npycrf.dict"))
+	dictionary.save(os.path.join(args.working_directory, "char.dict"))
 
 	# 確認
 	table = [
@@ -163,13 +163,17 @@ def main():
 		f_measure = 2 * precision * recall / (precision + recall)
 		print(tabulate([["Labeled", precision, recall, f_measure]], headers=["Precision", "Recall", "F-measure"]))
 
-			# log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
-			# log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()
-			# table = [
-			# 	["Labeled", log_likelihood_l],
-			# 	["Unlabeled", log_likelihood_u]
-			# ]
-			# print(tabulate(table, headers=["Log-likelihood", "Dev"]))
+		# log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
+		# log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()
+		# table = [
+		# 	["Labeled", log_likelihood_l],
+		# 	["Unlabeled", log_likelihood_u]
+		# ]
+		# print(tabulate(table, headers=["Log-likelihood", "Dev"]))
+
+		# モデルの保存
+		npylm.save(os.path.join(args.working_directory, "npylm.model"))
+		crf.save(os.path.join(args.working_directory, "crf.model"))
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

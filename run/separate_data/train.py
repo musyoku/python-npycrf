@@ -79,7 +79,7 @@ def main():
 	dataset_u = nlp.dataset(corpus_u, dictionary, args.train_dev_split, args.seed)	# 教師なし
 
 	# 辞書を保存
-	dictionary.save(os.path.join(args.working_directory, "npycrf.dict"))
+	dictionary.save(os.path.join(args.working_directory, "char.dict"))
 
 	# 確認
 	table = [
@@ -156,13 +156,13 @@ def main():
 		elapsed_time = time.time() - start
 		print("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
 
-			# log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
-			# log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()
-			# table = [
-			# 	["Labeled", log_likelihood_l],
-			# 	["Unlabeled", log_likelihood_u]
-			# ]
-			# print(tabulate(table, headers=["Log-likelihood", "Dev"]))
+		# log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
+		# log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()
+		# table = [
+		# 	["Labeled", log_likelihood_l],
+		# 	["Unlabeled", log_likelihood_u]
+		# ]
+		# print(tabulate(table, headers=["Log-likelihood", "Dev"]))
 
 		trainer.print_segmentation_labeled_dev(10)	# ランダムに分割を表示
 		trainer.print_segmentation_unlabeled_dev(10)	# ランダムに分割を表示
@@ -170,6 +170,10 @@ def main():
 		precision, recall = trainer.compute_precision_and_recall_labeled_dev()
 		f_measure = 2 * precision * recall / (precision + recall)
 		print(tabulate([["Labeled", precision, recall, f_measure]], headers=["Precision", "Recall", "F-measure"]))
+
+		# モデルの保存
+		npylm.save(os.path.join(args.working_directory, "npylm.model"))
+		crf.save(os.path.join(args.working_directory, "crf.model"))
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

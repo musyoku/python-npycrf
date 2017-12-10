@@ -26,6 +26,7 @@ namespace npycrf {
 			Parameter();
 			~Parameter();
 			Parameter(int weight_size);
+			int get_num_features();
 		};
 		class CRF {
 		private:
@@ -101,7 +102,7 @@ namespace npycrf {
 				int feature_x_identical_2_end,
 				double sigma
 			);
-			CRF(){};
+			CRF();
 			~CRF();
 			// 以下、iは左端を1とした番号
 			// 例）

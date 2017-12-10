@@ -11,6 +11,7 @@ namespace npycrf {
 				_map_character_ids[CHARACTER_ID_BOS] = CHARACTER_ID_BOS;	// <s>
 				_map_character_ids[CHARACTER_ID_EOS] = CHARACTER_ID_EOS;	// </s>
 			}
+			Dictionary(std::string filename);
 			int add_character(wchar_t character);
 			int get_character_id(wchar_t character);
 			int get_num_characters();

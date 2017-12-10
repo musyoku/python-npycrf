@@ -44,6 +44,12 @@ namespace npycrf {
 				_all_weights[index] = value;
 			}
 		}
+		int Parameter::get_num_features(){
+			if(_all_weights == NULL){
+				return _effective_weights.size();
+			}
+			return _weight_size;
+		}
 		template <class Archive>
 		void Parameter::serialize(Archive &ar, unsigned int version){
 			ar & _effective_weights;
@@ -51,6 +57,9 @@ namespace npycrf {
 			ar & _bias;
 		}
 
+		CRF::CRF(){
+			_parameter = new Parameter();
+		}
 		CRF::CRF(int num_character_ids,
 				 int num_character_types,
 				 int feature_x_unigram_start,

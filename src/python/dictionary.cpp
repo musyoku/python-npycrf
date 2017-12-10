@@ -4,10 +4,17 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/unordered_set.hpp>
 #include <fstream>
+#include <iostream>
 #include "dictionary.h"
 
 namespace npycrf {
 	namespace python {
+		Dictionary::Dictionary(std::string filename){
+			if(load(filename) == false){
+				std::cout << filename << " not found." << std::endl;
+				exit(0);
+			}
+		}
 		int Dictionary::add_character(wchar_t character){
 			auto itr = _map_character_ids.find(character);
 			if(itr == _map_character_ids.end()){
