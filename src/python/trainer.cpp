@@ -1,5 +1,6 @@
 #include <boost/python.hpp>
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include "../npycrf/sampler.h"
 #include "../npycrf/wordtype.h"
@@ -290,7 +291,6 @@ namespace npycrf {
 		void Trainer::sgd(double learning_rate, int batchsize, bool pure_crf){
 			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
 			int total_batches = (double)_rand_indices_train_l.size() / (double)batchsize + ((_rand_indices_train_l.size() % batchsize) ? 1 : 0);
-			// std::cout << "#batches: " << total_batches << std::endl;
 			Lattice* lattice = _npycrf->_lattice;
 			bool original_mode = lattice->get_pure_crf_mode();
 			lattice->set_pure_crf_mode(pure_crf);

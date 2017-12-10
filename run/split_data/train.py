@@ -120,7 +120,7 @@ def main():
 						dataset_unlabeled=dataset_u,
 						dictionary=dictionary,
 						npycrf=npycrf,
-						crf_regularization_constant=1.0)
+						crf_regularization_constant=10.0)
 
 	# 文字列の単語IDが衝突しているかどうかをチェック
 	# 時間の無駄なので一度したらしなくてよい
@@ -205,7 +205,7 @@ if __name__ == "__main__":
 	parser.add_argument("--crf-feature-x-identical-2-start", type=int, default=-3)
 	parser.add_argument("--crf-feature-x-identical-2-end", type=int, default=1)
 	parser.add_argument("--crf-prior-sigma", type=float, default=1.0)
-	parser.add_argument("--crf-learning-rate", type=float, default=0.001)
+	parser.add_argument("--crf-learning-rate", "-crf-lr", type=float, default=0.001)
 
 	args = parser.parse_args()
 

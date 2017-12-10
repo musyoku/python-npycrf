@@ -6,6 +6,51 @@
 
 namespace npycrf {
 	namespace crf {
+		Parameter::Parameter(){
+			_all_weights = NULL;
+			_num_updates = NULL;
+		}
+		Parameter::~Parameter(){
+			delete[] _all_weights;
+			delete[] _num_updates;
+		}
+		Parameter::Parameter(int weight_size){
+			_weight_size = weight_size;
+			_bias = 0;
+			_all_weights = new double[weight_size];
+			for(int i = 0;i < weight_size;i++){
+				_all_weights[i] = sampler::uniform(-0.0001, 0.0001);
+			}
+
+			_num_updates = new int[weight_size];
+			for(int i = 0;i < weight_size;i++){
+				_num_updates[i] = 0;
+			}
+		}
+		double Parameter::weight_at_index(int index){
+			if(_all_weights == NULL){
+				auto itr = _effective_weights.find(index);
+				if(itr == _effective_weights.end()){
+					return 0;
+				}
+				return itr->second;
+			}
+			return _all_weights[index];
+		}
+		void Parameter::set_weight_at_index(int index, double value){
+			if(_all_weights == NULL){
+				_effective_weights[index] = value;
+			}else{
+				_all_weights[index] = value;
+			}
+		}
+		template <class Archive>
+		void Parameter::serialize(Archive &ar, unsigned int version){
+			ar & _effective_weights;
+			ar & _weight_size;
+			ar & _bias;
+		}
+
 		CRF::CRF(int num_character_ids,
 				 int num_character_types,
 				 int feature_x_unigram_start,
@@ -20,7 +65,6 @@ namespace npycrf {
 		{
 			_num_character_ids = num_character_ids;
 			_num_character_types = num_character_types;
-			_bias = 0;
 
 			assert(feature_x_unigram_start <= feature_x_unigram_end);
 			assert(feature_x_bigram_start <= feature_x_bigram_end);
@@ -71,11 +115,7 @@ namespace npycrf {
 							 + _w_size_unigram_type_u + _w_size_unigram_type_b 
 							 + _w_size_bigram_type_u + _w_size_bigram_type_b;
 
-			_weight = new double[_weight_size];
-			for(int i = 0;i < _weight_size;i++){
-				_weight[i] = sampler::normal(0, sigma);
-				// _weight[i] = 1;
-			}
+			_parameter = new Parameter(_weight_size);
 
 			_offset_w_label_u = 0;
 			_offset_w_label_b = _w_size_label_u;
@@ -129,10 +169,10 @@ namespace npycrf {
 									+ _w_size_bigram_type_u;
 		}
 		CRF::~CRF(){
-			delete[] _weight;
+			delete _parameter;
 		}
 		double CRF::bias(){
-			return _bias;
+			return _parameter->_bias;
 		}
 		int CRF::_index_w_label_u(int y_i){
 			int index = y_i;
@@ -225,127 +265,127 @@ namespace npycrf {
 		}
 		double CRF::w_label_u(int y_i){
 			int index = _index_w_label_u(y_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_label_b(int y_i_1, int y_i){
 			int index = _index_w_label_b(y_i_1, y_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_unigram_u(int y_i, int i, int x_i){
 			assert(x_i < _num_character_ids);
 			int index = _index_w_unigram_u(y_i, i, x_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_unigram_b(int y_i_1, int y_i, int i, int x_i){
 			assert(x_i < _num_character_ids);
 			int index = _index_w_unigram_b(y_i_1, y_i, i, x_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_bigram_u(int y_i, int i, int x_i_1, int x_i){
 			assert(x_i_1 < _num_character_ids);
 			assert(x_i < _num_character_ids);
 			int index = _index_w_bigram_u(y_i, i, x_i_1, x_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
 			assert(x_i_1 < _num_character_ids);
 			assert(x_i < _num_character_ids);
 			int index = _index_w_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_identical_1_u(int y_i, int i){
 			int index = _index_w_identical_1_u(y_i, i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_identical_1_b(int y_i_1, int y_i, int i){
 			int index = _index_w_identical_1_b(y_i_1, y_i, i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_identical_2_u(int y_i, int i){
 			int index = _index_w_identical_2_u(y_i, i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_identical_2_b(int y_i_1, int y_i, int i){
 			int index = _index_w_identical_2_b(y_i_1, y_i, i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_unigram_type_u(int y_i, int type_i){
 			assert(type_i < _num_character_types);
 			int index = _index_w_unigram_type_u(y_i, type_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_unigram_type_b(int y_i_1, int y_i, int type_i){
 			assert(type_i < _num_character_types);
 			int index = _index_w_unigram_type_b(y_i_1, y_i, type_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_bigram_type_u(int y_i, int type_i_1, int type_i){
 			assert(type_i_1 < _num_character_types);
 			assert(type_i < _num_character_types);
 			int index = _index_w_bigram_type_u(y_i, type_i_1, type_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
 			assert(type_i_1 < _num_character_types);
 			assert(type_i < _num_character_types);
 			int index = _index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
-			return _weight[index];
+			return _parameter->weight_at_index(index);
 		}
 		void CRF::set_w_label_u(int y_i, double value){
 			int index = _index_w_label_u(y_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_label_b(int y_i_1, int y_i, double value){
 			int index = _index_w_label_b(y_i_1, y_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_unigram_u(int y_i, int i, int x_i, double value){
 			int index = _index_w_unigram_u(y_i, i, x_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_unigram_b(int y_i_1, int y_i, int i, int x_i, double value){
 			int index = _index_w_unigram_b(y_i_1, y_i, i, x_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_bigram_u(int y_i, int i, int x_i_1, int x_i, double value){
 			int index = _index_w_bigram_u(y_i, i, x_i_1, x_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i, double value){
 			int index = _index_w_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_identical_1_u(int y_i, int i, double value){
 			int index = _index_w_identical_1_u(y_i, i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_identical_1_b(int y_i_1, int y_i, int i, double value){
 			int index = _index_w_identical_1_b(y_i_1, y_i, i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_identical_2_u(int y_i, int i, double value){
 			int index = _index_w_identical_2_u(y_i, i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_identical_2_b(int y_i_1, int y_i, int i, double value){
 			int index = _index_w_identical_2_b(y_i_1, y_i, i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_unigram_type_u(int y_i, int type_i, double value){
 			int index = _index_w_unigram_type_u(y_i, type_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_unigram_type_b(int y_i_1, int y_i, int type_i, double value){
 			int index = _index_w_unigram_type_b(y_i_1, y_i, type_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_bigram_type_u(int y_i, int type_i_1, int type_i, double value){
 			int index = _index_w_bigram_type_u(y_i, type_i_1, type_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i, double value){
 			int index = _index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
-			_weight[index] = value;
+			_parameter->set_weight_at_index(index, value);
 		}
 		// γ(s, t) ∝ log{P(c_s^{t - 1}|・)}
 		// s、tはともに番号なので1から始まる
@@ -403,11 +443,11 @@ namespace npycrf {
 				FeatureIndices* features = sentence->_features;
 				for(int m = 0;m < features->_num_features_u[i][y_i];m++){
 					int k = features->_feature_indices_u[i][y_i][m];
-					cost += _weight[k];
+					cost += _parameter->weight_at_index(k);
 				}
 				for(int m = 0;m < features->_num_features_b[i][y_i_1][y_i];m++){
 					int k = features->_feature_indices_b[i][y_i_1][y_i][m];
-					cost += _weight[k];
+					cost += _parameter->weight_at_index(k);
 				}
 				#ifdef __DEBUG__
 					double true_cost = 0;
@@ -672,11 +712,103 @@ namespace npycrf {
 		}
 		template void CRF::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
 		template void CRF::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
-		void CRF::save(boost::archive::binary_oarchive &archive, unsigned int version) const {
+		void CRF::save(boost::archive::binary_oarchive &ar, unsigned int version) const {
+			ar & _num_character_ids;
+			ar & _num_character_types;
+			ar & _x_unigram_start;
+			ar & _x_unigram_end;
+			ar & _x_bigram_start;
+			ar & _x_bigram_end;
+			ar & _x_identical_1_start;
+			ar & _x_identical_1_end;
+			ar & _x_identical_2_start;
+			ar & _x_identical_2_end;
+			ar & _x_range_unigram;
+			ar & _x_range_bigram;
+			ar & _x_range_identical_1;
+			ar & _x_range_identical_2;
+			ar & _w_size_label_u;
+			ar & _w_size_label_b;
+			ar & _w_size_unigram_u;
+			ar & _w_size_unigram_b;
+			ar & _w_size_bigram_u;
+			ar & _w_size_bigram_b;
+			ar & _w_size_identical_1_u;
+			ar & _w_size_identical_1_b;
+			ar & _w_size_identical_2_u;
+			ar & _w_size_identical_2_b;
+			ar & _w_size_unigram_type_u;
+			ar & _w_size_unigram_type_b;
+			ar & _w_size_bigram_type_u;
+			ar & _w_size_bigram_type_b;
+			ar & _offset_w_label_u;
+			ar & _offset_w_label_b;
+			ar & _offset_w_unigram_u;
+			ar & _offset_w_unigram_b;
+			ar & _offset_w_bigram_u;
+			ar & _offset_w_bigram_b;
+			ar & _offset_w_identical_1_u;
+			ar & _offset_w_identical_1_b;
+			ar & _offset_w_identical_2_u;
+			ar & _offset_w_identical_2_b;
+			ar & _offset_w_unigram_type_u;
+			ar & _offset_w_unigram_type_b;
+			ar & _offset_w_bigram_type_u;
+			ar & _offset_w_bigram_type_b;
 
+			_parameter->_effective_weights.clear();
+			for(int i = 0;i < _weight_size;i++){
+				if(_parameter->_num_updates[i] == 0){
+					continue;
+				}
+				_parameter->_effective_weights[i] = _parameter->_all_weights[i];
+			}
+			ar & _parameter;
 		}
-		void CRF::load(boost::archive::binary_iarchive &archive, unsigned int version) {
-			
+		void CRF::load(boost::archive::binary_iarchive &ar, unsigned int version) {
+			ar & _num_character_ids;
+			ar & _num_character_types;
+			ar & _x_unigram_start;
+			ar & _x_unigram_end;
+			ar & _x_bigram_start;
+			ar & _x_bigram_end;
+			ar & _x_identical_1_start;
+			ar & _x_identical_1_end;
+			ar & _x_identical_2_start;
+			ar & _x_identical_2_end;
+			ar & _x_range_unigram;
+			ar & _x_range_bigram;
+			ar & _x_range_identical_1;
+			ar & _x_range_identical_2;
+			ar & _w_size_label_u;
+			ar & _w_size_label_b;
+			ar & _w_size_unigram_u;
+			ar & _w_size_unigram_b;
+			ar & _w_size_bigram_u;
+			ar & _w_size_bigram_b;
+			ar & _w_size_identical_1_u;
+			ar & _w_size_identical_1_b;
+			ar & _w_size_identical_2_u;
+			ar & _w_size_identical_2_b;
+			ar & _w_size_unigram_type_u;
+			ar & _w_size_unigram_type_b;
+			ar & _w_size_bigram_type_u;
+			ar & _w_size_bigram_type_b;
+			ar & _offset_w_label_u;
+			ar & _offset_w_label_b;
+			ar & _offset_w_unigram_u;
+			ar & _offset_w_unigram_b;
+			ar & _offset_w_bigram_u;
+			ar & _offset_w_bigram_b;
+			ar & _offset_w_identical_1_u;
+			ar & _offset_w_identical_1_b;
+			ar & _offset_w_identical_2_u;
+			ar & _offset_w_identical_2_b;
+			ar & _offset_w_unigram_type_u;
+			ar & _offset_w_unigram_type_b;
+			ar & _offset_w_bigram_type_u;
+			ar & _offset_w_bigram_type_b;
+			ar & _parameter;
 		}
 		
 	}

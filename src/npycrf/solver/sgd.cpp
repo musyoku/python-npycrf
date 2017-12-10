@@ -7,20 +7,25 @@ namespace npycrf {
 		SGD::SGD(crf::CRF* crf, double regularization_constant){
 			_crf = crf;
 			_regularization_constant = regularization_constant;
-			_grad_weight = new double[crf->_weight_size];
+			_grad_weight = new double[crf->_parameter->_weight_size];
 			clear_grads();
 		}
 		SGD::~SGD(){
 			delete[] _grad_weight;
 		}
 		void SGD::clear_grads(){
-			for(int i = 0;i < _crf->_weight_size;i++){
+			for(int i = 0;i < _crf->_parameter->_weight_size;i++){
 				_grad_weight[i] = 0;
 			}
 		}
 		void SGD::update(double learning_rate){
-			for(int i = 0;i < _crf->_weight_size;i++){
-				_crf->_weight[i] += learning_rate * _grad_weight[i] - _regularization_constant * _crf->_weight[i];
+			crf::Parameter* params = _crf->_parameter;
+			assert(params->_all_weights != NULL);
+			for(int i = 0;i < params->_weight_size;i++){
+				params->_all_weights[i] += learning_rate * _grad_weight[i] - _regularization_constant * learning_rate * params->_all_weights[i];
+				if(_grad_weight[i] != 0){
+					params->_num_updates[i] += 1;
+				}
 			}
 		}
 		// CRFの勾配計算について

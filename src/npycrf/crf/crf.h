@@ -10,14 +10,32 @@
 
 namespace npycrf {
 	namespace crf {
+		class Parameter {
+		private:
+			friend class boost::serialization::access;
+			template <class Archive>
+			void serialize(Archive &ar, unsigned int version);
+		public:
+			double _bias;
+			double* _all_weights;		// 全ての重み
+			hashmap<int, double> _effective_weights;	// 枝刈りされた重み
+			int* _num_updates;
+			int _weight_size;
+			double weight_at_index(int index);
+			void set_weight_at_index(int index, double value);
+			Parameter();
+			~Parameter();
+			Parameter(int weight_size);
+		};
 		class CRF {
 		private:
 			friend class boost::serialization::access;
 			template <class Archive>
 			void serialize(Archive &archive, unsigned int version);
-			void save(boost::archive::binary_oarchive &archive, unsigned int version) const;
-			void load(boost::archive::binary_iarchive &archive, unsigned int version);
+			void save(boost::archive::binary_oarchive &ar, unsigned int version) const;
+			void load(boost::archive::binary_iarchive &ar, unsigned int version);
 		public:
+			Parameter* _parameter;
 			int _num_character_ids;
 			int _num_character_types;
 			// y ∈ {0,1}
@@ -51,8 +69,6 @@ namespace npycrf {
 			int _w_size_bigram_type_u;	// (y_i, type, type)
 			int _w_size_bigram_type_b;	// (y_{i-1}, y_i, type, type)
 			int _weight_size;
-			double _bias;
-			double* _weight;
 			int _offset_w_label_u;
 			int _offset_w_label_b;
 			int _offset_w_unigram_u;
