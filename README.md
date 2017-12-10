@@ -5,11 +5,11 @@
 #### Todo
 
 - [x] NPYCRFの学習
+- [x] モデルの保存
+- [x] 評価
 - [ ] CRF単体の学習
 - [ ] CRF単体の分割
 - [ ] CRFの学習の並列化
-- [ ] モデルの保存
-- [ ] 評価
 - [ ] 最大単語帳の予測に基づく枝刈り
 
 # 動作環境
@@ -74,7 +74,15 @@ python3 train.py -file dataset.txt -ssl-split 0.1 -td-split 0.9 -neologd /usr/lo
 python3 train.py -file-l supervised.txt -file-u unsupervised.txt -td-split 0.9 -neologd /usr/local/lib/mecab/dic/mecab-ipadic-neologd
 ```
 
-## 
+学習の一時停止や再開はできません。
+
+# 分割
+
+ビタビアルゴリズムによる最尤分割を求めます。
+
+```
+python3 viterbi.py -file test.txt -neologd /usr/local/lib/mecab/dic/mecab-ipadic-neologd
+```
 
 ## 注意事項
 

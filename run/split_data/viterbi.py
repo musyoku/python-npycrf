@@ -1,4 +1,4 @@
-import argparse, sys, os, time, codecs, random
+import argparse, sys, os, time, codecs, random, re
 from tabulate import tabulate
 import MeCab
 import npycrf as nlp
@@ -8,17 +8,22 @@ def viterbi(npycrf, dictionary, filepath, directory, neologd_path=None):
 	assert filepath is not None or directory is not None
 	sentence_list = []
 
+	def preprocess(sentence):
+		sentence = re.sub(r"[0-9.,]+", "#", sentence);
+		sentence = sentence.strip()
+		return sentence
+
 	if filepath is not None:
 		with codecs.open(filepath, "r", "utf-8") as f:
 			for sentence_str in f:
-				sentence_str = sentence_str.strip()
+				sentence_str = preprocess(sentence_str)
 				sentence_list.append(sentence_str)
 
 	if directory is not None:
 		for filename in os.listdir(directory):
 			with codecs.open(os.path.join(directory, filename), "r", "utf-8") as f:
 				for sentence_str in f:
-					sentence_str = sentence_str.strip()
+					sentence_str = preprocess(sentence_str)
 					sentence_list.append(sentence_str)
 
 	# 教師データはMeCabによる分割
