@@ -9,6 +9,7 @@ namespace npycrf {
 		Parameter::Parameter(){
 			_all_weights = NULL;
 			_num_updates = NULL;
+			_lambda_0 = 1;
 		}
 		Parameter::~Parameter(){
 			delete[] _all_weights;
@@ -26,6 +27,8 @@ namespace npycrf {
 			for(int i = 0;i < weight_size;i++){
 				_num_updates[i] = 0;
 			}
+
+			_lambda_0 = 1;
 		}
 		double Parameter::weight_at_index(int index){
 			if(_all_weights == NULL){

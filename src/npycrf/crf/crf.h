@@ -21,6 +21,7 @@ namespace npycrf {
 			hashmap<int, double> _effective_weights;	// 枝刈りされた重み
 			int* _num_updates;
 			int _weight_size;
+			double _lambda_0;	// モデル補完重み
 			double weight_at_index(int index);
 			void set_weight_at_index(int index, double value);
 			Parameter();

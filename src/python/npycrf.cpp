@@ -11,7 +11,7 @@ namespace npycrf {
 			_set_locale();
 			_npylm = py_npylm->_npylm;
 			_crf = py_crf->_crf;
-			_lattice = new Lattice(_npylm, _crf, 1);
+			_lattice = new Lattice(_npylm, _crf);
 		}
 		NPYCRF::~NPYCRF(){
 			delete _lattice;
@@ -44,10 +44,10 @@ namespace npycrf {
 			_npylm->_vpylm->_beta_pass = pass;
 		}
 		double NPYCRF::get_lambda_0(){
-			return _lattice->_lambda_0;
+			return _crf->_parameter->_lambda_0;
 		}
 		void NPYCRF::set_lambda_0(double lambda_0){
-			_lattice->_lambda_0 = lambda_0;
+			_crf->_parameter->_lambda_0 = lambda_0;
 		}
 		// 分配関数の計算
 		double NPYCRF::compute_normalizing_constant(Sentence* sentence){

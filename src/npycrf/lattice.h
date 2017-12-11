@@ -35,6 +35,7 @@ namespace npycrf {
 		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double prod_scaling);
 		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** pw_h_tkji, double* scaling, bool use_scaling);
 		void _backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments);
+		double _lambda_0();
 	public:
 		npylm::NPYLM* _npylm;
 		crf::CRF* _crf;
@@ -50,9 +51,8 @@ namespace npycrf {
 		int*** _viterbi_backward;
 		int _max_word_length;
 		int _max_sentence_length;
-		double _lambda_0;
-		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, double lambda_0);
-		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, double lambda_0, int max_word_length, int max_sentence_length);
+		Lattice(npylm::NPYLM* npylm, crf::CRF* crf);
+		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, int max_word_length, int max_sentence_length);
 		~Lattice();
 		void set_pure_crf_mode(bool enabled);
 		bool get_pure_crf_mode();

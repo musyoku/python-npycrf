@@ -368,6 +368,8 @@ namespace npycrf {
 				Sentence* sentence = dataset[data_index]->copy();
 				if(labeled == false){	// 教師なしデータの場合は最尤分解を求める
 					_npycrf->parse(sentence);
+				}else{
+					sentence->dump_words();
 				}
 				double log_py_s = _npycrf->compute_log_proportional_p_y_given_sentence(sentence);
 				double log_Zs = _npycrf->compute_log_normalizing_constant(sentence);

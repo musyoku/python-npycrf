@@ -120,7 +120,7 @@ void run_training_loop(){
 	double crf_regularization_constant = 1;
 
 	Trainer* trainer = new Trainer(dataset_l, dataset_u, dict, model, crf_regularization_constant);
-	trainer->add_labelded_data_to_npylm();
+	trainer->add_labeled_data_to_npylm();
 	trainer->sgd(learning_rate, batchsize, true);
 	for(int epoch = 1;epoch < 200;epoch++){
 		auto start_time = std::chrono::system_clock::now();
@@ -134,9 +134,9 @@ void run_training_loop(){
 			trainer->update_p_k_given_vpylm();
 		}
 		// if(epoch % 10 == 0){
-			trainer->print_segmentation_train(10);
+			trainer->print_segmentation_labeled_dev(10);
 			// cout << "ppl: " << trainer->compute_perplexity_train() << endl;
-			trainer->print_segmentation_dev(10);
+			trainer->print_segmentation_unlabeled_dev(10);
 			// cout << "ppl: " << trainer->compute_perplexity_dev() << endl;
 			// cout << "log_likelihood: " << trainer->compute_log_likelihood_train() << endl;
 			// cout << "log_likelihood: " << trainer->compute_log_likelihood_dev() << endl;

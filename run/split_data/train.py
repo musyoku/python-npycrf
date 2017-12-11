@@ -168,13 +168,13 @@ def main():
 		f_measure = 2 * precision * recall / (precision + recall)
 		print(tabulate([["Labeled", precision, recall, f_measure]], headers=["Precision", "Recall", "F-measure"]))
 
-		# log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
-		# log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()
-		# table = [
-		# 	["Labeled", log_likelihood_l],
-		# 	["Unlabeled", log_likelihood_u]
-		# ]
-		# print(tabulate(table, headers=["Log-likelihood", "Dev"]))
+		log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
+		log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()
+		table = [
+			["Labeled", log_likelihood_l],
+			["Unlabeled", log_likelihood_u]
+		]
+		print(tabulate(table, headers=["Log-likelihood", "Dev"]))
 
 		# モデルの保存
 		npylm.save(os.path.join(args.working_directory, "npylm.model"))
