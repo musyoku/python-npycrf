@@ -10,8 +10,8 @@
 
 namespace npycrf {
 	namespace npylm {
-		// character_idsのsubstr_char_t_startからsubstr_char_t_endまでの文字列を<bow>と<eow>で挟んでwrapped_character_idsの先頭に格納
-		void wrap_bow_eow(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, wchar_t* wrapped_character_ids);
+		// character_idsのsubstr_char_t_startからsubstr_char_t_endまでの文字列に<eow>を付けてtoken_idsの先頭に格納
+		void append_eow(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, int* token_ids);
 		double factorial(double n);
 		class NPYLM {
 		private:
@@ -41,7 +41,8 @@ namespace npycrf {
 			double _lambda_b;
 			// 計算高速化用
 			double* _hpylm_parent_pw_cache;
-			wchar_t* _characters;
+			int* _token_ids;
+			bool _fix_g0_using_poisson; // 単語の事前分布をポアソン分布により補正するかどうか
 			NPYLM(){}
 			NPYLM(int max_word_length, 
 				int max_sentence_length, 
@@ -56,18 +57,18 @@ namespace npycrf {
 			void set_lambda_prior(double a, double b);
 			void sample_lambda_with_initial_params();
 			bool add_customer_at_time_t(Sentence* sentence, int t);
-			void vpylm_add_customers(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, wchar_t* wrapped_character_ids, std::vector<int> &prev_depths);
+			void vpylm_add_customers(int const* character_ids, int token_ids_length, std::vector<int> &prev_depths);
 			bool remove_customer_at_time_t(Sentence* sentence, int t);
-			void vpylm_remove_customers(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, wchar_t* wrapped_character_ids, std::vector<int> &prev_depths);
+			void vpylm_remove_customers(int const* character_ids, int token_ids_length, std::vector<int> &prev_depths);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(Sentence* sentence, int word_t_index, double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(id const* word_ids, int word_ids_length, int word_t_index, bool generate_node_if_needed, bool return_middle_node);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(
-				wchar_t const* character_ids, int character_ids_length, 
+				int const* character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
 				int word_t_index, int substr_char_t_start, int substr_char_t_end, 
 				double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node);
 			// word_idは既知なので再計算を防ぐ
-			double compute_g0_substring_at_time_t(wchar_t const* character_ids, int character_ids_length, int substr_char_t_start, int substr_char_t_end, id word_t_id);
+			double compute_g0_substring_at_time_t(int const* character_ids, wchar_t const* characters, int character_ids_length, int substr_char_t_start, int substr_char_t_end, id word_t_id);
 			double compute_poisson_k_lambda(unsigned int k, double lambda);
 			double compute_p_k_given_vpylm(int k);
 			void sample_hpylm_vpylm_hyperparameters();
@@ -75,10 +76,10 @@ namespace npycrf {
 			double compute_p_y_given_sentence(Sentence* sentence);
 			double compute_p_w_given_h(Sentence* sentence, int word_t_index);
 			double compute_p_w_given_h(
-				wchar_t const* character_ids, int character_ids_length, 
+				int const* character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, int word_t_index);
 			double compute_p_w_given_h(
-				wchar_t const* character_ids, int character_ids_length, 
+				int const* character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
 				int word_t_index, int substr_char_t_start, int substr_char_t_end);
 		};

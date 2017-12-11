@@ -39,7 +39,7 @@ void run_training_loop(){
 	std::wcin.imbue(ctype_default);
 	
 	Corpus* corpus_u = new Corpus();
-	std::string filename_u = "../../dataset/aozora/kokoro.txt";
+	std::string filename_u = "../../dataset/test.txt";
 	std::wifstream ifs_u(filename_u.c_str());
 	std::wstring sentence_str;
 	assert(ifs_u.fail() == false);
@@ -69,7 +69,7 @@ void run_training_loop(){
 			std::wcout << word << L" ";
 		}
 		std::wcout << std::endl;
-		corpus_l->add_words(words);
+		// corpus_l->add_words(words);
 		if(i > num_labelded_data){
 			break;
 		}
@@ -79,7 +79,7 @@ void run_training_loop(){
 
 	int seed = 0;
 	Dataset* dataset_l = new Dataset(corpus_l, dict, 1, seed);
-	Dataset* dataset_u = new Dataset(corpus_u, dict, 0.1, seed);
+	Dataset* dataset_u = new Dataset(corpus_u, dict, 1, seed);
 
 	double lambda_0 = 1;
 	int max_word_length = 12;
@@ -111,6 +111,7 @@ void run_training_loop(){
 										feature_x_identical_1_end,
 										feature_x_identical_2_start,
 										feature_x_identical_2_end,
+										1.0,
 										sigma);
 
 	NPYCRF* model = new NPYCRF(py_npylm, py_crf);
@@ -128,15 +129,15 @@ void run_training_loop(){
 		trainer->sgd(learning_rate, batchsize, false);
 	    auto diff = std::chrono::system_clock::now() - start_time;
 	    cout << (std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0) << endl;
-		trainer->sample_hpylm_vpylm_hyperparameters();
-		trainer->sample_npylm_lambda();
+		// trainer->sample_hpylm_vpylm_hyperparameters();
+		// trainer->sample_npylm_lambda();
 		if(epoch > 3){
-			trainer->update_p_k_given_vpylm();
+			// trainer->update_p_k_given_vpylm();
 		}
 		// if(epoch % 10 == 0){
-			trainer->print_segmentation_labeled_dev(10);
+			// trainer->print_segmentation_labeled_dev(10);
 			// cout << "ppl: " << trainer->compute_perplexity_train() << endl;
-			trainer->print_segmentation_unlabeled_dev(10);
+			// trainer->print_segmentation_unlabeled_dev(10);
 			// cout << "ppl: " << trainer->compute_perplexity_dev() << endl;
 			// cout << "log_likelihood: " << trainer->compute_log_likelihood_train() << endl;
 			// cout << "log_likelihood: " << trainer->compute_log_likelihood_dev() << endl;
@@ -150,7 +151,7 @@ void run_training_loop(){
 }
 
 int main(int argc, char *argv[]){
-	for(int i = 0;i < 10;i++){
+	for(int i = 0;i < 1000;i++){
 		run_training_loop();
 	}
 }

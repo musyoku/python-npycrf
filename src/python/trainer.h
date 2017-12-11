@@ -24,6 +24,7 @@ namespace npycrf {
 			wchar_t* _vpylm_sampling_id_table;
 			bool* _added_to_npylm_u;
 			bool* _added_to_npylm_l;
+			int _total_gibbs_iterations;
 			void _print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices);
 			double _compute_perplexity(std::vector<Sentence*> &dataset);
 			double _compute_log_likelihood(std::vector<Sentence*> &dataset, bool labeled = false);
@@ -36,7 +37,7 @@ namespace npycrf {
 			void sgd(double learning_rate, int batchsize = 32, bool pure_crf = false);
 			void sample_hpylm_vpylm_hyperparameters();
 			void sample_npylm_lambda();
-			wchar_t sample_word_from_vpylm_given_context(wchar_t* context_ids, int context_length, int sample_t, bool skip_eow = false);
+			int sample_word_from_vpylm_given_context(int* context_ids, int context_length, int sample_t, bool skip_eow = false);
 			void update_p_k_given_vpylm();
 			double compute_perplexity_train();
 			double compute_perplexity_dev();

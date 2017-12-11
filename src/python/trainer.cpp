@@ -17,6 +17,7 @@ namespace npycrf {
 			_sgd = new solver::SGD(npycrf->_crf, crf_regularization_constant);
 			_vpylm_sampling_probability_table = new double[_dict->get_num_characters() + 1];	// </s>を含む
 			_vpylm_sampling_id_table = new wchar_t[_dict->get_num_characters() + 1];			// </s>を含む
+			_total_gibbs_iterations = 0;
 
 			// 教師なしデータ
 			int num_data = dataset_u->get_size_train();
@@ -109,7 +110,7 @@ namespace npycrf {
 			}
 		}
 		// VPYLMに文脈を渡し次の文字を生成
-		wchar_t Trainer::sample_word_from_vpylm_given_context(wchar_t* context_ids, int context_length, int sample_t, bool skip_eow){
+		int Trainer::sample_word_from_vpylm_given_context(int* context_ids, int context_length, int sample_t, bool skip_eow){
 			double sum_probs = 0;
 			npylm::lm::VPYLM* vpylm = _npycrf->_npylm->_vpylm;
 			int table_index = 0;
@@ -147,26 +148,46 @@ namespace npycrf {
 		void Trainer::update_p_k_given_vpylm(){
 			int num_samples = 20000;
 			int early_stopping_threshold = 10;
-			int max_word_length = _npycrf->get_max_word_length() + 1;
+			int max_word_length = _npycrf->get_max_word_length() + 1; // 最大+1
 			double* pk_vpylm = _npycrf->_npylm->_pk_vpylm;
 			int* num_words_of_k = new int[max_word_length];
 			for(int i = 0;i <= max_word_length;i++){
 				pk_vpylm[i] = 0;
 				num_words_of_k[i] = 0;
 			}
-			wchar_t* wrapped_character_ids = new wchar_t[max_word_length + 2];
+			npylm::lm::VPYLM* vpylm = _npycrf->_npylm->_vpylm;
+			int* character_ids = new int[max_word_length + 1];
 			double sum_words = 0;
+			auto all_characters = _dict->_map_character_ids;
+			int num_characters = _dict->get_num_characters();
+			double* unigram_distribution = new double[num_characters];
+			int* unigram_ids = new int[num_characters];
+			int table_index = 0;
+			double sum_probs = 0;
+			for(auto elem: all_characters){
+				int character_id = elem.first; 
+				wchar_t character = elem.second;
+				assert(table_index < num_characters);
+				character_ids[0] = character_id;
+				double pw = vpylm->compute_p_w(character_ids, 0, 0);
+				sum_probs += pw;
+				unigram_distribution[table_index] = pw;
+				unigram_ids[table_index] = character_id;
+				table_index++;
+				std::wcout << character << ": " << "table_index=" << table_index << ", pw=" << pw << std::endl;
+			}
+
 			for(int m = 1;m <= num_samples;m++){
 				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 					return;		
 				}
 				// wcout << "m = " << m << endl;
-				wrapped_character_ids[0] = ID_BOW;
+				character_ids[0] = ID_BOW;
 				int k = 0;
 				for(int j = 0;j < max_word_length;j++){
 					bool skip_eow = (j == 0) ? true : false;
-					wchar_t token_char = sample_word_from_vpylm_given_context(wrapped_character_ids, j + 1, j + 1, skip_eow);
-					wrapped_character_ids[j + 1] = token_char;
+					wchar_t token_char = sample_word_from_vpylm_given_context(character_ids, j + 1, j + 1, skip_eow);
+					character_ids[j + 1] = token_char;
 					if(token_char == ID_EOW){
 						break;
 					}
@@ -198,10 +219,16 @@ namespace npycrf {
 				assert(pk_vpylm[k] > 0);
 			}
 			delete[] num_words_of_k;
-			delete[] wrapped_character_ids;
+			delete[] character_ids;
+			delete[] unigram_distribution;
+			delete[] unigram_ids;
 		}
 		// 単語分割のギブスサンプリング
 		void Trainer::gibbs(bool include_labeled_data){
+			_npycrf->_npylm->_fix_g0_using_poisson = true;
+			if(_total_gibbs_iterations < 3){
+				_npycrf->_npylm->_fix_g0_using_poisson = false;
+			}
 			// 教師なしデータでモデルパラメータを更新
 			std::vector<int> segments;		// 分割の一時保存用
 			shuffle(_rand_indices_train_u.begin(), _rand_indices_train_u.end(), sampler::mt);		// データをシャッフル
@@ -257,12 +284,18 @@ namespace npycrf {
 			if(include_labeled_data){
 				_gibbs_labeled();
 			}
+
+			_total_gibbs_iterations += 1;
 		}
 		void Trainer::add_labeled_data_to_npylm(){
 			_gibbs_labeled();
 		}
 		// 教師ありデータでモデルパラメータを更新
 		void Trainer::_gibbs_labeled(){
+			_npycrf->_npylm->_fix_g0_using_poisson = true;
+			if(_total_gibbs_iterations < 3){
+				_npycrf->_npylm->_fix_g0_using_poisson = false;
+			}
 			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
 			for(int i = 0;i < _rand_indices_train_l.size();i++){
 				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック

@@ -248,7 +248,7 @@ namespace npycrf {
 				_word_ids[0] = ID_BOS;
 				_word_ids[1] = ID_BOS;
 				_word_ids[2] = word_k_id;
-				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				p = exp(_lambda_0() * log(pw_h) + potential);
 				pw_h_tkji[t][k][0][0] = pw_h;
@@ -267,7 +267,7 @@ namespace npycrf {
 				_word_ids[0] = ID_BOS;
 				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);;
 				_word_ids[2] = word_k_id;
-				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				assert(alpha[t - k][j][0] > 0);
 				p = exp(_lambda_0() * log(pw_h) + potential);
@@ -289,7 +289,7 @@ namespace npycrf {
 				_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k - j, i);;
 				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);;
 				_word_ids[2] = word_k_id;
-				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				assert(i <= _max_word_length);
 				assert(alpha[t - k][j][i] > 0);
@@ -394,11 +394,11 @@ namespace npycrf {
 				_word_ids[2] = word_t_id;
 				double pw_h = 0;
 				if(t == sentence->size()){	// <eos>に接続する確率からサンプリング
-					pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+					pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t);
 				}else{
 					pw_h = _pw_h[t + next_word_length][next_word_length][k][j];
 					#ifdef __DEBUG__
-						double pw_h2 = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + next_word_length - 1);
+						double pw_h2 = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + next_word_length - 1);
 						if(pw_h != pw_h2){
 							std::cout << "t = " << t << ", k = " << k << ", j = " << j << std::endl;
 							std::cout << "next_word_length = " << next_word_length << std::endl;
@@ -431,11 +431,11 @@ namespace npycrf {
 				_word_ids[2] = word_t_id;
 				double pw_h = 0;
 				if(t == sentence->size()){	// <eos>に接続する確率からサンプリング
-					pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+					pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t);
 				}else{
 					pw_h = _pw_h[t + next_word_length][next_word_length][k][0];
 					#ifdef __DEBUG__
-						double pw_h2 = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + next_word_length - 1);
+						double pw_h2 = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + next_word_length - 1);
 						if(pw_h != pw_h2){
 							std::cout << "t = " << t << ", k = " << k << ", j = " << 0 << std::endl;
 							std::cout << "next_word_length = " << next_word_length << std::endl;
@@ -532,7 +532,7 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
-				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				p = exp(_lambda_0() * log(pw_h) + potential);
 			}
@@ -552,7 +552,7 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
-				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				p = exp(_lambda_0() * log(pw_h) + potential);
 			}
@@ -576,7 +576,7 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
-				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
+				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				p = exp(_lambda_0() * log(pw_h) + potential);
 			}
@@ -625,7 +625,7 @@ namespace npycrf {
 					_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k, j);;
 					_word_ids[1] = get_substring_word_id_at_t_k(sentence, t, k);;
 					_word_ids[2] = ID_EOS;
-					double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t);
 					assert(pw_h > 0);
 					p = exp(_lambda_0() * log(pw_h) + potential);
 				}
@@ -647,7 +647,7 @@ namespace npycrf {
 					_word_ids[0] = ID_BOS;
 					_word_ids[1] = get_substring_word_id_at_t_k(sentence, t, k);;
 					_word_ids[2] = ID_EOS;
-					double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t);
+					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t);
 					assert(pw_h > 0);
 					p = exp(_lambda_0() * log(pw_h) + potential);
 				}
@@ -892,7 +892,7 @@ namespace npycrf {
 					_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k - j, i);
 					_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);
 					_word_ids[2] = ID_EOS;
-					double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2);
+					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2);
 					assert(pw_h > 0);
 					p = exp(_lambda_0() * log(pw_h) + potential);
 				}
@@ -938,7 +938,7 @@ namespace npycrf {
 					_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k, j);
 					_word_ids[1] = word_k_id;
 					_word_ids[2] = ID_EOS;
-					double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2);
+					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2);
 					assert(pw_h > 0);
 					p = exp(_lambda_0() * log(pw_h) + potential);
 				}
@@ -967,7 +967,7 @@ namespace npycrf {
 				_word_ids[0] = ID_BOS;
 				_word_ids[1] = ID_BOS;
 				_word_ids[2] = get_substring_word_id_at_t_k(sentence, i, i);
-				double pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, 0, i - 1);
+				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, 0, i - 1);
 				assert(pw_h > 0);
 				p = exp(_lambda_0() * log(pw_h) + potential);
 			}
@@ -1007,7 +1007,7 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
-				double pw_h = (pw_h_tkji[t + i][i][k][j] > 0) ? pw_h_tkji[t + i][i][k][j] : _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
+				double pw_h = (pw_h_tkji[t + i][i][k][j] > 0) ? pw_h_tkji[t + i][i][k][j] : _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
 				assert(pw_h > 0);
 				p = exp(_lambda_0() * log(pw_h) + potential);
 			}
@@ -1019,7 +1019,7 @@ namespace npycrf {
 			#ifdef __DEBUG__
 				if(_pure_crf_mode == false){
 					if(pw_h_tkji[t + i][i][k][j] > 0){
-						double _pw_h = _npylm->compute_p_w_given_h(characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
+						double _pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
 						assert(_pw_h == pw_h_tkji[t + i][i][k][j]);
 					}
 				}

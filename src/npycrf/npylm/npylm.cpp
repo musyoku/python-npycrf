@@ -13,13 +13,12 @@ namespace npycrf {
 	namespace npylm {
 		using namespace lm;
 		// character_idsのsubstr_char_t_startからsubstr_char_t_endまでの文字列を<bow>と<eow>で挟んでwrapped_character_idsの先頭に格納
-		void wrap_bow_eow(wchar_t const* characters, int substr_t_start_index, int substr_t_end_index, wchar_t* token_ids){
-			token_ids[0] = ID_BOW;
+		void append_eow(int const* character_ids, int substr_t_start_index, int substr_t_end_index, int* token_ids){
 			int i = 0;
 			for(;i < substr_t_end_index - substr_t_start_index + 1;i++){
-				token_ids[i + 1] = characters[i + substr_t_start_index];
+				token_ids[i] = character_ids[i + substr_t_start_index];
 			}
-			token_ids[i + 1] = ID_EOW;
+			token_ids[i] = ID_EOW;
 		}
 		double factorial(double n) {
 			if (n == 0){
@@ -38,12 +37,12 @@ namespace npycrf {
 
 			_max_sentence_length = max_sentence_length;
 			_max_word_length = max_word_length;
-			_characters = new wchar_t[max_sentence_length + 2]; 	// <bow>と<eow>を含める
+			_token_ids = new int[max_sentence_length + 1]; 	// <eow>を含める
 			_pk_vpylm = new double[max_word_length + 2]; 			// kが1スタート、かつk > max_word_length用の領域も必要なので+2
 			for(int k = 1;k < max_word_length + 2;k++){
 				_pk_vpylm[k] = 1.0 / (max_word_length + 2);
 			}
-
+			_fix_g0_using_poisson = true;
 			#ifdef __DEBUG__
 			std::cout << "Warning: Debug mode enabled!" << std::endl;
 			#endif
@@ -53,7 +52,7 @@ namespace npycrf {
 			delete _vpylm;
 			delete[] _hpylm_parent_pw_cache;
 			delete[] _lambda_for_type;
-			delete[] _characters;
+			delete[] _token_ids;
 			delete[] _pk_vpylm;
 		}
 		void NPYLM::reserve(int max_sentence_length){
@@ -66,10 +65,10 @@ namespace npycrf {
 		}
 		void NPYLM::_allocate_capacity(int max_sentence_length){
 			_max_sentence_length = max_sentence_length;
-			_characters = new wchar_t[max_sentence_length + 2];
+			_token_ids = new int[max_sentence_length + 1];
 		}
 		void NPYLM::_delete_capacity(){
-			delete[] _characters;
+			delete[] _token_ids;
 		}
 		void NPYLM::set_vpylm_g0(double g0){
 			_vpylm->set_g0(g0);
@@ -85,7 +84,7 @@ namespace npycrf {
 			}
 		}
 		bool NPYLM::add_customer_at_time_t(Sentence* sentence, int t){
-			assert(_characters != NULL);
+			assert(_token_ids != NULL);
 			assert(t >= 2);
 			id token_t = sentence->get_word_id_at(t);
 			Node<id>* node = find_node_by_tracing_back_context_from_time_t(sentence, t, _hpylm_parent_pw_cache, true, false);
@@ -107,56 +106,59 @@ namespace npycrf {
 				std::vector<std::vector<int>> &depths = _prev_depth_at_table_of_token[token_t];
 				assert(depths.size() <= added_table_k);	// 存在してはいけない
 				std::vector<int> prev_depths;
-				vpylm_add_customers(sentence->_characters, substr_t_start_index, substr_t_end_index, _characters, prev_depths);
-				assert(prev_depths.size() == substr_t_end_index - substr_t_start_index + 3);
+				assert(substr_t_end_index >= substr_t_start_index);
+				assert(substr_t_end_index < _max_sentence_length);
+				int token_ids_length = substr_t_end_index - substr_t_start_index + 2;	// <eow>を考慮
+				append_eow(sentence->_character_ids, substr_t_start_index, substr_t_end_index, _token_ids);
+				vpylm_add_customers(_token_ids, token_ids_length, prev_depths);
 				depths.push_back(prev_depths);
 			}
 			return true;
 		}
-		void NPYLM::vpylm_add_customers(wchar_t const* characters, int substr_t_start_index, int substr_t_end_index, wchar_t* token_ids, std::vector<int> &prev_depths){
+		void NPYLM::vpylm_add_customers(int const* token_ids, int token_ids_length, std::vector<int> &prev_depths){
 			assert(prev_depths.size() == 0);
-			assert(substr_t_end_index >= substr_t_start_index);
-			// 先頭に<bow>をつける
-			assert(substr_t_end_index < _max_sentence_length);
-			wrap_bow_eow(characters, substr_t_start_index, substr_t_end_index, token_ids);
-			int token_ids_length = substr_t_end_index - substr_t_start_index + 3;	// <bow>と<eow>を考慮
 			// 客を追加
-			for(int char_t = 0;char_t < token_ids_length;char_t++){
-				int depth_t = _vpylm->sample_depth_at_time_t(token_ids, char_t, _vpylm->_parent_pw_cache, _vpylm->_path_nodes);
-				_vpylm->add_customer_at_time_t(token_ids, char_t, depth_t, _vpylm->_parent_pw_cache, _vpylm->_path_nodes);	// キャッシュを使って追加
+			for(int t = 0;t < token_ids_length;t++){
+				int depth_t = _vpylm->sample_depth_at_time_t(token_ids, t, _vpylm->_parent_pw_cache, _vpylm->_path_nodes);
+				_vpylm->add_customer_at_time_t(token_ids, t, depth_t, _vpylm->_parent_pw_cache, _vpylm->_path_nodes);	// キャッシュを使って追加
 				prev_depths.push_back(depth_t);
 			}
+			assert(prev_depths.size() == token_ids_length);
 		}
 		bool NPYLM::remove_customer_at_time_t(Sentence* sentence, int t){
-			assert(_characters != NULL);
+			assert(_token_ids != NULL);
 			assert(t >= 2);
-			id token_t = sentence->get_word_id_at(t);
+			id word_t = sentence->get_word_id_at(t);
 			Node<id>* node = find_node_by_tracing_back_context_from_time_t(sentence->_word_ids, sentence->get_num_segments(), t, false, false);
 			assert(node != NULL);
 			int num_tables_before = _hpylm->_root->_num_tables;
 			int removed_from_table_k = -1;
 			int substr_t_start_index = sentence->_start[t];
 			int substr_t_end_index = sentence->_start[t] + sentence->_segments[t] - 1;
-			node->remove_customer(token_t, true, removed_from_table_k);
+			node->remove_customer(word_t, true, removed_from_table_k);
 
 			// 単語unigramノードでテーブル数が増えた場合VPYLMから削除
 			int num_tables_after = _hpylm->_root->_num_tables;
 			if(num_tables_before > num_tables_after){
 				_g0_cache.clear();
-				if(token_t == ID_EOS){
+				if(word_t == ID_EOS){
 					// <eos>は文字列に分解できないので常にVPYLMのルートノードに追加されている
-					_vpylm->_root->remove_customer(token_t, true, removed_from_table_k);
+					_vpylm->_root->remove_customer(word_t, true, removed_from_table_k);
 					return true;
 				}
 				assert(removed_from_table_k != -1);
-				auto itr = _prev_depth_at_table_of_token.find(token_t);
+				auto itr = _prev_depth_at_table_of_token.find(word_t);
 				assert(itr != _prev_depth_at_table_of_token.end());
 				std::vector<std::vector<int>> &depths = itr->second;
 				assert(removed_from_table_k < depths.size());
 				// 客を除外
 				std::vector<int> &prev_depths = depths[removed_from_table_k];
 				assert(prev_depths.size() > 0);
-				vpylm_remove_customers(sentence->_characters, substr_t_start_index, substr_t_end_index, _characters, prev_depths);
+				assert(substr_t_end_index >= substr_t_start_index);
+				assert(substr_t_end_index < _max_sentence_length);
+				int token_ids_length = substr_t_end_index - substr_t_start_index + 2;	// <eow>を考慮
+				append_eow(sentence->_character_ids, substr_t_start_index, substr_t_end_index, _token_ids);
+				vpylm_remove_customers(_token_ids, token_ids_length, prev_depths);
 				// シフト
 				depths.erase(depths.begin() + removed_from_table_k);
 			}
@@ -165,18 +167,12 @@ namespace npycrf {
 			}
 			return true;
 		}
-		void NPYLM::vpylm_remove_customers(wchar_t const* characters, int substr_t_start_index, int substr_t_end_index, wchar_t* token_ids, std::vector<int> &prev_depths){
-			assert(prev_depths.size() > 0);
-			assert(substr_t_end_index >= substr_t_start_index);
-			// 先頭に<bow>をつける
-			assert(substr_t_end_index < _max_sentence_length);
-			wrap_bow_eow(characters, substr_t_start_index, substr_t_end_index, token_ids);
-			int token_ids_length = substr_t_end_index - substr_t_start_index + 3;	// <bow>と<eow>を考慮
+		void NPYLM::vpylm_remove_customers(int const* token_ids, int token_ids_length, std::vector<int> &prev_depths){
 			// 客を除外
 			assert(prev_depths.size() == token_ids_length);
 			auto prev_depth_t = prev_depths.begin();
-			for(int char_t = 0;char_t < token_ids_length;char_t++){
-				_vpylm->remove_customer_at_time_t(token_ids, char_t, *prev_depth_t);
+			for(int t = 0;t < token_ids_length;t++){
+				_vpylm->remove_customer_at_time_t(token_ids, t, *prev_depth_t);
 				prev_depth_t++;
 			}
 		}
@@ -215,14 +211,14 @@ namespace npycrf {
 			int substr_t_start_index = sentence->_start[word_t_index];
 			int substr_t_end_index = sentence->_start[word_t_index] + sentence->_segments[word_t_index] - 1;
 			return find_node_by_tracing_back_context_from_time_t(
-				sentence->_characters, sentence->size(), 
+				sentence->_character_ids, sentence->_characters, sentence->size(), 
 				sentence->_word_ids, sentence->get_num_segments(), 
 				word_t_index, substr_t_start_index, substr_t_end_index, 
 				parent_pw_cache, generate_node_if_needed, return_middle_node);
 		}
 		// 効率のためノードを探しながら確率も計算する
 		Node<id>* NPYLM::find_node_by_tracing_back_context_from_time_t(
-				wchar_t const* characters, int character_ids_length, 
+				int const* character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
 				int word_t_index, int substr_t_start_index, int substr_t_end_index, 
 				double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node)
@@ -237,7 +233,7 @@ namespace npycrf {
 			}else{
 				assert(0 <= substr_t_start_index && substr_t_start_index <= substr_t_end_index);
 				assert(substr_t_start_index <= substr_t_end_index);
-				parent_pw = compute_g0_substring_at_time_t(characters, character_ids_length, substr_t_start_index, substr_t_end_index, word_t_id);
+				parent_pw = compute_g0_substring_at_time_t(character_ids, characters, character_ids_length, substr_t_start_index, substr_t_end_index, word_t_id);
 			}
 			assert(parent_pw > 0);
 			parent_pw_cache[0] = parent_pw;
@@ -262,10 +258,10 @@ namespace npycrf {
 		}
 		// word_idは既知なので再計算を防ぐ
 		double NPYLM::compute_g0_substring_at_time_t(
-				wchar_t const* characters, int character_ids_length, 
+				int const* character_ids, wchar_t const* characters, int character_ids_length, 
 				int substr_t_start_index, int substr_t_end_index, id word_t_id)
 		{
-			assert(_characters != NULL);
+			assert(_token_ids != NULL);
 			if(word_t_id == ID_EOS){
 				return _vpylm->_g0;
 			}
@@ -279,20 +275,21 @@ namespace npycrf {
 			assert(substr_t_start_index >= 0);
 			assert(substr_t_end_index >= substr_t_start_index);
 			int word_length = substr_t_end_index - substr_t_start_index + 1;
+			assert(word_length <= character_ids_length);
 			// if(word_length > _max_word_length){
 			// 	return 0;
 			// }
 			auto itr = _g0_cache.find(word_t_id);
 			if(itr == _g0_cache.end()){
 				// 先頭に<bow>をつける
-				wchar_t* token_ids = _characters;
-				wrap_bow_eow(characters, substr_t_start_index, substr_t_end_index, token_ids);
-				int token_ids_length = substr_t_end_index - substr_t_start_index + 3;
+				// wchar_t* token_ids = _characters;
+				// append_eow(characters, substr_t_start_index, substr_t_end_index, token_ids);
+				// int token_ids_length = substr_t_end_index - substr_t_start_index + 3;
 				// g0を計算
-				double pw = std::max(_vpylm->compute_p_w(token_ids, token_ids_length), std::numeric_limits<double>::min());
+				double pw = std::max(_vpylm->compute_p_w(character_ids, substr_t_start_index, substr_t_end_index), std::numeric_limits<double>::min());
 
 				// 学習の最初のイテレーションでは文が丸ごと1単語になるので補正する意味はない
-				if(word_length > _max_word_length){
+				if(_fix_g0_using_poisson == false){
 					_g0_cache[word_t_id] = pw;
 					return pw;
 				}
@@ -312,6 +309,10 @@ namespace npycrf {
 						std::wcout << characters[u];
 					}
 					std::wcout << std::endl;
+					for(int u = 0;u < character_ids_length;u++){
+						std::cout << character_ids[u] << ", ";
+					}
+					std::cout << std::endl;
 					std::cout << pw << std::endl;
 					std::cout << poisson << std::endl;
 					std::cout << p_k_given_vpylm << std::endl;
@@ -358,17 +359,17 @@ namespace npycrf {
 			assert(sentence->_segments[word_t_index] > 0);
 			int substr_t_start_index = sentence->_start[word_t_index];
 			int substr_t_end_index = sentence->_start[word_t_index] + sentence->_segments[word_t_index] - 1;
-			return compute_p_w_given_h(sentence->_characters, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t_index, substr_t_start_index, substr_t_end_index);
+			return compute_p_w_given_h(sentence->_character_ids, sentence->_characters, sentence->size(), sentence->_word_ids, sentence->get_num_segments(), word_t_index, substr_t_start_index, substr_t_end_index);
 		}
 		// word_t_index, substr_t_start_index, substr_char_t_endはインデックス
 		double NPYLM::compute_p_w_given_h(
-				wchar_t const* characters, int character_ids_length, 
+				int const* character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, int word_t_index)
 		{
-			return compute_p_w_given_h(characters, character_ids_length, word_ids, word_ids_length, word_t_index, -1, -1);
+			return compute_p_w_given_h(character_ids, characters, character_ids_length, word_ids, word_ids_length, word_t_index, -1, -1);
 		}
 		double NPYLM::compute_p_w_given_h(
-				wchar_t const* characters, int character_ids_length, 
+				int const* character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
 				int word_t_index, int substr_t_start_index, int substr_t_end_index)
 		{
@@ -396,7 +397,7 @@ namespace npycrf {
 				#endif
 			}
 			// ノードを探しながら_hpylm_parent_pw_cacheをセット
-			Node<id>* node = find_node_by_tracing_back_context_from_time_t(characters, character_ids_length, word_ids, word_ids_length, word_t_index, substr_t_start_index, substr_t_end_index, _hpylm_parent_pw_cache, false, true);
+			Node<id>* node = find_node_by_tracing_back_context_from_time_t(character_ids, characters, character_ids_length, word_ids, word_ids_length, word_t_index, substr_t_start_index, substr_t_end_index, _hpylm_parent_pw_cache, false, true);
 			assert(node != NULL);
 			double parent_pw = _hpylm_parent_pw_cache[node->_depth];
 			// 効率のため親の確率のキャッシュから計算
@@ -436,7 +437,7 @@ namespace npycrf {
 			_lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];
 
 			_hpylm_parent_pw_cache = new double[3];
-			_characters = new wchar_t[_max_sentence_length + 2];
+			_token_ids = new int[_max_sentence_length + 1];
 
 			for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
 				archive & _lambda_for_type[type];
