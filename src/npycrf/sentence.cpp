@@ -34,7 +34,7 @@ namespace npycrf {
 		_start[1] = 0;
 		_start[2] = 0;
 		_start[3] = _sentence_str.size();
-		_num_segments = 4;
+		_num_segments = 4;	// <bos>2つと<eos>1つを含む単語数. 4以上の値になる.
 	}
 	Sentence::~Sentence(){
 		delete[] _character_ids;
@@ -50,11 +50,20 @@ namespace npycrf {
 		if(_features != NULL){
 			sentence->_features = _features->copy();
 		}
+		sentence->_num_segments = _num_segments;
+		for(int n = 0;n < size() + 3;n++){
+			sentence->_start[n] = _start[n];
+			sentence->_word_ids[n] = _word_ids[n];
+			sentence->_segments[n] = _segments[n];
+		}
 		return sentence;
 	}
+	// 文字数を返す
+	// <bos>と<eos>は含まない
 	int Sentence::size(){
 		return _sentence_str.size();
 	}
+	// <bos>と<eos>を含む単語数を返す
 	int Sentence::get_num_segments(){
 		return _num_segments;
 	}

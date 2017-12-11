@@ -106,12 +106,13 @@ def main():
 				feature_x_identical_1_end=args.crf_feature_x_identical_1_end,
 				feature_x_identical_2_start=args.crf_feature_x_identical_2_start,
 				feature_x_identical_2_end=args.crf_feature_x_identical_2_end,
+				initial_lambda_0=args.crf_lambda_0,
 				sigma=args.crf_prior_sigma)
 
 	npylm = nlp.npylm(max_word_length=args.max_word_length,
 					g0=1.0 / num_character_ids,
-					initial_lambda_a=args.lambda_a,
-					initial_lambda_b=args.lambda_b,
+					initial_lambda_a=args.npylm_lambda_a,
+					initial_lambda_b=args.npylm_lambda_b,
 					vpylm_beta_stop=args.vpylm_beta_stop,
 					vpylm_beta_pass=args.vpylm_beta_pass)
 
@@ -194,8 +195,8 @@ if __name__ == "__main__":
 	parser.add_argument("--neologd-path", "-neologd", type=str, default=None)
 
 	# NPYLM
-	parser.add_argument("--lambda-a", "-lam-a", type=float, default=4)
-	parser.add_argument("--lambda-b", "-lam-b", type=float, default=1)
+	parser.add_argument("--npylm-lambda-a", "-lam-a", type=float, default=4)
+	parser.add_argument("--npylm-lambda-b", "-lam-b", type=float, default=1)
 	parser.add_argument("--vpylm-beta-stop", "-beta-stop", type=float, default=4)
 	parser.add_argument("--vpylm-beta-pass", "-beta-pass", type=float, default=1)
 	parser.add_argument("--max-word-length", "-l", type=int, default=12, help="可能な単語の最大長.")
@@ -207,14 +208,15 @@ if __name__ == "__main__":
 	# The character/number/letter bigrams locating at positions i−2, i−1, i, i+1
 	parser.add_argument("--crf-feature-x-bigram-start", type=int, default=-2)
 	parser.add_argument("--crf-feature-x-bigram-end", type=int, default=1)
-	# Whether xj and xj+1 are identical, for j = (i−2)...(i + 1)
+	# Whether x_j and x_{j+1} are identical, for j = (i−2)...(i + 1)
 	parser.add_argument("--crf-feature-x-identical-1-start", type=int, default=-2)
 	parser.add_argument("--crf-feature-x-identical-1-end", type=int, default=1)
-	# Whether xj and xj+2 are identical, for j = (i−3)...(i + 1)
+	# Whether x_j and x_{j+2} are identical, for j = (i−3)...(i + 1)
 	parser.add_argument("--crf-feature-x-identical-2-start", type=int, default=-3)
 	parser.add_argument("--crf-feature-x-identical-2-end", type=int, default=1)
+	parser.add_argument("--crf-lambda-0", "-lam-0", type=float, default=1.0, help="モデル補完重みの初期値")
 	parser.add_argument("--crf-prior-sigma", type=float, default=1.0)
-	parser.add_argument("--crf-learning-rate", "-crf-lr", type=float, default=0.001)
+	parser.add_argument("--crf-learning-rate", "-lr", type=float, default=0.001)
 
 	args = parser.parse_args()
 

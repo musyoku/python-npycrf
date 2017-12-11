@@ -15,7 +15,7 @@ namespace npycrf {
 			delete[] _all_weights;
 			delete[] _num_updates;
 		}
-		Parameter::Parameter(int weight_size){
+		Parameter::Parameter(int weight_size, double initial_lambda_0){
 			_weight_size = weight_size;
 			_bias = 0;
 			_all_weights = new double[weight_size];
@@ -28,7 +28,7 @@ namespace npycrf {
 				_num_updates[i] = 0;
 			}
 
-			_lambda_0 = 1;
+			_lambda_0 = initial_lambda_0;
 		}
 		double Parameter::weight_at_index(int index){
 			if(_all_weights == NULL){
@@ -58,6 +58,7 @@ namespace npycrf {
 			ar & _effective_weights;
 			ar & _weight_size;
 			ar & _bias;
+			ar & _lambda_0;
 		}
 
 		CRF::CRF(){
@@ -73,6 +74,7 @@ namespace npycrf {
 				 int feature_x_identical_1_end,
 				 int feature_x_identical_2_start,
 				 int feature_x_identical_2_end,
+				 double initial_lambda_0,
 				 double sigma)
 		{
 			_num_character_ids = num_character_ids;
@@ -127,7 +129,7 @@ namespace npycrf {
 							 + _w_size_unigram_type_u + _w_size_unigram_type_b 
 							 + _w_size_bigram_type_u + _w_size_bigram_type_b;
 
-			_parameter = new Parameter(_weight_size);
+			_parameter = new Parameter(_weight_size, initial_lambda_0);
 
 			_offset_w_label_u = 0;
 			_offset_w_label_b = _w_size_label_u;

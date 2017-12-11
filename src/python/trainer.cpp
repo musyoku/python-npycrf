@@ -52,10 +52,12 @@ namespace npycrf {
 			for(Sentence* sentence: dataset_u->_sentences_train){
 				assert(sentence->_features == NULL);
 				sentence->_features = npycrf->_crf->extract_features(sentence);
+				assert(sentence->_num_segments == 4);
 			}
 			for(Sentence* sentence: dataset_u->_sentences_dev){
 				assert(sentence->_features == NULL);
 				sentence->_features = npycrf->_crf->extract_features(sentence);
+				assert(sentence->_num_segments == 4);
 			}
 
 			// 必要な領域を確保
@@ -368,8 +370,6 @@ namespace npycrf {
 				Sentence* sentence = dataset[data_index]->copy();
 				if(labeled == false){	// 教師なしデータの場合は最尤分解を求める
 					_npycrf->parse(sentence);
-				}else{
-					sentence->dump_words();
 				}
 				double log_py_s = _npycrf->compute_log_proportional_p_y_given_sentence(sentence);
 				double log_Zs = _npycrf->compute_log_normalizing_constant(sentence);

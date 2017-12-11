@@ -4,7 +4,6 @@
 #include "crf/features.h"
 #include "common.h"
 
-// <bos>と<eos>は長さが0文字であることに注意
 // NPYLMでは先頭に<bos>が2つ、末尾に<eos>が1つ
 // CRFでは先頭に<bos>が1つ、末尾に<eos>が2つ
 
@@ -34,7 +33,6 @@ namespace npycrf {
 		std::wstring get_word_str_at(int t);	// t=0,1の時は<bos>が返る
 		void dump_characters();
 		void dump_words();
-		// num_segmentsには<bos>や<eos>の数は含めない
 		void split(int* segments_without_special_tokens, int num_segments_without_special_tokens);
 		void split(std::vector<int> &segments_without_special_tokens);
 	};

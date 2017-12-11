@@ -17,6 +17,7 @@ namespace npycrf {
 					int feature_x_identical_1_end,
 					int feature_x_identical_2_start,
 					int feature_x_identical_2_end,
+					double initial_lambda_0,
 					double sigma);
 				CRF(std::string filename);
 				~CRF();

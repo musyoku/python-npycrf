@@ -26,7 +26,7 @@ namespace npycrf {
 			void set_weight_at_index(int index, double value);
 			Parameter();
 			~Parameter();
-			Parameter(int weight_size);
+			Parameter(int weight_size, double initial_lambda_0);
 			int get_num_features();
 		};
 		class CRF {
@@ -101,6 +101,7 @@ namespace npycrf {
 				int feature_x_identical_1_end,
 				int feature_x_identical_2_start,
 				int feature_x_identical_2_end,
+				double initial_lambda_0,
 				double sigma
 			);
 			CRF();
