@@ -3,6 +3,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include "../common.h"
+#include "../array.h"
 #include "../sentence.h"
 
 // [1] A discriminative latent variable chinese segmenter with hybrid word/character information
@@ -157,11 +158,11 @@ namespace npycrf {
 			double compute_gamma(Sentence* sentence, int s, int t);
 			double compute_path_cost(Sentence* sentence, int i_1, int i, int y_i_1, int y_i);
 			double _compute_cost_label_features(int y_i_1, int y_i);
-			double _compute_cost_unigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
-			double _compute_cost_bigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
-			double _compute_cost_identical_1_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
-			double _compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i);
-			double _compute_cost_unigram_and_bigram_type_features(int const* character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i);
+			double _compute_cost_unigram_features(array<int> &character_ids, int character_ids_length, int i, int y_i_1, int y_i);
+			double _compute_cost_bigram_features(array<int> &character_ids, int character_ids_length, int i, int y_i_1, int y_i);
+			double _compute_cost_identical_1_features(array<int> &character_ids, int character_ids_length, int i, int y_i_1, int y_i);
+			double _compute_cost_identical_2_features(array<int> &character_ids, int character_ids_length, int i, int y_i_1, int y_i);
+			double _compute_cost_unigram_and_bigram_type_features(array<int> &character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i);
 			double compute_log_p_y_given_sentence(Sentence* sentence);
 			FeatureIndices* extract_features(Sentence* sentence);
 		};

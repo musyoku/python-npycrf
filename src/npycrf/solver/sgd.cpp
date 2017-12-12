@@ -39,7 +39,7 @@ namespace npycrf {
 			_backward_label(sentence, pz_s);
 		}
 		void SGD::_backward_unigram(Sentence* sentence, double*** pz_s){
-			int const* character_ids = sentence->_character_ids;
+			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
 			for(int i = 1;i <= sentence->size() + 2;i++){
@@ -79,7 +79,7 @@ namespace npycrf {
 			}
 		}
 		void SGD::_backward_bigram(Sentence* sentence, double*** pz_s){
-			int const* character_ids = sentence->_character_ids;
+			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
 			for(int i = 1;i <= sentence->size() + 2;i++){
@@ -120,7 +120,7 @@ namespace npycrf {
 			}
 		}
 		void SGD::_backward_identical_1(Sentence* sentence, double*** pz_s){
-			int const* character_ids = sentence->_character_ids;
+			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
 			for(int i = 1;i <= sentence->size() + 2;i++){
@@ -162,7 +162,7 @@ namespace npycrf {
 			}
 		}
 		void SGD::_backward_identical_2(Sentence* sentence, double*** pz_s){
-			int const* character_ids = sentence->_character_ids;
+			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
 			for(int i = 1;i <= sentence->size() + 2;i++){
@@ -204,7 +204,7 @@ namespace npycrf {
 			}
 		}
 		void SGD::_backward_unigram_type(Sentence* sentence, double*** pz_s){
-			int const* character_ids = sentence->_character_ids;
+			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
 			for(int i = 1;i <= sentence->size() + 2;i++){
@@ -238,7 +238,7 @@ namespace npycrf {
 			}
 		}
 		void SGD::_backward_bigram_type(Sentence* sentence, double*** pz_s){
-			int const* character_ids = sentence->_character_ids;
+			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
 			for(int i = 2;i <= sentence->size() + 2;i++){
@@ -273,7 +273,7 @@ namespace npycrf {
 			}
 		}
 		void SGD::_backward_label(Sentence* sentence, double*** pz_s){
-			int const* character_ids = sentence->_character_ids;
+			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
 			for(int i = 2;i <= sentence->size() + 2;i++){

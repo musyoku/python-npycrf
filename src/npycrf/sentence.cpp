@@ -5,10 +5,10 @@
 // <bos>と<eos>は長さが0文字であることに注意
 
 namespace npycrf {
-	Sentence::Sentence(std::wstring sentence, int* character_ids){
+	Sentence::Sentence(std::wstring sentence, array<int> &character_ids){
 		_sentence_str = sentence;
 		_characters = _sentence_str.data();
-		_character_ids = new int[size()];
+		_character_ids = array<int>(size());
 		for(int i = 0;i < size();i++){
 			_character_ids[i] = character_ids[i];
 		}
@@ -37,7 +37,6 @@ namespace npycrf {
 		_num_segments = 4;	// <bos>2つと<eos>1つを含む単語数. 4以上の値になる.
 	}
 	Sentence::~Sentence(){
-		delete[] _character_ids;
 		delete[] _segments;
 		delete[] _start;
 		delete[] _word_ids;

@@ -434,7 +434,7 @@ namespace npycrf {
 		// iはノードの位置（1スタートなので注意。インデックスではない.ただし実際は隣接ノードが取れるi>=2のみ可）
 		// i_1は本来引数にする必要はないがわかりやすさのため
 		double CRF::compute_path_cost(Sentence* sentence, int i_1, int i, int y_i_1, int y_i){
-			int const* character_ids = sentence->_character_ids;
+			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
 			assert(i_1 + 1 == i);
@@ -482,7 +482,7 @@ namespace npycrf {
 			cost += w_label_b(y_i_1, y_i);
 			return cost;
 		}
-		double CRF::_compute_cost_unigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
+		double CRF::_compute_cost_unigram_features(array<int> &character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
 			int r_start = std::max(1, i + _x_unigram_start);
 			int r_end = std::min(character_ids_length + 2, i + _x_unigram_end);	// <eos>2つを考慮
@@ -494,7 +494,7 @@ namespace npycrf {
 			}
 			return cost;
 		}
-		double CRF::_compute_cost_bigram_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
+		double CRF::_compute_cost_bigram_features(array<int> &character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
 			int r_start = std::max(2, i + _x_bigram_start);
 			int r_end = std::min(character_ids_length + 2, i + _x_bigram_end);
@@ -507,7 +507,7 @@ namespace npycrf {
 			}
 			return cost;
 		}
-		double CRF::_compute_cost_identical_1_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
+		double CRF::_compute_cost_identical_1_features(array<int> &character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
 			int r_start = std::max(2, i + _x_identical_1_start);
 			int r_end = std::min(character_ids_length + 2, i + _x_identical_1_end);
@@ -522,7 +522,7 @@ namespace npycrf {
 			}
 			return cost;
 		}
-		double CRF::_compute_cost_identical_2_features(int const* character_ids, int character_ids_length, int i, int y_i_1, int y_i){
+		double CRF::_compute_cost_identical_2_features(array<int> &character_ids, int character_ids_length, int i, int y_i_1, int y_i){
 			double cost = 0;
 			int r_start = std::max(3, i + _x_identical_2_start);
 			int r_end = std::min(character_ids_length + 2, i + _x_identical_2_end);
@@ -537,7 +537,7 @@ namespace npycrf {
 			}
 			return cost;
 		}
-		double CRF::_compute_cost_unigram_and_bigram_type_features(int const* character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i){
+		double CRF::_compute_cost_unigram_and_bigram_type_features(array<int> &character_ids, wchar_t const* characters, int character_ids_length, int i, int y_i_1, int y_i){
 			assert(i > 1);
 			double cost = 0;
 			int type_i = (i <= character_ids_length) ? ctype::get_type(characters[i - 1]) : CTYPE_UNKNOWN;
@@ -563,7 +563,7 @@ namespace npycrf {
 		FeatureIndices* CRF::extract_features(Sentence* sentence){
 			assert(sentence->_features == NULL);
 
-			int const* character_ids = sentence->_character_ids;
+			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
 

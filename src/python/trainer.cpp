@@ -109,7 +109,7 @@ namespace npycrf {
 			}
 		}
 		// VPYLMに文脈を渡し次の文字を生成
-		int Trainer::sample_word_from_vpylm_given_context(int* context_ids, int context_length, int sample_t){
+		int Trainer::sample_word_from_vpylm_given_context(npycrf::array<int> &context_ids, int context_length, int sample_t){
 			double sum_probs = 0;
 			npylm::lm::VPYLM* vpylm = _npycrf->_npylm->_vpylm;
 			auto all_characters = _dict->_map_character_ids;
@@ -138,22 +138,20 @@ namespace npycrf {
 			int num_samples = 20000;
 			int early_stopping_threshold = 10;
 			int max_word_length = _npycrf->get_max_word_length() + 1; // 最大+1
-			double* pk_vpylm = _npycrf->_npylm->_pk_vpylm;
-			int* num_words_of_k = new int[max_word_length + 1];
-			npycrf::array<int, max_word_length + 1> _num_words_of_k;
-			_num_words_of_k[100] = 100;
+			npycrf::array<double> &pk_vpylm = _npycrf->_npylm->_pk_vpylm;
+			npycrf::array<int> num_words_of_k(max_word_length + 1);
 			for(int i = 0;i <= max_word_length;i++){
 				pk_vpylm[i] = 0;
 				num_words_of_k[i] = 0;
 			}
 			npylm::lm::VPYLM* vpylm = _npycrf->_npylm->_vpylm;
-			int* character_ids = new int[max_word_length + 1];
+			npycrf::array<int> character_ids(max_word_length + 1);
 			double sum_words = 0;
 			auto all_characters = _dict->_map_character_ids;
 			int num_characters = _dict->get_num_characters();
 			std::cout << "num_characters: " << num_characters << std::endl;
 			std::cout << "all_characters: " << all_characters.size() << std::endl;
-			double* unigram_distribution = new double[num_characters];
+			npycrf::array<double> unigram_distribution(num_characters);
 			double sum_probs = 0;
 			for(auto elem: all_characters){
 				int character_id = elem.second; 
@@ -215,9 +213,6 @@ namespace npycrf {
 				std::cout << "k = " << k << ", " << pk_vpylm[k] << std::endl;
 				assert(pk_vpylm[k] > 0);
 			}
-			delete[] num_words_of_k;
-			delete[] character_ids;
-			delete[] unigram_distribution;
 		}
 		// 単語分割のギブスサンプリング
 		void Trainer::gibbs(bool include_labeled_data){

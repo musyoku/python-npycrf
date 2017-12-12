@@ -32,7 +32,7 @@ namespace npycrf {
 				delete[] _parent_pw_cache;
 				delete[] _path_nodes;
 			}
-			bool VPYLM::add_customer_at_time_t(int const* character_ids, int t, int depth_t){
+			bool VPYLM::add_customer_at_time_t(array<int> &character_ids, int t, int depth_t){
 				assert(_parent_pw_cache != NULL);
 				assert(0 <= depth_t && depth_t <= t);
 				Node<int>* node = find_node_by_tracing_back_context(character_ids, t, depth_t, _parent_pw_cache);
@@ -47,7 +47,7 @@ namespace npycrf {
 			}
 			// parent_pw_cacheがすでにセットされていてpath_nodesを更新する
 			// NPYLMから呼ぶ用
-			bool VPYLM::add_customer_at_time_t(int const* character_ids, int t, int depth_t, double* parent_pw_cache, Node<int>** path_nodes){
+			bool VPYLM::add_customer_at_time_t(array<int> &character_ids, int t, int depth_t, double* parent_pw_cache, Node<int>** path_nodes){
 				assert(path_nodes != NULL);
 				assert(0 <= depth_t && depth_t <= t);
 				Node<int>* node = find_node_by_tracing_back_context(character_ids, t, depth_t, path_nodes);
@@ -66,7 +66,7 @@ namespace npycrf {
 				int tabke_k;
 				return node->add_customer(token_t, parent_pw_cache, _d_m, _theta_m, true, tabke_k);
 			}
-			bool VPYLM::remove_customer_at_time_t(int const* character_ids, int t, int depth_t){
+			bool VPYLM::remove_customer_at_time_t(array<int> &character_ids, int t, int depth_t){
 				assert(0 <= depth_t && depth_t <= t);
 				Node<int>* node = find_node_by_tracing_back_context(character_ids, t, depth_t, false, false);
 				assert(node != NULL);
@@ -87,7 +87,7 @@ namespace npycrf {
 			// character_ids:       [2, 4, 7, 1, 9, 10]
 			// t: 3                     ^     ^
 			// depth_t: 2               |<- <-|
-			Node<int>* VPYLM::find_node_by_tracing_back_context(int const* character_ids, int t, int depth_t, bool generate_node_if_needed, bool return_middle_node){
+			Node<int>* VPYLM::find_node_by_tracing_back_context(array<int> &character_ids, int t, int depth_t, bool generate_node_if_needed, bool return_middle_node){
 				if(t - depth_t < 0){
 					return NULL;
 				}
@@ -111,7 +111,7 @@ namespace npycrf {
 			}
 			// add_customer用
 			// 辿りながら確率をキャッシュ
-			Node<int>* VPYLM::find_node_by_tracing_back_context(int const* character_ids, int t, int depth_t, double* parent_pw_cache){
+			Node<int>* VPYLM::find_node_by_tracing_back_context(array<int> &character_ids, int t, int depth_t, double* parent_pw_cache){
 				assert(parent_pw_cache != NULL);
 				if(t - depth_t < 0){
 					return NULL;
@@ -138,7 +138,7 @@ namespace npycrf {
 				return node;
 			}
 			// すでに辿ったノードのキャッシュを使いながら辿る
-			Node<int>* VPYLM::find_node_by_tracing_back_context(int const* character_ids, int t, int depth_t, Node<int>** path_nodes_cache){
+			Node<int>* VPYLM::find_node_by_tracing_back_context(array<int> &character_ids, int t, int depth_t, Node<int>** path_nodes_cache){
 				assert(path_nodes_cache != NULL);
 				if(t - depth_t < 0){
 					return NULL;
@@ -162,7 +162,7 @@ namespace npycrf {
 				}
 				return node;
 			}
-			double VPYLM::compute_p_w(int const* character_ids, int substr_start, int substr_end){
+			double VPYLM::compute_p_w(array<int> &character_ids, int substr_start, int substr_end){
 				int token_t = character_ids[substr_start];
 				double pw = _root->compute_p_w(token_t, _g0, _d_m, _theta_m);
 				for(int t = substr_start;t < substr_end;t++){
@@ -170,7 +170,7 @@ namespace npycrf {
 				}
 				return pw;
 			}
-			double VPYLM::compute_log_p_w(int const* character_ids, int substr_start, int substr_end){
+			double VPYLM::compute_log_p_w(array<int> &character_ids, int substr_start, int substr_end){
 				int token_t = character_ids[substr_start];
 				double log_pw = 0;
 				if(token_t != ID_BOW){
@@ -182,7 +182,7 @@ namespace npycrf {
 				return log_pw;
 			}
 			// 文字列のcontext_substr_startからcontext_substr_endまでの部分文字列を文脈として、context_substr_end+1の文字が生成される確率
-			double VPYLM::compute_p_w_given_h(int const* character_ids, int context_substr_start, int context_substr_end){
+			double VPYLM::compute_p_w_given_h(array<int> &character_ids, int context_substr_start, int context_substr_end){
 				assert(context_substr_start >= 0);
 				assert(context_substr_end >= context_substr_start);
 				int target_id = character_ids[context_substr_end + 1];
@@ -190,7 +190,7 @@ namespace npycrf {
 			}
 			// 単語のサンプリングなどで任意のtarget_idの確率を計算することがあるため一般化
 			// 文字列のcontext_substr_startからcontext_substr_endまでの部分文字列を文脈として、target_idが生成される確率
-			double VPYLM::compute_p_w_given_h(int target_id, int const* character_ids, int context_substr_start, int context_substr_end){
+			double VPYLM::compute_p_w_given_h(int target_id, array<int> &character_ids, int context_substr_start, int context_substr_end){
 				assert(context_substr_start >= 0);
 				assert(context_substr_end >= context_substr_start);
 				Node<int>* node = _root;
@@ -235,7 +235,7 @@ namespace npycrf {
 				return p;
 			}
 			// 辿ったノードとそれぞれのノードからの出力確率をキャッシュしながらオーダーをサンプリング
-			int VPYLM::sample_depth_at_time_t(int const* character_ids, int t, double* parent_pw_cache, Node<int>** path_nodes){
+			int VPYLM::sample_depth_at_time_t(array<int> &character_ids, int t, double* parent_pw_cache, Node<int>** path_nodes){
 				assert(path_nodes != NULL);
 				assert(parent_pw_cache != NULL);
 				if(t == 0){

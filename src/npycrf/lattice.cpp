@@ -232,7 +232,7 @@ namespace npycrf {
 	void Lattice::_sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double prod_scaling){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
-		int const* character_ids = sentence->_character_ids;
+		array<int> &character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		assert(t <= _max_sentence_length + 1);
 		assert(k <= _max_word_length);
@@ -373,7 +373,7 @@ namespace npycrf {
 		assert(_pure_crf_mode == false);
 		int table_index = 0;
 		wchar_t const* characters = sentence->_characters;
-		int const* character_ids = sentence->_character_ids;
+		array<int> &character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		double sum_p = 0;
 		int limit_k = std::min(t, _max_word_length);
@@ -516,7 +516,7 @@ namespace npycrf {
 	void Lattice::viterbi_argmax_alpha_t_k_j(Sentence* sentence, int t, int k, int j){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
-		int const* character_ids = sentence->_character_ids;
+		array<int> &character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		assert(t <= character_ids_length + 1);
 		assert(k <= _max_word_length);
@@ -609,7 +609,7 @@ namespace npycrf {
 	void Lattice::viterbi_argmax_backward_k_and_j_to_eos(Sentence* sentence, int t, int next_word_length, int &argmax_k, int &argmax_j){
 		assert(t == sentence->size());
 		wchar_t const* characters = sentence->_characters;
-		int const* character_ids = sentence->_character_ids;
+		array<int> &character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		double max_log_p = 0;
 		argmax_k = 0;
@@ -874,7 +874,7 @@ namespace npycrf {
 		int t = sentence->size() + 1; // <eos>を指す
 		int k = 1;	// ここでは<eos>の長さを1と考える
 		wchar_t const* characters = sentence->_characters;
-		int const* character_ids = sentence->_character_ids;
+		array<int> &character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		double potential = _crf->compute_gamma(sentence, t, t + 1);
 		// double potential = 0;
@@ -920,7 +920,7 @@ namespace npycrf {
 		// <eos>への接続を考える
 		int t = sentence->size();
 		wchar_t const* characters = sentence->_characters;
-		int const* character_ids = sentence->_character_ids;
+		array<int> &character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		double potential = _crf->compute_gamma(sentence, t + 1, t + 2);
 		// double potential = 0;
@@ -978,7 +978,7 @@ namespace npycrf {
 	void Lattice::_sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** pw_h_tkji, double* scaling, bool use_scaling){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
-		int const* character_ids = sentence->_character_ids;
+		array<int> &character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
 		assert(1 <= t && t <= character_ids_length);
 		assert(1 <= k && k <= _max_word_length);

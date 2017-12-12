@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../npycrf/common.h"
+#include "../npycrf/array.h"
 #include "npycrf.h"
 
 using namespace npycrf::npylm;
@@ -87,7 +88,7 @@ namespace npycrf {
 			_npylm->reserve(sentence_str.size());
 			std::vector<int> segments;		// 分割の一時保存用
 			// 構成文字を文字IDに変換
-			int* character_ids = new int[sentence_str.size()];
+			array<int> character_ids = array<int>(sentence_str.size());
 			for(int i = 0;i < sentence_str.size();i++){
 				wchar_t character = sentence_str[i];
 				int character_id = dictionary->get_character_id(character);
@@ -95,7 +96,6 @@ namespace npycrf {
 			}
 			Sentence* sentence = new Sentence(sentence_str, character_ids);
 			double ret = compute_normalizing_constant(sentence);
-			delete[] character_ids;
 			delete sentence;
 			return ret;
 		}
@@ -122,7 +122,7 @@ namespace npycrf {
 			_npylm->reserve(sentence_str.size());
 			std::vector<int> segments;		// 分割の一時保存用
 			// 構成文字を文字IDに変換
-			int* character_ids = new int[sentence_str.size()];
+			array<int> character_ids = array<int>(sentence_str.size());
 			for(int i = 0;i < sentence_str.size();i++){
 				wchar_t character = sentence_str[i];
 				int character_id = dictionary->get_character_id(character);
@@ -136,7 +136,6 @@ namespace npycrf {
 				std::wstring word = sentence->get_word_str_at(n + 2);
 				words.append(word);
 			}
-			delete[] character_ids;
 			delete sentence;
 			return words;
 		}

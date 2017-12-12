@@ -4,6 +4,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <vector> 
 #include "../common.h"
+#include "../array.h"
 #include "lm/node.h"
 #include "lm/vpylm.h"
 #include "lm/hpylm.h"
@@ -11,7 +12,7 @@
 namespace npycrf {
 	namespace npylm {
 		// character_idsのsubstr_char_t_startからsubstr_char_t_endまでの文字列に<eow>を付けてtoken_idsの先頭に格納
-		void append_eow(wchar_t const* character_ids, int substr_char_t_start, int substr_char_t_end, int* token_ids);
+		void append_eow(npycrf::array<int> &character_ids, int substr_char_t_start, int substr_char_t_end, npycrf::array<int> &token_ids);
 		double factorial(double n);
 		class NPYLM {
 		private:
@@ -34,14 +35,14 @@ namespace npycrf {
 			hashmap<id, double> _g0_cache;
 			hashmap<id, double> _vpylm_g0_cache;
 			double* _lambda_for_type;
-			double* _pk_vpylm;	// 文字n-gramから長さkの単語が生成される確率
+			npycrf::array<double> _pk_vpylm;	// 文字n-gramから長さkの単語が生成される確率
+			npycrf::array<int> _token_ids;
 			int _max_word_length;
 			int _max_sentence_length;
 			double _lambda_a;
 			double _lambda_b;
 			// 計算高速化用
 			double* _hpylm_parent_pw_cache;
-			int* _token_ids;
 			bool _fix_g0_using_poisson; // 単語の事前分布をポアソン分布により補正するかどうか
 			NPYLM(){}
 			NPYLM(int max_word_length, 
@@ -57,18 +58,18 @@ namespace npycrf {
 			void set_lambda_prior(double a, double b);
 			void sample_lambda_with_initial_params();
 			bool add_customer_at_time_t(Sentence* sentence, int t);
-			void vpylm_add_customers(int const* character_ids, int token_ids_length, std::vector<int> &prev_depths);
+			void vpylm_add_customers(array<int> &character_ids, int token_ids_length, std::vector<int> &prev_depths);
 			bool remove_customer_at_time_t(Sentence* sentence, int t);
-			void vpylm_remove_customers(int const* character_ids, int token_ids_length, std::vector<int> &prev_depths);
+			void vpylm_remove_customers(array<int> &character_ids, int token_ids_length, std::vector<int> &prev_depths);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(Sentence* sentence, int word_t_index, double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(id const* word_ids, int word_ids_length, int word_t_index, bool generate_node_if_needed, bool return_middle_node);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(
-				int const* character_ids, wchar_t const* characters, int character_ids_length, 
+				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
 				int word_t_index, int substr_char_t_start, int substr_char_t_end, 
 				double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node);
 			// word_idは既知なので再計算を防ぐ
-			double compute_g0_substring_at_time_t(int const* character_ids, wchar_t const* characters, int character_ids_length, int substr_char_t_start, int substr_char_t_end, id word_t_id);
+			double compute_g0_substring_at_time_t(array<int> &character_ids, wchar_t const* characters, int character_ids_length, int substr_char_t_start, int substr_char_t_end, id word_t_id);
 			double compute_poisson_k_lambda(unsigned int k, double lambda);
 			double compute_p_k_given_vpylm(int k);
 			void sample_hpylm_vpylm_hyperparameters();
@@ -76,10 +77,10 @@ namespace npycrf {
 			double compute_p_y_given_sentence(Sentence* sentence);
 			double compute_p_w_given_h(Sentence* sentence, int word_t_index);
 			double compute_p_w_given_h(
-				int const* character_ids, wchar_t const* characters, int character_ids_length, 
+				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, int word_t_index);
 			double compute_p_w_given_h(
-				int const* character_ids, wchar_t const* characters, int character_ids_length, 
+				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
 				int word_t_index, int substr_char_t_start, int substr_char_t_end);
 		};

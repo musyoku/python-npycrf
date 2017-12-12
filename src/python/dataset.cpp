@@ -3,6 +3,7 @@
 #include <fstream>
 #include "dataset.h"
 #include "../npycrf/sampler.h"
+#include "../npycrf/array.h"
 
 namespace npycrf {
 	namespace python {
@@ -34,7 +35,7 @@ namespace npycrf {
 					segmentation.push_back(word_str.size());
 				}
 				// 構成文字を辞書に追加し、文字IDに変換
-				int* character_ids = new int[sentence_str.size()];
+				array<int> character_ids = array<int>(sentence_str.size());
 				for(int i = 0;i < sentence_str.size();i++){
 					wchar_t character = sentence_str[i];
 					int character_id = dict->add_character(character);
