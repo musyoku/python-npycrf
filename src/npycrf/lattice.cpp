@@ -1043,11 +1043,22 @@ namespace npycrf {
 		_clear_word_id_cache();
 		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, true);
 		_enumerate_backward_variables(sentence, _beta, _pw_h, _scaling, true);
-		_enumerate_marginal_p_trigram_given_sentence(sentence, p_conc, _alpha, _beta);
+		_enumerate_marginal_p_trigram_given_sentence(sentence, p_conc, _alpha, _beta, _scaling);
 	}	
-	void Lattice::_enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, npycrf::array<double> &p_conc, double*** alpha, double*** beta){
-		for(int t = 1;t <= sentence->get_num_segments();t++){
+	void Lattice::_enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, npycrf::array<double> &p_conc, double*** alpha, double*** beta, double* scaling){
+		sentence->dump_words();
+		for(int n = 2;n < sentence->get_num_segments() - 1;n++){	// <eos>を除く
+			int k = sentence->_segments[n];
+			int t = sentence->_start[n] + k;
+			int j = (t - k == 0) ? 0 : sentence->_segments[n - 1];
+			int i = (t - k - j == 0) ? 0 : sentence->_segments[n - 2];
+			std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << std::endl;
+			double cost = 0;
+			if(_pure_crf_mode){
+				cost = 0;
+			}else{
 
+			}
 		}
 	}
 	// p(z_t, z_{t+1}|s)の計算

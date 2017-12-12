@@ -72,7 +72,7 @@ namespace npycrf {
 		double compute_log_normalizing_constant(Sentence* sentence, bool use_scaling = true);
 		double _compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji);
 		void enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, npycrf::array<double> &p_conc);
-		void _enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, npycrf::array<double> &p_conc, double*** alpha, double*** beta);
+		void _enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, npycrf::array<double> &p_conc, double*** alpha, double*** beta, double* scaling);
 		void enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s);
 		void _enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s, double*** alpha, double*** beta, double Zs);
 		void _enumerate_marginal_p_path_given_sentence_using_p_substring(double*** pz_s, int sentence_length, double** pc_s);

@@ -129,8 +129,8 @@ void test_backward_unigram(bool pure_crf_mode){
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
-	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
-	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
 	sentence->_features = crf->extract_features(sentence);
@@ -316,8 +316,8 @@ void test_backward_bigram(bool pure_crf_mode){
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
-	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
-	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
 	sentence->_features = crf->extract_features(sentence);
@@ -493,8 +493,8 @@ void test_backward_identical_1(bool pure_crf_mode){
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
-	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
-	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
 	sentence->_features = crf->extract_features(sentence);
@@ -664,8 +664,8 @@ void test_backward_identical_2(bool pure_crf_mode){
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
-	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
-	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
 	sentence->_features = crf->extract_features(sentence);
@@ -839,8 +839,8 @@ void test_backward_character_type_unigram(bool pure_crf_mode){
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
-	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
-	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
 	sentence->_features = crf->extract_features(sentence);
@@ -986,8 +986,8 @@ void test_backward_character_type_bigram(bool pure_crf_mode){
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
-	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
-	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
 	sentence->_features = crf->extract_features(sentence);
@@ -1178,8 +1178,8 @@ void test_backward_label(bool pure_crf_mode){
 	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
 	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
-	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
-	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
+	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
 
 	crf::CRF* crf = var->py_crf->_crf;
 	sentence->_features = crf->extract_features(sentence);
@@ -1330,11 +1330,8 @@ void test_backward_lambda_0(bool pure_crf_mode){
 	lattice->_clear_word_id_cache();
 	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
-	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
-	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
-	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
-	lattice->_enumerate_proportional_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
-	lattice->_enumerate_marginal_p_path_given_sentence(lattice->_pz_s, sentence->size(), lattice->_pc_s);
+	array<double> p_conc(sentence->get_num_segments() - 2);
+	lattice->enumerate_marginal_p_trigram_given_sentence(sentence, p_conc);
 
 	crf::CRF* crf = var->py_crf->_crf;
 	sentence->_features = crf->extract_features(sentence);
