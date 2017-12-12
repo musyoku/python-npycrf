@@ -500,6 +500,13 @@ namespace npycrf {
 			result.append(mean_recall);
 			return result;
 		}
+		void Trainer::print_p_k_vpylm(){
+			int max_word_length = _npycrf->get_max_word_length();
+			npycrf::array<double> &pk_vpylm = _npycrf->_npylm->_pk_vpylm;
+			for(int k = 1;k <= max_word_length;k++){
+				std::cout << "k = " << k << ", " << pk_vpylm[k] << std::endl;
+			}
+		}
 		void Trainer::print_segmentation_labeled_train(int num_to_print){
 			_print_segmentation(num_to_print, _dataset_l->_sentences_train, _rand_indices_train_l);
 		}

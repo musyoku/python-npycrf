@@ -132,10 +132,10 @@ namespace npycrf {
 			table = NULL;
 		}
 	}
-	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf): Lattice(npylm, crf, 12, 100){
+	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf): Lattice(npylm, crf, 100){
 		
 	}
-	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, int max_word_length, int max_sentence_length){
+	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, int max_sentence_length){
 		_npylm = npylm;
 		_crf = crf;
 		_word_ids = new id[3];	// 3-gram
@@ -148,7 +148,7 @@ namespace npycrf {
 		_viterbi_backward = NULL;
 		_substring_word_id_cache = NULL;
 		_pure_crf_mode = false;
-		_allocate_capacity(max_word_length, max_sentence_length);
+		_allocate_capacity(npylm->_max_word_length, max_sentence_length);
 	}
 	Lattice::~Lattice(){
 		delete[] _word_ids;

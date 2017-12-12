@@ -50,6 +50,7 @@ namespace npycrf {
 			void print_segmentation_unlabeled_train(int num_to_print);
 			void print_segmentation_labeled_dev(int num_to_print);
 			void print_segmentation_unlabeled_dev(int num_to_print);
+			void print_p_k_vpylm();
 			int detect_hash_collision(int max_word_length);
 		};
 	}

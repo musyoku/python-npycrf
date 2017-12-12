@@ -12,6 +12,7 @@ namespace npycrf {
 			double _regularization_constant;
 			double _grad_bias;
 			double* _grad_weight;
+			double _grad_lambda_0;
 			SGD(crf::CRF* crf, double regularization_constant);
 			~SGD();
 			void clear_grads();

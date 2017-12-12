@@ -175,6 +175,10 @@ def main():
 		# モデルの保存
 		npylm.save(os.path.join(args.working_directory, "npylm.model"))
 		crf.save(os.path.join(args.working_directory, "crf.model"))
+		
+
+
+		trainer.print_p_k_vpylm()
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

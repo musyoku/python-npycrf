@@ -29,6 +29,7 @@ BOOST_PYTHON_MODULE(npycrf){
 	.def("print_segmentation_unlabeled_train", &Trainer::print_segmentation_unlabeled_train)
 	.def("print_segmentation_labeled_dev", &Trainer::print_segmentation_labeled_dev)
 	.def("print_segmentation_unlabeled_dev", &Trainer::print_segmentation_unlabeled_dev)
+	.def("print_p_k_vpylm", &Trainer::print_p_k_vpylm)
 	.def("sample_hpylm_vpylm_hyperparameters", &Trainer::sample_hpylm_vpylm_hyperparameters)
 	.def("sample_npylm_lambda", &Trainer::sample_npylm_lambda)
 	.def("update_p_k_given_vpylm", &Trainer::update_p_k_given_vpylm)

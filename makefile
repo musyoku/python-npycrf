@@ -30,10 +30,10 @@ check_ldflags:	## libpython3の場所を確認
 	python3-config --ldflags
 
 module_tests: ## 各モジュールのテスト.
+	$(CC) test/module_tests/solver/sgd.cpp $(SOURCES) -o test/module_tests/solver/sgd $(INCLUDE) $(LDFLAGS) -O0 -g
+	./test/module_tests/solver/sgd
 	$(CC) test/module_tests/npylm/vpylm.cpp $(SOURCES) -o test/module_tests/npylm/vpylm $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm/vpylm
-	$(CC) test/module_tests/solver/sgd.cpp $(SOURCES) -o test/module_tests/solver/sgd $(INCLUDE) $(LDFLAGS) -O3
-	./test/module_tests/solver/sgd
 	$(CC) test/module_tests/npylm/lattice.cpp $(SOURCES) -o test/module_tests/npylm/lattice $(INCLUDE) $(LDFLAGS) -O0 -g
 	./test/module_tests/npylm/lattice
 	$(CC) test/module_tests/crf/crf.cpp $(SOURCES) -o test/module_tests/crf/crf $(INCLUDE) $(LDFLAGS) -O0 -g
@@ -48,7 +48,7 @@ module_tests: ## 各モジュールのテスト.
 	./test/module_tests/npylm/hash
 
 running_tests:	## 運用テスト
-	$(CC) test/running_tests/train.cpp $(SOURCES)  -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O3 -Wall
+	$(CC) test/running_tests/train.cpp $(SOURCES)  -o test/running_tests/train $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 	$(CC) test/running_tests/likelihood.cpp $(SOURCES) -o test/running_tests/likelihood $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 	$(CC) test/running_tests/save.cpp $(SOURCES) -o test/running_tests/save $(INCLUDE) $(LDFLAGS) -O0 -g -Wall
 

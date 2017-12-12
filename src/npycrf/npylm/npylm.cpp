@@ -223,15 +223,24 @@ namespace npycrf {
 			assert(word_t_index < word_ids_length);
 			Node<id>* node = _hpylm->_root;
 			id word_t_id = word_ids[word_t_index];
-			double parent_pw = -1;
+			int word_length = substr_t_end_index - substr_t_start_index + 1;
+			double parent_pw = 0;
 			if(word_t_id == SPECIAL_CHARACTER_END){
 				parent_pw = _vpylm->_g0;
 			}else{
 				assert(0 <= substr_t_start_index && substr_t_start_index <= substr_t_end_index);
 				assert(substr_t_start_index <= substr_t_end_index);
-				parent_pw = compute_g0_substring_at_time_t(character_ids, characters, character_ids_length, substr_t_start_index, substr_t_end_index, word_t_id);
+				if(word_length > _max_word_length){
+					parent_pw = 0;
+				}else{
+					parent_pw = compute_g0_substring_at_time_t(character_ids, characters, character_ids_length, substr_t_start_index, substr_t_end_index, word_t_id);
+				}
 			}
-			assert(parent_pw > 0);
+			if(word_length > _max_word_length){
+				assert(parent_pw >= 0);
+			}else{
+				assert(parent_pw > 0);
+			}
 			parent_pw_cache[0] = parent_pw;
 			for(int depth = 1;depth <= 2;depth++){
 				id context_id = SPECIAL_CHARACTER_BEGIN;
@@ -271,9 +280,7 @@ namespace npycrf {
 			assert(substr_t_end_index >= substr_t_start_index);
 			int word_length = substr_t_end_index - substr_t_start_index + 1;
 			assert(word_length <= character_ids_length);
-			// if(word_length > _max_word_length){
-			// 	return 0;
-			// }
+			assert(word_length <= _max_word_length);
 			auto itr = _g0_cache.find(word_t_id);
 			if(itr == _g0_cache.end()){
 				// 先頭に<bow>をつける
@@ -308,11 +315,11 @@ namespace npycrf {
 						std::cout << character_ids[u] << ", ";
 					}
 					std::cout << std::endl;
-					std::cout << pw << std::endl;
-					std::cout << poisson << std::endl;
-					std::cout << p_k_given_vpylm << std::endl;
-					std::cout << g0 << std::endl;
-					std::cout << word_length << std::endl;
+					std::cout << "pw = " << pw << std::endl;
+					std::cout << "poisson = " << poisson << std::endl;
+					std::cout << "p_k_given_vpylm = " << p_k_given_vpylm << std::endl;
+					std::cout << "g0 = " << g0 << std::endl;
+					std::cout << "word_length = " << word_length << std::endl;
 				}
 				assert(0 < g0 && g0 < 1);
 				_g0_cache[word_t_id] = g0;
@@ -324,10 +331,7 @@ namespace npycrf {
 			return pow(lambda, k) * exp(-lambda) / factorial(k);
 		}
 		double NPYLM::compute_p_k_given_vpylm(int k){
-			assert(k > 0);
-			if(k > _max_word_length){
-				return 0;
-			}
+			assert(0 < k && k <= _max_word_length);
 			return _pk_vpylm[k];
 		}
 		void NPYLM::sample_hpylm_vpylm_hyperparameters(){

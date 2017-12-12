@@ -1,4 +1,6 @@
 #pragma once
+#include <cassert>
+
 namespace npycrf {
 	template<typename T>
 	class array {
