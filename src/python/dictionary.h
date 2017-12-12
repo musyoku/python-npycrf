@@ -5,11 +5,11 @@ namespace npycrf {
 	namespace python {
 		class Dictionary{
 		public:
-			hashmap<wchar_t, int> _map_character_ids;	// すべての文字
+			hashmap<wchar_t, int> _map_character_to_id;	// すべての文字
+			hashmap<int, wchar_t> _map_id_to_character;	// すべての文字
 			Dictionary(){
-				_map_character_ids[CHARACTER_ID_UNK] = 0;	// <unk>
-				_map_character_ids[CHARACTER_ID_BOS] = 1;	// <s>
-				_map_character_ids[CHARACTER_ID_EOS] = 2;	// </s>
+				_map_character_to_id[TOKEN_UNK] = 0;	// <unk>
+				_map_character_to_id[CHARACTER_ID_EOS] = 1;	// </s>
 			}
 			Dictionary(std::string filename);
 			int add_character(wchar_t character);

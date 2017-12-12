@@ -39,7 +39,7 @@ void run_training_loop(){
 	std::wcin.imbue(ctype_default);
 	
 	Corpus* corpus_u = new Corpus();
-	std::string filename_u = "../../dataset/test.txt";
+	std::string filename_u = "../../dataset/aozora/kokoro.txt";
 	std::wifstream ifs_u(filename_u.c_str());
 	std::wstring sentence_str;
 	assert(ifs_u.fail() == false);

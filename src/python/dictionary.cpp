@@ -16,21 +16,22 @@ namespace npycrf {
 			}
 		}
 		int Dictionary::add_character(wchar_t character){
-			auto itr = _map_character_ids.find(character);
-			if(itr == _map_character_ids.end()){
-				int character_id = _map_character_ids.size();
-				_map_character_ids[character] = character_id;
+			auto itr = _map_character_to_id.find(character);
+			if(itr == _map_character_to_id.end()){
+				int character_id = _map_character_to_id.size();
+				_map_character_to_id[character] = character_id;
+				_map_id_to_character[character_id] = character;
 				return character_id;
 			}
 			return itr->second;
 		}
 		int Dictionary::get_num_characters(){
-			return _map_character_ids.size();
+			return _map_character_to_id.size();
 		}
 		int Dictionary::get_character_id(wchar_t character){
-			auto itr = _map_character_ids.find(character);
-			if(itr == _map_character_ids.end()){
-				return CHARACTER_ID_UNK;
+			auto itr = _map_character_to_id.find(character);
+			if(itr == _map_character_to_id.end()){
+				return TOKEN_UNK;
 			}
 			return itr->second;
 		}
@@ -39,7 +40,8 @@ namespace npycrf {
 			std::ifstream ifs(dictionary_filename);
 			if(ifs.good()){
 				boost::archive::binary_iarchive iarchive(ifs);
-				iarchive >> _map_character_ids;
+				iarchive >> _map_character_to_id;
+				iarchive >> _map_id_to_character;
 				ifs.close();
 				return true;
 			}
@@ -49,7 +51,8 @@ namespace npycrf {
 		bool Dictionary::save(std::string filename){
 			std::ofstream ofs(filename);
 			boost::archive::binary_oarchive oarchive(ofs);
-			oarchive << _map_character_ids;
+			oarchive << _map_character_to_id;
+			oarchive << _map_id_to_character;
 			ofs.close();
 			return true;
 		}

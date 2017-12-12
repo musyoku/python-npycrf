@@ -21,7 +21,7 @@ namespace npycrf {
 			Dictionary* _dict;
 			NPYCRF* _npycrf;
 			solver::SGD* _sgd;
-			double* _vpylm_sampling_probability_table;
+			npycrf::array<double> _vpylm_sampling_probability_table;
 			bool* _added_to_npylm_u;
 			bool* _added_to_npylm_l;
 			int _total_gibbs_iterations;
@@ -37,7 +37,7 @@ namespace npycrf {
 			void sgd(double learning_rate, int batchsize = 32, bool pure_crf = false);
 			void sample_hpylm_vpylm_hyperparameters();
 			void sample_npylm_lambda();
-			int sample_word_from_vpylm_given_context(array<int> &context_ids, int context_length, int sample_t);
+			int sample_word_from_vpylm_given_context(array<int> &context_ids, int sample_t);
 			void update_p_k_given_vpylm();
 			double compute_perplexity_train();
 			double compute_perplexity_dev();

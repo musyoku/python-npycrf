@@ -15,7 +15,7 @@ namespace npycrf {
 			_dict = dict;
 			_npycrf = npycrf;
 			_sgd = new solver::SGD(npycrf->_crf, crf_regularization_constant);
-			_vpylm_sampling_probability_table = new double[_dict->get_num_characters() + 1];	// </s>を含む
+			_vpylm_sampling_probability_table = array<double>(_dict->get_num_characters() + 1);	// </s>を含む
 			_total_gibbs_iterations = 0;
 
 			// 教師なしデータ
@@ -109,14 +109,14 @@ namespace npycrf {
 			}
 		}
 		// VPYLMに文脈を渡し次の文字を生成
-		int Trainer::sample_word_from_vpylm_given_context(npycrf::array<int> &context_ids, int context_length, int sample_t){
+		int Trainer::sample_word_from_vpylm_given_context(npycrf::array<int> &context_ids, int sample_t){
 			double sum_probs = 0;
 			npylm::lm::VPYLM* vpylm = _npycrf->_npylm->_vpylm;
-			auto all_characters = _dict->_map_character_ids;
+			auto &all_characters = _dict->_map_character_to_id;
 			int num_characters = _dict->get_num_characters();
 			for(auto elem: all_characters){
-				int character_id = elem.first; 
-				double pw = vpylm->compute_p_w_given_h(character_id, context_ids, 0, context_length - 1);
+				int character_id = elem.second; 
+				double pw = vpylm->compute_p_w_given_h(character_id, context_ids, 0, sample_t - 1);
 				sum_probs += pw;
 				_vpylm_sampling_probability_table[character_id] = pw;
 			}
@@ -147,7 +147,7 @@ namespace npycrf {
 			npylm::lm::VPYLM* vpylm = _npycrf->_npylm->_vpylm;
 			npycrf::array<int> character_ids(max_word_length + 1);
 			double sum_words = 0;
-			auto all_characters = _dict->_map_character_ids;
+			auto &all_characters = _dict->_map_character_to_id;
 			int num_characters = _dict->get_num_characters();
 			std::cout << "num_characters: " << num_characters << std::endl;
 			std::cout << "all_characters: " << all_characters.size() << std::endl;
@@ -156,6 +156,10 @@ namespace npycrf {
 			for(auto elem: all_characters){
 				int character_id = elem.second; 
 				character_ids[0] = character_id;
+				if(character_id == ID_EOW){
+					unigram_distribution[character_id] = 0;
+					continue;
+				}
 				double pw = vpylm->compute_p_w(character_ids, 0, 0);
 				sum_probs += pw;
 				unigram_distribution[character_id] = pw;
@@ -166,7 +170,7 @@ namespace npycrf {
 				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 					return;		
 				}
-				int start_character_id = ID_EOW;
+				int start_character_id = -1;
 				double normalizer = 1.0 / sum_probs;
 				double r = sampler::uniform(0, 1);
 				double stack = 0;
@@ -177,22 +181,37 @@ namespace npycrf {
 						break;
 					}
 				}
+				assert(start_character_id != -1);
 				// wcout << "m = " << m << endl;
 				character_ids[0] = start_character_id;
-				int j = 1;
-				for(;j < max_word_length;j++){
-					int next_character_id = sample_word_from_vpylm_given_context(character_ids, j, j);
-					character_ids[j] = next_character_id;
+				int word_length = 1;
+				for(int k = 1;k < max_word_length;k++){
+					int next_character_id = sample_word_from_vpylm_given_context(character_ids, k);
+					character_ids[k] = next_character_id;
 					if(next_character_id == ID_EOW){
 						break;
 					}
+					word_length += 1;
 				}
+
+				std::cout << "length: " << word_length << std::endl;
+				std::wstring str = L"";
+				for(int u = 0;u < word_length;u++){
+					if(character_ids[u] == ID_EOW){
+						break;
+					}
+					str += _dict->_map_id_to_character[character_ids[u]];
+					std::cout << character_ids[u] << ", ";
+				}
+				std::cout << std::endl;
+				std::wcout << str << std::endl;
+
 				sum_words += 1;
-				if(j == 0){	// <bow><eow>
+				if(word_length == 0){	// <bow><eow>
 					continue;
 				}
-				assert(j <= max_word_length);
-				num_words_of_k[j] += 1;
+				assert(word_length <= max_word_length);
+				num_words_of_k[word_length] += 1;
 
 				// すべてのkが生成されていたら早期終了
 				if(m % 100 == 0){

@@ -1492,7 +1492,7 @@ int main(int argc, char *argv[]){
 	std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
 	std::wcout.imbue(ctype_default);
 	std::wcin.imbue(ctype_default);
-	token_ids[CHARACTER_ID_UNK] = token_ids.size();
+	token_ids[TOKEN_UNK] = token_ids.size();
 	token_ids[CHARACTER_ID_BOS] = token_ids.size();
 	token_ids[CHARACTER_ID_EOS] = token_ids.size();
 	test_indices();

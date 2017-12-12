@@ -26,10 +26,6 @@ using id = size_t;
 #define VPYLM_BETA_PASS  1
 #define VPYLM_EPS 1e-12
 
-#define ID_BOS 0
-#define ID_BOW 0
-#define ID_EOS 1
-#define ID_EOW 2
-#define CHARACTER_ID_UNK 0
-#define CHARACTER_ID_BOS 1
-#define CHARACTER_ID_EOS 2
+#define SPECIAL_CHARACTER_UNK 0
+#define SPECIAL_CHARACTER_BEGIN 1
+#define SPECIAL_CHARACTER_END 2
