@@ -24,9 +24,9 @@ double compute_p_w_given_h(NPYLM* npylm, Sentence* sentence, int word_t_index){
 	assert(substr_char_t_start >= 0);
 	id word_id = sentence->_word_ids[word_t_index];
 	if(word_t_index == word_ids_length - 1){
-		assert(word_id == ID_EOS);
+		assert(word_id == SPECIAL_CHARACTER_END);
 	}else{
-		if(word_id != ID_EOS){
+		if(word_id != SPECIAL_CHARACTER_END){
 			assert(substr_char_t_end < character_ids_length);
 			#ifdef __DEBUG__
 			id a = hash_substring_ptr(sentence->_characters, substr_char_t_start, substr_char_t_end);

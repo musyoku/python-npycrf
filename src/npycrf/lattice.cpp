@@ -216,7 +216,7 @@ namespace npycrf {
 		assert(k < _max_sentence_length + 1);
 		assert(t - k >= 0);
 		if(t == 0){
-			return ID_BOS;
+			return SPECIAL_CHARACTER_BEGIN;
 		}
 		id word_id = _substring_word_id_cache[t][k];
 		if(word_id == 0){
@@ -245,8 +245,8 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
-				_word_ids[0] = ID_BOS;
-				_word_ids[1] = ID_BOS;
+				_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
+				_word_ids[1] = SPECIAL_CHARACTER_BEGIN;
 				_word_ids[2] = word_k_id;
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
@@ -264,7 +264,7 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
-				_word_ids[0] = ID_BOS;
+				_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
 				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);;
 				_word_ids[2] = word_k_id;
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
@@ -381,7 +381,7 @@ namespace npycrf {
 			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 				id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
 				id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
-				id word_t_id = ID_EOS;
+				id word_t_id = SPECIAL_CHARACTER_END;
 				if(t < sentence->size()){
 					assert(t + next_word_length <= sentence->size());
 					assert(next_word_length > 0);
@@ -416,9 +416,9 @@ namespace npycrf {
 				// p_k.push_back(p);
 			}
 			if(t - k == 0){
-				id word_j_id = ID_BOS;
+				id word_j_id = SPECIAL_CHARACTER_BEGIN;
 				id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
-				id word_t_id = ID_EOS;
+				id word_t_id = SPECIAL_CHARACTER_END;
 				if(t < sentence->size()){
 					assert(t + next_word_length <= sentence->size());
 					assert(next_word_length > 0);
@@ -524,8 +524,8 @@ namespace npycrf {
 		assert(t - k >= 0);
 		// <bos>から生成されている場合
 		if(j == 0){
-			_word_ids[0] = ID_BOS;
-			_word_ids[1] = ID_BOS;
+			_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
+			_word_ids[1] = SPECIAL_CHARACTER_BEGIN;
 			_word_ids[2] = word_k_id;
 			double p = 0;
 			double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
@@ -544,7 +544,7 @@ namespace npycrf {
 		// i=0に相当
 		if(t - k - j == 0){
 			id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-			_word_ids[0] = ID_BOS;
+			_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
 			_word_ids[1] = word_j_id;
 			_word_ids[2] = word_k_id;
 			double p = 0;
@@ -624,7 +624,7 @@ namespace npycrf {
 				}else{
 					_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k, j);;
 					_word_ids[1] = get_substring_word_id_at_t_k(sentence, t, k);;
-					_word_ids[2] = ID_EOS;
+					_word_ids[2] = SPECIAL_CHARACTER_END;
 					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t);
 					assert(pw_h > 0);
 					p = exp(_lambda_0() * log(pw_h) + potential);
@@ -644,9 +644,9 @@ namespace npycrf {
 				if(_pure_crf_mode){
 					p = exp(potential);
 				}else{
-					_word_ids[0] = ID_BOS;
+					_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
 					_word_ids[1] = get_substring_word_id_at_t_k(sentence, t, k);;
-					_word_ids[2] = ID_EOS;
+					_word_ids[2] = SPECIAL_CHARACTER_END;
 					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t);
 					assert(pw_h > 0);
 					p = exp(_lambda_0() * log(pw_h) + potential);
@@ -887,7 +887,7 @@ namespace npycrf {
 				}else{
 					_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k - j, i);
 					_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);
-					_word_ids[2] = ID_EOS;
+					_word_ids[2] = SPECIAL_CHARACTER_END;
 					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2);
 					assert(pw_h > 0);
 					p = exp(_lambda_0() * log(pw_h) + potential);
@@ -933,7 +933,7 @@ namespace npycrf {
 				}else{
 					_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k, j);
 					_word_ids[1] = word_k_id;
-					_word_ids[2] = ID_EOS;
+					_word_ids[2] = SPECIAL_CHARACTER_END;
 					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2);
 					assert(pw_h > 0);
 					p = exp(_lambda_0() * log(pw_h) + potential);
@@ -960,8 +960,8 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				p = exp(potential);
 			}else{
-				_word_ids[0] = ID_BOS;
-				_word_ids[1] = ID_BOS;
+				_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
+				_word_ids[1] = SPECIAL_CHARACTER_BEGIN;
 				_word_ids[2] = get_substring_word_id_at_t_k(sentence, i, i);
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, 0, i - 1);
 				assert(pw_h > 0);

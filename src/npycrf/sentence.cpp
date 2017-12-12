@@ -22,10 +22,10 @@ namespace npycrf {
 			_segments[i] = 0;
 			_labels[i] = 0;
 		}
-		_word_ids[0] = ID_BOS;
-		_word_ids[1] = ID_BOS;
+		_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
+		_word_ids[1] = SPECIAL_CHARACTER_BEGIN;
 		_word_ids[2] = get_substr_word_id(0, size() - 1);
-		_word_ids[3] = ID_EOS;
+		_word_ids[3] = SPECIAL_CHARACTER_END;
 		_segments[0] = 1;
 		_segments[1] = 1;
 		_segments[2] = _sentence_str.size();
@@ -128,7 +128,7 @@ namespace npycrf {
 		}
 		assert(sum == _sentence_str.size());
 		_segments[n + 2] = 1;
-		_word_ids[n + 2] = ID_EOS;
+		_word_ids[n + 2] = SPECIAL_CHARACTER_END;
 		_start[n + 2] = _start[n + 1];
 		n++;
 		for(;n < _sentence_str.size();n++){
@@ -152,7 +152,7 @@ namespace npycrf {
 		}
 		assert(sum == _sentence_str.size());
 		_segments[n + 2] = 1;
-		_word_ids[n + 2] = ID_EOS;
+		_word_ids[n + 2] = SPECIAL_CHARACTER_END;
 		_start[n + 2] = _sentence_str.size() - 1;
 		n++;
 		for(;n < _sentence_str.size();n++){

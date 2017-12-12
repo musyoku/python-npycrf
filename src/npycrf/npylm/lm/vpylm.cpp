@@ -172,10 +172,7 @@ namespace npycrf {
 			}
 			double VPYLM::compute_log_p_w(array<int> &character_ids, int substr_start, int substr_end){
 				int token_t = character_ids[substr_start];
-				double log_pw = 0;
-				if(token_t != ID_BOW){
-					log_pw = log(_root->compute_p_w(token_t, _g0, _d_m, _theta_m));
-				}
+				double log_pw = log(_root->compute_p_w(token_t, _g0, _d_m, _theta_m));
 				for(int t = substr_start;t < substr_end;t++){
 					log_pw += log(compute_p_w_given_h(character_ids, substr_start, t));
 				}

@@ -31,7 +31,7 @@ namespace npycrf {
 		int Dictionary::get_character_id(wchar_t character){
 			auto itr = _map_character_to_id.find(character);
 			if(itr == _map_character_to_id.end()){
-				return TOKEN_UNK;
+				return SPECIAL_CHARACTER_UNK;
 			}
 			return itr->second;
 		}

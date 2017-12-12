@@ -51,7 +51,7 @@ namespace npycrf {
 				int r_end = std::min(character_ids_length + 2, i + _crf->_x_unigram_end);	// <eos>2つを考慮
 				for(int r = r_start;r <= r_end;r++){
 					int pos = r - i - _crf->_x_unigram_start + 1;	// [1, _x_range_unigram]
-					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
 
 					// 発火
 					int k_u = _crf->_index_w_unigram_u(y_i, pos, x_i);
@@ -91,8 +91,8 @@ namespace npycrf {
 				int r_end = std::min(character_ids_length + 2, i + _crf->_x_bigram_end);
 				for(int r = r_start;r <= r_end;r++){
 					int pos = r - i - _crf->_x_unigram_start + 1;	// [1, _x_range_bigram]
-					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-					int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+					int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 
 					// 発火
 					int k_u = _crf->_index_w_bigram_u(y_i, pos, x_i_1, x_i);
@@ -132,8 +132,8 @@ namespace npycrf {
 				int r_end = std::min(character_ids_length + 2, i + _crf->_x_identical_1_end);
 				for(int r = r_start;r <= r_end;r++){
 					int pos = r - i - _crf->_x_identical_1_start + 1;	// [1, _x_range_identical_1]
-					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-					int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+					int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 					if(x_i == x_i_1){
 						// 発火
 						int k_u = _crf->_index_w_identical_1_u(y_i, pos);
@@ -174,8 +174,8 @@ namespace npycrf {
 				int r_end = std::min(character_ids_length + 2, i + _crf->_x_identical_2_end);
 				for(int r = r_start;r <= r_end;r++){
 					int pos = r - i - _crf->_x_identical_2_start + 1;	// [1, _x_range_identical_2]
-					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-					int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : CHARACTER_ID_EOS;
+					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+					int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : SPECIAL_CHARACTER_END;
 					if(x_i == x_i_2){
 						// 発火
 						int k_u = _crf->_index_w_identical_2_u(y_i, pos);

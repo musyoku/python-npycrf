@@ -172,7 +172,7 @@ void test_backward_unigram(bool pure_crf_mode){
 			int r = crf->_x_unigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(0 <= index);
-			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
+			int x_i = (index < character_ids_length) ? character_ids[index] : SPECIAL_CHARACTER_END;
 			double pi_k = (k == crf->_index_w_unigram_u(yt, pos, x_i)) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
@@ -253,7 +253,7 @@ void test_backward_unigram(bool pure_crf_mode){
 			int r = crf->_x_unigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(0 <= index);
-			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
+			int x_i = (index < character_ids_length) ? character_ids[index] : SPECIAL_CHARACTER_END;
 			double pi_k = (k == crf->_index_w_unigram_b(yt_1, yt, pos, x_i)) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
@@ -357,8 +357,8 @@ void test_backward_bigram(bool pure_crf_mode){
 			int r = crf->_x_bigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(1 <= index);
-			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
-			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : CHARACTER_ID_EOS;
+			int x_i = (index < character_ids_length) ? character_ids[index] : SPECIAL_CHARACTER_END;
+			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : SPECIAL_CHARACTER_END;
 			double pi_k = (k == crf->_index_w_bigram_u(yt, pos, x_i_1, x_i)) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
@@ -431,8 +431,8 @@ void test_backward_bigram(bool pure_crf_mode){
 			int r = crf->_x_bigram_start + (pos - 1);
 			int index = t + r - 1;
 			assert(1 <= index);
-			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
-			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : CHARACTER_ID_EOS;
+			int x_i = (index < character_ids_length) ? character_ids[index] : SPECIAL_CHARACTER_END;
+			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : SPECIAL_CHARACTER_END;
 			double pi_k = (k == crf->_index_w_bigram_b(yt_1, yt, pos, x_i_1, x_i)) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
@@ -531,8 +531,8 @@ void test_backward_identical_1(bool pure_crf_mode){
 			int r = crf->_x_identical_1_start + (pos - 1);
 			int index = t + r - 1;
 			assert(1 <= index);
-			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
-			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : CHARACTER_ID_EOS;
+			int x_i = (index < character_ids_length) ? character_ids[index] : SPECIAL_CHARACTER_END;
+			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : SPECIAL_CHARACTER_END;
 			double pi_k = (k == crf->_index_w_identical_1_u(yt, pos) && x_i_1 == x_i) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
@@ -603,8 +603,8 @@ void test_backward_identical_1(bool pure_crf_mode){
 			int r = crf->_x_identical_1_start + (pos - 1);
 			int index = t + r - 1;
 			assert(1 <= index);
-			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
-			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : CHARACTER_ID_EOS;
+			int x_i = (index < character_ids_length) ? character_ids[index] : SPECIAL_CHARACTER_END;
+			int x_i_1 = (index - 1 < character_ids_length) ? character_ids[index - 1] : SPECIAL_CHARACTER_END;
 			double pi_k = (k == crf->_index_w_identical_1_b(yt_1, yt, pos) && x_i_1 == x_i) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
@@ -705,8 +705,8 @@ void test_backward_identical_2(bool pure_crf_mode){
 			int r = crf->_x_identical_2_start + (pos - 1);
 			int index = t + r - 1;
 			assert(2 <= index);
-			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
-			int x_i_2 = (index - 2 < character_ids_length) ? character_ids[index - 2] : CHARACTER_ID_EOS;
+			int x_i = (index < character_ids_length) ? character_ids[index] : SPECIAL_CHARACTER_END;
+			int x_i_2 = (index - 2 < character_ids_length) ? character_ids[index - 2] : SPECIAL_CHARACTER_END;
 			double pi_k = (k == crf->_index_w_identical_2_u(yt, pos) && x_i_2 == x_i) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
@@ -777,8 +777,8 @@ void test_backward_identical_2(bool pure_crf_mode){
 			int r = crf->_x_identical_2_start + (pos - 1);
 			int index = t + r - 1;
 			assert(2 <= index);
-			int x_i = (index < character_ids_length) ? character_ids[index] : CHARACTER_ID_EOS;
-			int x_i_2 = (index - 2 < character_ids_length) ? character_ids[index - 2] : CHARACTER_ID_EOS;
+			int x_i = (index < character_ids_length) ? character_ids[index] : SPECIAL_CHARACTER_END;
+			int x_i_2 = (index - 2 < character_ids_length) ? character_ids[index - 2] : SPECIAL_CHARACTER_END;
 			double pi_k = (k == crf->_index_w_identical_2_b(yt_1, yt, pos) && x_i_2 == x_i) ? 1 : 0;
 			// cout << "t = " << t << ", s = " << s << ", yt_1 = " << yt_1 << ", yt = " << yt << ", seg = " << sentence->_segments[i] << ", i = " << i << endl;
 			double sum_expectation = 0;
@@ -1331,8 +1331,8 @@ int main(int argc, char *argv[]){
 	std::wcout.imbue(ctype_default);
 	std::wcin.imbue(ctype_default);
 	token_ids[TOKEN_UNK] = token_ids.size();
-	token_ids[CHARACTER_ID_BOS] = token_ids.size();
-	token_ids[CHARACTER_ID_EOS] = token_ids.size();
+	token_ids[SPECIAL_CHARACTER_BEGIN] = token_ids.size();
+	token_ids[SPECIAL_CHARACTER_END] = token_ids.size();
 	sampler::set_seed(0);
 
 	test_backward_label(false);

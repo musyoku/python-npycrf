@@ -18,7 +18,7 @@ namespace npycrf {
 			for(;i < substr_t_end_index - substr_t_start_index + 1;i++){
 				token_ids[i] = character_ids[i + substr_t_start_index];
 			}
-			token_ids[i] = ID_EOW;
+			token_ids[i] = SPECIAL_CHARACTER_END;
 		}
 		double factorial(double n) {
 			if (n == 0){
@@ -95,7 +95,7 @@ namespace npycrf {
 			// 単語unigramノードでテーブル数が増えた場合VPYLMに追加
 			if(num_tables_before < num_tables_after){
 				_g0_cache.clear();
-				if(token_t == ID_EOS){
+				if(token_t == SPECIAL_CHARACTER_END){
 					_vpylm->_root->add_customer(token_t, _vpylm->_g0, _vpylm->_d_m, _vpylm->_theta_m, true, added_table_k);
 					return true;
 				}
@@ -137,7 +137,7 @@ namespace npycrf {
 			int num_tables_after = _hpylm->_root->_num_tables;
 			if(num_tables_before > num_tables_after){
 				_g0_cache.clear();
-				if(word_t == ID_EOS){
+				if(word_t == SPECIAL_CHARACTER_END){
 					// <eos>は文字列に分解できないので常にVPYLMのルートノードに追加されている
 					_vpylm->_root->remove_customer(word_t, true, removed_from_table_k);
 					return true;
@@ -180,7 +180,7 @@ namespace npycrf {
 			assert(word_t_index < word_ids_length);
 			Node<id>* node = _hpylm->_root;
 			for(int depth = 1;depth <= 2;depth++){
-				id context_id = ID_BOS;
+				id context_id = SPECIAL_CHARACTER_BEGIN;
 				if(word_t_index - depth >= 0){
 					context_id = word_ids[word_t_index - depth];
 				}
@@ -224,7 +224,7 @@ namespace npycrf {
 			Node<id>* node = _hpylm->_root;
 			id word_t_id = word_ids[word_t_index];
 			double parent_pw = -1;
-			if(word_t_id == ID_EOS){
+			if(word_t_id == SPECIAL_CHARACTER_END){
 				parent_pw = _vpylm->_g0;
 			}else{
 				assert(0 <= substr_t_start_index && substr_t_start_index <= substr_t_end_index);
@@ -234,7 +234,7 @@ namespace npycrf {
 			assert(parent_pw > 0);
 			parent_pw_cache[0] = parent_pw;
 			for(int depth = 1;depth <= 2;depth++){
-				id context_id = ID_BOS;
+				id context_id = SPECIAL_CHARACTER_BEGIN;
 				if(word_t_index - depth >= 0){
 					context_id = word_ids[word_t_index - depth];
 				}
@@ -257,7 +257,7 @@ namespace npycrf {
 				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
 				int substr_t_start_index, int substr_t_end_index, id word_t_id)
 		{
-			if(word_t_id == ID_EOS){
+			if(word_t_id == SPECIAL_CHARACTER_END){
 				return _vpylm->_g0;
 			}
 
@@ -371,7 +371,7 @@ namespace npycrf {
 			assert(0 <= word_t_index && word_t_index < word_ids_length);
 			id word_id = word_ids[word_t_index];
 
-			if(word_id != ID_EOS){
+			if(word_id != SPECIAL_CHARACTER_END){
 				assert(0 <= substr_t_start_index && substr_t_start_index <= substr_t_end_index);
 				assert(0 <= substr_t_end_index && substr_t_end_index < character_ids_length);
 				#ifdef __DEBUG__

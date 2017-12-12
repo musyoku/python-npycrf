@@ -130,7 +130,7 @@ namespace npycrf {
 					return character_id;
 				}
 			}
-			return ID_EOW;
+			return SPECIAL_CHARACTER_END;
 		}
 		// VPYLMから長さkの単語が出現する確率をキャッシュする
 		void Trainer::update_p_k_given_vpylm(){
@@ -156,16 +156,16 @@ namespace npycrf {
 			for(auto elem: all_characters){
 				int character_id = elem.second; 
 				character_ids[0] = character_id;
-				if(character_id == ID_EOW){
+				if(character_id == SPECIAL_CHARACTER_END || character_id == SPECIAL_CHARACTER_BEGIN){
 					unigram_distribution[character_id] = 0;
 					continue;
 				}
 				double pw = vpylm->compute_p_w(character_ids, 0, 0);
 				sum_probs += pw;
 				unigram_distribution[character_id] = pw;
-				std::cout << character_id << ": " << "character_id=" << character_id << ", pw=" << pw << std::endl;
+				// std::cout << character_id << ": " << "character_id=" << character_id << ", pw=" << pw << std::endl;
 			}
-			std::cout << "sum_probs: " << sum_probs << std::endl;
+			// std::cout << "sum_probs: " << sum_probs << std::endl;
 			for(int m = 1;m <= num_samples;m++){
 				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 					return;		
@@ -188,23 +188,23 @@ namespace npycrf {
 				for(int k = 1;k < max_word_length;k++){
 					int next_character_id = sample_word_from_vpylm_given_context(character_ids, k);
 					character_ids[k] = next_character_id;
-					if(next_character_id == ID_EOW){
+					if(next_character_id == SPECIAL_CHARACTER_END){
 						break;
 					}
 					word_length += 1;
 				}
 
-				std::cout << "length: " << word_length << std::endl;
-				std::wstring str = L"";
-				for(int u = 0;u < word_length;u++){
-					if(character_ids[u] == ID_EOW){
-						break;
-					}
-					str += _dict->_map_id_to_character[character_ids[u]];
-					std::cout << character_ids[u] << ", ";
-				}
-				std::cout << std::endl;
-				std::wcout << str << std::endl;
+				// std::cout << "length: " << word_length << std::endl;
+				// std::wstring str = L"";
+				// for(int u = 0;u < word_length;u++){
+				// 	if(character_ids[u] == SPECIAL_CHARACTER_END){
+				// 		break;
+				// 	}
+				// 	str += _dict->_map_id_to_character[character_ids[u]];
+				// 	std::cout << character_ids[u] << ", ";
+				// }
+				// std::cout << std::endl;
+				// std::wcout << str << std::endl;
 
 				sum_words += 1;
 				if(word_length == 0){	// <bow><eow>
@@ -229,7 +229,7 @@ namespace npycrf {
 			}
 			for(int k = 1;k <= max_word_length;k++){
 				pk_vpylm[k] = (num_words_of_k[k] + 1) / (sum_words + max_word_length);	// ラプラススムージングを入れておく
-				std::cout << "k = " << k << ", " << pk_vpylm[k] << std::endl;
+				// std::cout << "k = " << k << ", " << pk_vpylm[k] << std::endl;
 				assert(pk_vpylm[k] > 0);
 			}
 		}

@@ -488,7 +488,7 @@ namespace npycrf {
 			int r_end = std::min(character_ids_length + 2, i + _x_unigram_end);	// <eos>2つを考慮
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_unigram]
-				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
 				cost += w_unigram_u(y_i, pos, x_i);
 				cost += w_unigram_b(y_i_1, y_i, pos, x_i);
 			}
@@ -500,8 +500,8 @@ namespace npycrf {
 			int r_end = std::min(character_ids_length + 2, i + _x_bigram_end);
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_bigram_start + 1;	// [1, _x_range_bigram]
-				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-				int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+				int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 				cost += w_bigram_u(y_i, pos, x_i_1, x_i);
 				cost += w_bigram_b(y_i_1, y_i, pos, x_i_1, x_i);
 			}
@@ -513,8 +513,8 @@ namespace npycrf {
 			int r_end = std::min(character_ids_length + 2, i + _x_identical_1_end);
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_identical_1_start + 1;	// [1, _x_range_identical_1]
-				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-				int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+				int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 				if(x_i == x_i_1){
 					cost += w_identical_1_u(y_i, pos);
 					cost += w_identical_1_b(y_i_1, y_i, pos);
@@ -528,8 +528,8 @@ namespace npycrf {
 			int r_end = std::min(character_ids_length + 2, i + _x_identical_2_end);
 			for(int r = r_start;r <= r_end;r++){
 				int pos = r - i - _x_identical_2_start + 1;	// [1, _x_range_identical_2]
-				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-				int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : CHARACTER_ID_EOS;
+				int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+				int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : SPECIAL_CHARACTER_END;
 				if(x_i == x_i_2){
 					cost += w_identical_2_u(y_i, pos);
 					cost += w_identical_2_b(y_i_1, y_i, pos);
@@ -585,7 +585,7 @@ namespace npycrf {
 					r_end = std::min(character_ids_length + 2, i + _x_unigram_end);	// <eos>2つを考慮
 					for(int r = r_start;r <= r_end;r++){
 						int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_unigram]
-						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
 						indices_u.push_back(_index_w_unigram_u(y_i, pos, x_i));
 					}
 					// 文字bigram素性
@@ -593,8 +593,8 @@ namespace npycrf {
 					r_end = std::min(character_ids_length + 2, i + _x_bigram_end);
 					for(int r = r_start;r <= r_end;r++){
 						int pos = r - i - _x_bigram_start + 1;	// [1, _x_range_bigram]
-						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-						int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+						int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 						indices_u.push_back(_index_w_bigram_u(y_i, pos, x_i_1, x_i));
 					}
 					// identical_1素性
@@ -602,8 +602,8 @@ namespace npycrf {
 					r_end = std::min(character_ids_length + 2, i + _x_identical_1_end);
 					for(int r = r_start;r <= r_end;r++){
 						int pos = r - i - _x_identical_1_start + 1;	// [1, _x_range_identical_1]
-						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-						int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+						int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 						if(x_i == x_i_1){
 							indices_u.push_back(_index_w_identical_1_u(y_i, pos));
 						}
@@ -613,8 +613,8 @@ namespace npycrf {
 					r_end = std::min(character_ids_length + 2, i + _x_identical_2_end);
 					for(int r = r_start;r <= r_end;r++){
 						int pos = r - i - _x_identical_2_start + 1;	// [1, _x_range_identical_2]
-						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-						int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : CHARACTER_ID_EOS;
+						int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+						int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : SPECIAL_CHARACTER_END;
 						if(x_i == x_i_2){
 							indices_u.push_back(_index_w_identical_2_u(y_i, pos));
 						}
@@ -661,7 +661,7 @@ namespace npycrf {
 						r_end = std::min(character_ids_length + 2, i + _x_unigram_end);	// <eos>2つを考慮
 						for(int r = r_start;r <= r_end;r++){
 							int pos = r - i - _x_unigram_start + 1;	// [1, _x_range_unigram]
-							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
+							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
 							indices_b.push_back(_index_w_unigram_b(y_i_1, y_i, pos, x_i));
 						}
 						// 文字bigram素性
@@ -669,8 +669,8 @@ namespace npycrf {
 						r_end = std::min(character_ids_length + 2, i + _x_bigram_end);
 						for(int r = r_start;r <= r_end;r++){
 							int pos = r - i - _x_bigram_start + 1;	// [1, _x_range_bigram]
-							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-							int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+							int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 							indices_b.push_back(_index_w_bigram_b(y_i_1, y_i, pos, x_i_1, x_i));
 						}
 						// identical_1素性
@@ -678,8 +678,8 @@ namespace npycrf {
 						r_end = std::min(character_ids_length + 2, i + _x_identical_1_end);
 						for(int r = r_start;r <= r_end;r++){
 							int pos = r - i - _x_identical_1_start + 1;	// [1, _x_range_identical_1]
-							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-							int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : CHARACTER_ID_EOS;
+							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+							int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 							if(x_i == x_i_1){
 								indices_b.push_back(_index_w_identical_1_b(y_i_1, y_i, pos));
 							}
@@ -689,8 +689,8 @@ namespace npycrf {
 						r_end = std::min(character_ids_length + 2, i + _x_identical_2_end);
 						for(int r = r_start;r <= r_end;r++){
 							int pos = r - i - _x_identical_2_start + 1;	// [1, _x_range_identical_2]
-							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : CHARACTER_ID_EOS;
-							int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : CHARACTER_ID_EOS;
+							int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
+							int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : SPECIAL_CHARACTER_END;
 							if(x_i == x_i_2){
 								indices_b.push_back(_index_w_identical_2_b(y_i_1, y_i, pos));
 							}
