@@ -795,31 +795,6 @@ namespace npycrf {
 		}
 		return log(px);
 	}
-	// 可能な分割全てを考慮した文の確率（<eos>への接続を含む）
-	// use_scaling=trueならアンダーフローを防ぐ
-	// double Lattice::compute_marginal_log_p_sentence(Sentence* sentence, bool use_scaling){
-	// 	assert(sentence->size() <= _max_sentence_length);
-	// 	int size = sentence->size() + 1;
-	// 	_clear_word_id_cache();
-	// 	// 前向き確率を求める
-	// 	_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);
-	// 	// <eos>へ到達する確率を全部足す
-	// 	int t = sentence->size() + 1;	// <eos>
-	// 	int k = 1;	// <eos>の長さは1
-	// 	if(use_scaling){
-	// 		// スケーリング係数を使う場合は逆数の積がそのまま文の確率になる
-	// 		double log_px = 0;
-	// 		for(int m = 1;m <= t;m++){
-	// 			log_px += log(1.0 / _scaling[m]);
-	// 		}
-	// 		return log_px;
-	// 	}
-	// 	double px = 0;
-	// 	for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-	// 		px += _alpha[t][k][j];
-	// 	}
-	// 	return log(px);
-	// }
 	void Lattice::_enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* scaling, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
@@ -1038,7 +1013,7 @@ namespace npycrf {
 	}
 	// 文の部分文字列が単語になる確率
 	// P_{CONC}(c_{t-k}^t|x)
-	void Lattice::_enumerate_proportional_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta, double Zs){
+	void Lattice::_enumerate_marginal_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta, double Zs){
 		assert(Zs > 0);
 		assert(sentence_length <= _max_sentence_length);
 		int size = sentence_length + 1;
@@ -1063,18 +1038,33 @@ namespace npycrf {
 			}
 		}
 	}
+	// Pconc(c^{t-k-j}_{t-k-j-i+1}, c^{t-k}_{t-k-j+1}, c^t_{t-k+1}|x)の計算
+	void Lattice::enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, npycrf::array<double> &p_conc){
+		_clear_word_id_cache();
+		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, true);
+		_enumerate_backward_variables(sentence, _beta, _pw_h, _scaling, true);
+		_enumerate_marginal_p_trigram_given_sentence(sentence, p_conc, _alpha, _beta);
+	}	
+	void Lattice::_enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, npycrf::array<double> &p_conc, double*** alpha, double*** beta){
+		for(int t = 1;t <= sentence->get_num_segments();t++){
+
+		}
+	}
 	// p(z_t, z_{t+1}|s)の計算
 	void Lattice::enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s){
 		_clear_word_id_cache();
 		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, true);
 		_enumerate_backward_variables(sentence, _beta, _pw_h, _scaling, true);
-		double _Zs = 1.0 / _scaling[sentence->size() + 1];
-		_enumerate_proportional_p_substring_given_sentence(_pc_s, sentence->size(), _alpha, _beta, _Zs);
-		_enumerate_marginal_p_path_given_sentence(pz_s, sentence->size(), _pc_s);
+		double Zs = 1.0 / _scaling[sentence->size() + 1];
+		_enumerate_marginal_p_path_given_sentence(sentence, pz_s, _alpha, _beta, Zs);
+	}
+	void Lattice::_enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s, double*** alpha, double*** beta, double Zs){
+		_enumerate_marginal_p_substring_given_sentence(_pc_s, sentence->size(), alpha, beta, Zs);
+		_enumerate_marginal_p_path_given_sentence_using_p_substring(pz_s, sentence->size(), _pc_s);
 	}
 	// p(z_t, z_{t+1}|s)の計算
 	// Zsは統合モデル上での文の確率
-	void Lattice::_enumerate_marginal_p_path_given_sentence(double*** pz_s, int sentence_length, double** pc_s){
+	void Lattice::_enumerate_marginal_p_path_given_sentence_using_p_substring(double*** pz_s, int sentence_length, double** pc_s){
 		assert(sentence_length <= _max_sentence_length);
 		assert(pz_s != NULL);
 		pz_s[0][0][0] = 0;

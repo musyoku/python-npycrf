@@ -1349,6 +1349,8 @@ void test_backward_lambda_0(bool pure_crf_mode){
 	// sentence->dump_words();
 	double grad = 0;
 
+	
+
 	double log_Zs = log(model->compute_normalizing_constant(sentence));
 	double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 	// cout << log_Zs << " == " << log_py << endl;

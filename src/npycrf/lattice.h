@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "common.h"
+#include "array.h"
 #include "crf/crf.h"
 #include "npylm/npylm.h"
 
@@ -70,13 +71,16 @@ namespace npycrf {
 		double compute_normalizing_constant(Sentence* sentence, bool use_scaling = true);
 		double compute_log_normalizing_constant(Sentence* sentence, bool use_scaling = true);
 		double _compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji);
+		void enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, npycrf::array<double> &p_conc);
+		void _enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, npycrf::array<double> &p_conc, double*** alpha, double*** beta);
 		void enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s);
-		void _enumerate_marginal_p_path_given_sentence(double*** pz_s, int sentence_length, double** pc_s);
+		void _enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s, double*** alpha, double*** beta, double Zs);
+		void _enumerate_marginal_p_path_given_sentence_using_p_substring(double*** pz_s, int sentence_length, double** pc_s);
 		double _compute_p_z_case_1_1(int sentence_length, int t, double** pc_s);
 		double _compute_p_z_case_1_0(int sentence_length, int t, double** pc_s);
 		double _compute_p_z_case_0_1(int sentence_length, int t, double** pc_s);
 		double _compute_p_z_case_0_0(int sentence_length, int t, double** pc_s);
-		void _enumerate_proportional_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta, double Zs);
+		void _enumerate_marginal_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta, double Zs);
 		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double* scaling, bool use_scaling = true);
 		void _enumerate_backward_variables(Sentence* sentence, double*** beta, double**** pw_h_tkji, double* scaling, bool use_scaling = true);
 		void _clear_pw_h_tkji(double**** pw_h_tkji);
