@@ -101,6 +101,7 @@ def main():
 				feature_x_identical_1_end=args.crf_feature_x_identical_1_end,
 				feature_x_identical_2_start=args.crf_feature_x_identical_2_start,
 				feature_x_identical_2_end=args.crf_feature_x_identical_2_end,
+				initial_lambda_0=args.crf_lambda_0,
 				sigma=args.crf_prior_sigma)
 
 	npylm = nlp.npylm(max_word_length=args.max_word_length,
@@ -210,6 +211,7 @@ if __name__ == "__main__":
 	# Whether xj and xj+2 are identical, for j = (i−3)...(i + 1)
 	parser.add_argument("--crf-feature-x-identical-2-start", type=int, default=-3)
 	parser.add_argument("--crf-feature-x-identical-2-end", type=int, default=1)
+	parser.add_argument("--crf-lambda-0", "-lam-0", type=float, default=1.0, help="モデル補完重みの初期値")
 	parser.add_argument("--crf-prior-sigma", type=float, default=1.0)
 	parser.add_argument("--crf-learning-rate", type=float, default=0.001)
 
