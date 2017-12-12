@@ -134,7 +134,6 @@ namespace npycrf {
 		}
 		// VPYLMから長さkの単語が出現する確率をキャッシュする
 		void Trainer::update_p_k_given_vpylm(){
-			std::cout << "update_p_k_given_vpylm" << std::endl;
 			int num_samples = 20000;
 			int early_stopping_threshold = 10;
 			int max_word_length = _npycrf->get_max_word_length() + 1; // 最大+1
@@ -149,8 +148,8 @@ namespace npycrf {
 			double sum_words = 0;
 			auto &all_characters = _dict->_map_character_to_id;
 			int num_characters = _dict->get_num_characters();
-			std::cout << "num_characters: " << num_characters << std::endl;
-			std::cout << "all_characters: " << all_characters.size() << std::endl;
+			// std::cout << "num_characters: " << num_characters << std::endl;
+			// std::cout << "all_characters: " << all_characters.size() << std::endl;
 			npycrf::array<double> unigram_distribution(num_characters);
 			double sum_probs = 0;
 			for(auto elem: all_characters){
