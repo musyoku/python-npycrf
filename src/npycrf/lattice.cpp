@@ -741,7 +741,6 @@ namespace npycrf {
 	// use_scaling=trueならアンダーフローを防ぐ
 	double Lattice::compute_normalizing_constant(Sentence* sentence, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
-		int size = sentence->size() + 1;
 		_clear_word_id_cache();
 		// 前向き確率を求める
 		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);
@@ -766,7 +765,6 @@ namespace npycrf {
 	// スケーリング係数は前向き時のみ計算可能なので注意
 	double Lattice::_compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** pw_h_tkji){
 		assert(sentence->size() <= _max_sentence_length);
-		int size = sentence->size() + 1;
 		_clear_word_id_cache();
 		// 後向き確率を求める
 		_enumerate_backward_variables(sentence, beta, pw_h_tkji, NULL, false);
@@ -777,8 +775,6 @@ namespace npycrf {
 	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// use_scaling=trueならアンダーフローを防ぐ
 	double Lattice::compute_log_normalizing_constant(Sentence* sentence, bool use_scaling){
-		assert(sentence->size() <= _max_sentence_length);
-		int size = sentence->size() + 1;
 		_clear_word_id_cache();
 		// 前向き確率を求める
 		_enumerate_forward_variables(sentence, _alpha, _pw_h, _scaling, use_scaling);

@@ -16,7 +16,6 @@ namespace npycrf {
 			_npycrf = npycrf;
 			_sgd = new solver::SGD(npycrf->_crf, crf_regularization_constant);
 			_vpylm_sampling_probability_table = new double[_dict->get_num_characters() + 1];	// </s>を含む
-			_vpylm_sampling_id_table = new wchar_t[_dict->get_num_characters() + 1];			// </s>を含む
 			_total_gibbs_iterations = 0;
 
 			// 教師なしデータ
@@ -110,47 +109,39 @@ namespace npycrf {
 			}
 		}
 		// VPYLMに文脈を渡し次の文字を生成
-		int Trainer::sample_word_from_vpylm_given_context(int* context_ids, int context_length, int sample_t, bool skip_eow){
+		int Trainer::sample_word_from_vpylm_given_context(int* context_ids, int context_length, int sample_t){
 			double sum_probs = 0;
 			npylm::lm::VPYLM* vpylm = _npycrf->_npylm->_vpylm;
-			int table_index = 0;
 			auto all_characters = _dict->_map_character_ids;
 			int num_characters = _dict->get_num_characters();
 			for(auto elem: all_characters){
 				int character_id = elem.first; 
-				assert(table_index < num_characters);
 				double pw = vpylm->compute_p_w_given_h(character_id, context_ids, 0, context_length - 1);
 				sum_probs += pw;
-				_vpylm_sampling_probability_table[table_index] = pw;
-				_vpylm_sampling_id_table[table_index] = character_id;
-				table_index++;
-			}
-			if(skip_eow == false){
-				assert(table_index < num_characters + 1);
-				double pw = vpylm->compute_p_w_given_h(ID_EOW, context_ids, 0, context_length - 1);
-				sum_probs += pw;
-				_vpylm_sampling_probability_table[table_index] = pw;
-				_vpylm_sampling_id_table[table_index] = ID_EOW;
+				_vpylm_sampling_probability_table[character_id] = pw;
 			}
 
 			double normalizer = 1.0 / sum_probs;
 			double r = sampler::uniform(0, 1);
 			double stack = 0;
-			for(int i = 0;i <= table_index;i++){
-				stack += _vpylm_sampling_probability_table[i] * normalizer;
+			for(int character_id = 0;character_id < num_characters;character_id++){
+				stack += _vpylm_sampling_probability_table[character_id] * normalizer;
 				if(r <= stack){
-					return _vpylm_sampling_id_table[i];
+					return character_id;
 				}
 			}
-			return _vpylm_sampling_id_table[table_index];
+			return ID_EOW;
 		}
 		// VPYLMから長さkの単語が出現する確率をキャッシュする
 		void Trainer::update_p_k_given_vpylm(){
+			std::cout << "update_p_k_given_vpylm" << std::endl;
 			int num_samples = 20000;
 			int early_stopping_threshold = 10;
 			int max_word_length = _npycrf->get_max_word_length() + 1; // 最大+1
 			double* pk_vpylm = _npycrf->_npylm->_pk_vpylm;
-			int* num_words_of_k = new int[max_word_length];
+			int* num_words_of_k = new int[max_word_length + 1];
+			npycrf::array<int, max_word_length + 1> _num_words_of_k;
+			_num_words_of_k[100] = 100;
 			for(int i = 0;i <= max_word_length;i++){
 				pk_vpylm[i] = 0;
 				num_words_of_k[i] = 0;
@@ -160,45 +151,50 @@ namespace npycrf {
 			double sum_words = 0;
 			auto all_characters = _dict->_map_character_ids;
 			int num_characters = _dict->get_num_characters();
+			std::cout << "num_characters: " << num_characters << std::endl;
+			std::cout << "all_characters: " << all_characters.size() << std::endl;
 			double* unigram_distribution = new double[num_characters];
-			int* unigram_ids = new int[num_characters];
-			int table_index = 0;
 			double sum_probs = 0;
 			for(auto elem: all_characters){
-				int character_id = elem.first; 
-				wchar_t character = elem.second;
-				assert(table_index < num_characters);
+				int character_id = elem.second; 
 				character_ids[0] = character_id;
 				double pw = vpylm->compute_p_w(character_ids, 0, 0);
 				sum_probs += pw;
-				unigram_distribution[table_index] = pw;
-				unigram_ids[table_index] = character_id;
-				table_index++;
-				std::wcout << character << ": " << "table_index=" << table_index << ", pw=" << pw << std::endl;
+				unigram_distribution[character_id] = pw;
+				std::cout << character_id << ": " << "character_id=" << character_id << ", pw=" << pw << std::endl;
 			}
-
+			std::cout << "sum_probs: " << sum_probs << std::endl;
 			for(int m = 1;m <= num_samples;m++){
 				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 					return;		
 				}
-				// wcout << "m = " << m << endl;
-				character_ids[0] = ID_BOW;
-				int k = 0;
-				for(int j = 0;j < max_word_length;j++){
-					bool skip_eow = (j == 0) ? true : false;
-					wchar_t token_char = sample_word_from_vpylm_given_context(character_ids, j + 1, j + 1, skip_eow);
-					character_ids[j + 1] = token_char;
-					if(token_char == ID_EOW){
+				int start_character_id = ID_EOW;
+				double normalizer = 1.0 / sum_probs;
+				double r = sampler::uniform(0, 1);
+				double stack = 0;
+				for(int character_id = 0;character_id < num_characters;character_id++){
+					stack += unigram_distribution[character_id] * normalizer;
+					if(r <= stack){
+						start_character_id = character_id;
 						break;
 					}
-					k++;
+				}
+				// wcout << "m = " << m << endl;
+				character_ids[0] = start_character_id;
+				int j = 1;
+				for(;j < max_word_length;j++){
+					int next_character_id = sample_word_from_vpylm_given_context(character_ids, j, j);
+					character_ids[j] = next_character_id;
+					if(next_character_id == ID_EOW){
+						break;
+					}
 				}
 				sum_words += 1;
-				if(k == 0){	// <bow><eow>
+				if(j == 0){	// <bow><eow>
 					continue;
 				}
-				assert(k <= max_word_length);
-				num_words_of_k[k] += 1;
+				assert(j <= max_word_length);
+				num_words_of_k[j] += 1;
 
 				// すべてのkが生成されていたら早期終了
 				if(m % 100 == 0){
@@ -216,12 +212,12 @@ namespace npycrf {
 			}
 			for(int k = 1;k <= max_word_length;k++){
 				pk_vpylm[k] = (num_words_of_k[k] + 1) / (sum_words + max_word_length);	// ラプラススムージングを入れておく
+				std::cout << "k = " << k << ", " << pk_vpylm[k] << std::endl;
 				assert(pk_vpylm[k] > 0);
 			}
 			delete[] num_words_of_k;
 			delete[] character_ids;
 			delete[] unigram_distribution;
-			delete[] unigram_ids;
 		}
 		// 単語分割のギブスサンプリング
 		void Trainer::gibbs(bool include_labeled_data){

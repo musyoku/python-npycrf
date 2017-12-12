@@ -164,10 +164,7 @@ namespace npycrf {
 			}
 			double VPYLM::compute_p_w(int const* character_ids, int substr_start, int substr_end){
 				int token_t = character_ids[substr_start];
-				double pw = 1;
-				if(token_t != ID_BOW){
-					pw *= _root->compute_p_w(token_t, _g0, _d_m, _theta_m);
-				}
+				double pw = _root->compute_p_w(token_t, _g0, _d_m, _theta_m);
 				for(int t = substr_start;t < substr_end;t++){
 					pw *= compute_p_w_given_h(character_ids, substr_start, t);
 				}

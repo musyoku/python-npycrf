@@ -81,9 +81,7 @@ void run_training_loop(){
 	Dataset* dataset_l = new Dataset(corpus_l, dict, 1, seed);
 	Dataset* dataset_u = new Dataset(corpus_u, dict, 1, seed);
 
-	double lambda_0 = 1;
 	int max_word_length = 12;
-	int max_sentence_length = std::max(dataset_l->get_max_sentence_length(), dataset_u->get_max_sentence_length());
 	double g0 = 1.0 / (double)dict->get_num_characters();
 	double initial_lambda_a = 4;
 	double initial_lambda_b = 1;
@@ -92,7 +90,6 @@ void run_training_loop(){
 	model::NPYLM* py_npylm = new model::NPYLM(max_word_length, g0, initial_lambda_a, initial_lambda_b, vpylm_beta_stop, vpylm_beta_pass);
 
 	int num_character_ids = dict->get_num_characters();
-	int num_character_types = CTYPE_NUM_TYPES;
 	int feature_x_unigram_start = -2;
 	int feature_x_unigram_end = 2;
 	int feature_x_bigram_start = -2;
@@ -129,10 +126,10 @@ void run_training_loop(){
 		trainer->sgd(learning_rate, batchsize, false);
 	    auto diff = std::chrono::system_clock::now() - start_time;
 	    cout << (std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0) << endl;
-		// trainer->sample_hpylm_vpylm_hyperparameters();
-		// trainer->sample_npylm_lambda();
+		trainer->sample_hpylm_vpylm_hyperparameters();
+		trainer->sample_npylm_lambda();
 		if(epoch > 3){
-			// trainer->update_p_k_given_vpylm();
+			trainer->update_p_k_given_vpylm();
 		}
 		// if(epoch % 10 == 0){
 			// trainer->print_segmentation_labeled_dev(10);
