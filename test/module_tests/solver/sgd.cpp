@@ -1347,6 +1347,8 @@ void test_backward_lambda_0(bool use_scaling){
 	wchar_t const* characters = sentence->_characters;
 	int character_ids_length = sentence->size();
 
+	double Zs = model->compute_normalizing_constant(sentence);
+
 	// sentence->dump_words();
 	double grad = 0;
 
@@ -1357,7 +1359,7 @@ void test_backward_lambda_0(bool use_scaling){
 		t = sentence->_start[n] + k;
 		j = (t - k == 0) ? 0 : sentence->_segments[n - 1];
 		i = (t - k - j == 0) ? 0 : sentence->_segments[n - 2];
-		std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", f = " << log(pw_h_tkji[t][k][j][i]) << std::endl;
+		// std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", f = " << log(pw_h_tkji[t][k][j][i]) << std::endl;
 		grad += log(pw_h_tkji[t][k][j][i]);
 	}
 	// <eos>
@@ -1366,17 +1368,18 @@ void test_backward_lambda_0(bool use_scaling){
 	j = k;
 	k = 1;
 	grad +=log(pw_h_tkji[t][k][j][i]);
-	std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", f = " << log(pw_h_tkji[t][k][j][i]) << std::endl;
+	// std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", f = " << log(pw_h_tkji[t][k][j][i]) << std::endl;
 
 	// 発火の期待値を引く
 	for(int t = 1;t <= sentence->size();t++){
 		for(int k = 1;k <= std::min(t, lattice->_max_word_length);k++){
 			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, lattice->_max_word_length);j++){
 				for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, lattice->_max_word_length);i++){
-					std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", " << "grad -= " << p_conc_tkji[t][k][j][i] << " * " << log(pw_h_tkji[t][k][j][i]) << std::endl;;
+					double p_conc = use_scaling ? p_conc_tkji[t][k][j][i] : p_conc_tkji[t][k][j][i] / Zs;
+					// std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", " << "grad -= " << p_conc_tkji[t][k][j][i] << " * " << log(pw_h_tkji[t][k][j][i]) << std::endl;;
 					assert(pw_h_tkji[t][k][j][i] > 0);
-					assert(p_conc_tkji[t][k][j][i] > 0);
-					grad -= p_conc_tkji[t][k][j][i] * log(pw_h_tkji[t][k][j][i]);
+					assert(p_conc > 0);
+					grad -= p_conc * log(pw_h_tkji[t][k][j][i]);
 				}
 			}
 		}
@@ -1385,16 +1388,17 @@ void test_backward_lambda_0(bool use_scaling){
 	k = 1;
 	for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, lattice->_max_word_length);j++){
 		for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, lattice->_max_word_length);i++){
-			std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", " << "grad -= " << p_conc_tkji[t][k][j][i] << " * " << log(pw_h_tkji[t][k][j][i]) << std::endl;;
+			double p_conc = use_scaling ? p_conc_tkji[t][k][j][i] : p_conc_tkji[t][k][j][i] / Zs;
+			// std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", " << "grad -= " << p_conc_tkji[t][k][j][i] << " * " << log(pw_h_tkji[t][k][j][i]) << std::endl;;
 			assert(pw_h_tkji[t][k][j][i] > 0);
-			assert(p_conc_tkji[t][k][j][i] > 0);
-			grad -= p_conc_tkji[t][k][j][i] * log(pw_h_tkji[t][k][j][i]);
+			assert(p_conc > 0);
+			grad -= p_conc * log(pw_h_tkji[t][k][j][i]);
 		}
 	}
 
 	lattice->reserve(npylm->_max_word_length, sentence->size());
 	npylm->reserve(sentence->size());
-	double Zs = lattice->compute_normalizing_constant(sentence, use_scaling);
+	Zs = lattice->compute_normalizing_constant(sentence, use_scaling);
 	double log_Zs = log(Zs);
 	double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 	// cout << log_Zs << " == " << log_py << endl;
@@ -1409,10 +1413,8 @@ void test_backward_lambda_0(bool use_scaling){
 	if(std::abs(true_grad - grad) >= 1e-4){
 		cout << grad << ", " << true_grad << endl;
 	}
-	cout << grad << ", " << true_grad << endl;
 	assert(std::abs(true_grad - grad) < 1e-4);
 
-	assert(false);
 	delete sentence;
 	delete var;
 }
