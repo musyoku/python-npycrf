@@ -376,6 +376,7 @@ namespace npycrf {
 	}
 	// 後向きにkとjをサンプリング
 	void Lattice::sample_backward_k_and_j(Sentence* sentence, int t, int next_word_length, int &sampled_k, int &sampled_j){
+		assert(0 < next_word_length && next_word_length <= _max_word_length);
 		assert(_pure_crf_mode == false);
 		int table_index = 0;
 		wchar_t const* characters = sentence->_characters;
@@ -390,7 +391,6 @@ namespace npycrf {
 				id word_t_id = SPECIAL_CHARACTER_END;
 				if(t < sentence->size()){
 					assert(t + next_word_length <= sentence->size());
-					assert(next_word_length > 0);
 					word_t_id = get_substring_word_id_at_t_k(sentence, t + next_word_length, next_word_length);
 					// id word_id = sentence->get_substr_word_id(t - 1, t + next_word_length - 2);
 					// assert(word_t_id == word_id);
@@ -406,6 +406,7 @@ namespace npycrf {
 					#ifdef __DEBUG__
 						double pw_h2 = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + next_word_length - 1);
 						if(pw_h != pw_h2){
+							std::cout << pw_h << " == " << pw_h2 << std::endl;
 							std::cout << "t = " << t << ", k = " << k << ", j = " << j << std::endl;
 							std::cout << "next_word_length = " << next_word_length << std::endl;
 							std::cout << "size = " << sentence->size() << std::endl;
@@ -1057,7 +1058,6 @@ namespace npycrf {
 	// 文の部分文字列が単語になる確率
 	// P_{CONC}(c_{t-k}^t|x)
 	void Lattice::_enumerate_marginal_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta){
-		assert(Zs > 0);
 		assert(sentence_length <= _max_sentence_length);
 		int size = sentence_length + 1;
 		#ifdef __DEBUG__

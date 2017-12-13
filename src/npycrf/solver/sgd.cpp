@@ -14,6 +14,7 @@ namespace npycrf {
 			delete[] _grad_weight;
 		}
 		void SGD::clear_grads(){
+			_grad_lambda_0 = 0;
 			for(int i = 0;i < _crf->_parameter->_weight_size;i++){
 				_grad_weight[i] = 0;
 			}
@@ -30,7 +31,7 @@ namespace npycrf {
 		}
 		// CRFの勾配計算について
 		// http://www.ism.ac.jp/editsec/toukei/pdf/64-2-179.pdf
-		void SGD::backward(Sentence* sentence, double*** pz_s){
+		void SGD::backward_crf(Sentence* sentence, double*** pz_s){
 			_backward_unigram(sentence, pz_s);
 			_backward_bigram(sentence, pz_s);
 			_backward_identical_1(sentence, pz_s);
@@ -303,6 +304,47 @@ namespace npycrf {
 				_grad_weight[k_0_1] -= pz_s[i - 1][0][1];
 				_grad_weight[k_1_0] -= pz_s[i - 1][1][0];
 				_grad_weight[k_1_1] -= pz_s[i - 1][1][1];
+			}
+		}
+		void SGD::backward_lambda_0(Sentence* sentence, double**** p_conc_tkji, double**** pw_h_tkji, int max_word_length){
+			// 素性の発火
+			int t, k, j, i;
+			for(int n = 2;n < sentence->get_num_segments() - 1;n++){	// <eos>を除く
+				k = sentence->_segments[n];
+				t = sentence->_start[n] + k;
+				j = (t - k == 0) ? 0 : sentence->_segments[n - 1];
+				i = (t - k - j == 0) ? 0 : sentence->_segments[n - 2];
+				_grad_lambda_0 += log(pw_h_tkji[t][k][j][i]);
+			}
+			// <eos>
+			t += 1;
+			i = j;
+			j = k;
+			k = 1;
+			_grad_lambda_0 +=log(pw_h_tkji[t][k][j][i]);
+
+			// 発火の期待値を引く
+			for(int t = 1;t <= sentence->size();t++){
+				for(int k = 1;k <= std::min(t, max_word_length);k++){
+					for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, max_word_length);j++){
+						for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, max_word_length);i++){
+							double p_conc = p_conc_tkji[t][k][j][i];
+							assert(pw_h_tkji[t][k][j][i] > 0);
+							assert(p_conc > 0);
+							_grad_lambda_0 -= p_conc * log(pw_h_tkji[t][k][j][i]);
+						}
+					}
+				}
+			}
+			t = sentence->size() + 1;
+			k = 1;
+			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, max_word_length);j++){
+				for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, max_word_length);i++){
+					double p_conc = p_conc_tkji[t][k][j][i];
+					assert(pw_h_tkji[t][k][j][i] > 0);
+					assert(p_conc > 0);
+					_grad_lambda_0 -= p_conc * log(pw_h_tkji[t][k][j][i]);
+				}
 			}
 		}
 	}

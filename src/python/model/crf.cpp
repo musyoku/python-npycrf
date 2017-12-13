@@ -45,6 +45,9 @@ namespace npycrf {
 			int CRF::get_num_features(){
 				return _crf->_parameter->get_num_features();
 			}
+			double CRF::get_lambda_0(){
+				return _crf->_parameter->_lambda_0;
+			}
 			bool CRF::load(std::string filename){
 				bool success = false;
 				std::ifstream ifs(filename);

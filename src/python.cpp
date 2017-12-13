@@ -64,6 +64,7 @@ BOOST_PYTHON_MODULE(npycrf){
 	)
 	.def(boost::python::init<std::string>())
 	.def("get_num_features", &model::CRF::get_num_features)
+	.def("get_lambda_0", &model::CRF::get_lambda_0)
 	.def("save", &model::CRF::save)
 	.def("load", &model::CRF::load);
 
