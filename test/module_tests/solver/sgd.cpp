@@ -126,8 +126,8 @@ void test_backward_unigram(bool pure_crf_mode){
 	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
 	lattice->_clear_word_id_cache();
-	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
-	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_p_transition_tkji, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_p_transition_tkji, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
 	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
 	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
@@ -313,8 +313,8 @@ void test_backward_bigram(bool pure_crf_mode){
 	lattice->_clear_word_id_cache();
 	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
-	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
-	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_p_transition_tkji, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_p_transition_tkji, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
 	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
 	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
@@ -490,8 +490,8 @@ void test_backward_identical_1(bool pure_crf_mode){
 	lattice->_clear_word_id_cache();
 	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
-	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
-	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_p_transition_tkji, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_p_transition_tkji, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
 	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
 	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
@@ -661,8 +661,8 @@ void test_backward_identical_2(bool pure_crf_mode){
 	lattice->_clear_word_id_cache();
 	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
-	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
-	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_p_transition_tkji, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_p_transition_tkji, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
 	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
 	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
@@ -836,8 +836,8 @@ void test_backward_character_type_unigram(bool pure_crf_mode){
 	lattice->_clear_word_id_cache();
 	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
-	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
-	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_p_transition_tkji, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_p_transition_tkji, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
 	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
 	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
@@ -983,8 +983,8 @@ void test_backward_character_type_bigram(bool pure_crf_mode){
 	lattice->_clear_word_id_cache();
 	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
-	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
-	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_p_transition_tkji, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_p_transition_tkji, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
 	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
 	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
@@ -1175,8 +1175,8 @@ void test_backward_label(bool pure_crf_mode){
 	lattice->_clear_word_id_cache();
 	lattice->set_pure_crf_mode(pure_crf_mode);
 	Sentence* sentence = generate_sentence_4();
-	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_pw_h, lattice->_scaling, true);
-	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_pw_h, lattice->_scaling, true);
+	lattice->_enumerate_forward_variables(sentence, lattice->_alpha, lattice->_p_transition_tkji, lattice->_scaling, true);
+	lattice->_enumerate_backward_variables(sentence, lattice->_beta, lattice->_p_transition_tkji, lattice->_scaling, true);
 	double _Zs = 1.0 / lattice->_scaling[sentence->size() + 1];
 	lattice->_enumerate_marginal_p_substring_given_sentence(lattice->_pc_s, sentence->size(), lattice->_alpha, lattice->_beta, _Zs);
 	lattice->_enumerate_marginal_p_path_given_sentence_using_p_substring(lattice->_pz_s, sentence->size(), lattice->_pc_s);
@@ -1323,17 +1323,20 @@ void test_backward_label(bool pure_crf_mode){
 	delete var;
 }
 
-void test_backward_lambda_0(bool pure_crf_mode){
+void test_backward_lambda_0(bool use_scaling){
 	Variables* var = new Variables();
 	NPYCRF* model = var->model;
 	Lattice* lattice = model->_lattice;
 	lattice->_clear_word_id_cache();
-	lattice->set_pure_crf_mode(pure_crf_mode);
-	Sentence* sentence = generate_sentence_4();
-	array<double> p_conc(sentence->get_num_segments() - 2);
-	lattice->enumerate_marginal_p_trigram_given_sentence(sentence, p_conc);
+	Sentence* sentence = generate_sentence_5();
+	int seq_capacity = lattice->_max_sentence_length + 1;
+	int word_capacity = lattice->_max_word_length + 1;
+	double**** p_conc = NULL;
+	lattice::_init_array(p_conc, seq_capacity, word_capacity, word_capacity, word_capacity);
+	lattice->enumerate_marginal_p_trigram_given_sentence(sentence, p_conc, use_scaling);
 
 	crf::CRF* crf = var->py_crf->_crf;
+	npylm::NPYLM* npylm = var->py_npylm->_npylm;
 	sentence->_features = crf->extract_features(sentence);
 	double regularization_constant = 1.0;
 	solver::SGD* sgd = new solver::SGD(crf, regularization_constant);
@@ -1344,15 +1347,34 @@ void test_backward_lambda_0(bool pure_crf_mode){
 	int character_ids_length = sentence->size();
 
 	// sentence->dump_words();
-	double grad = 0;
+	double grad = sentence->get_num_segments() - 2;
+	for(int t = 1;t <= sentence->size();t++){
+		for(int k = 1;k <= std::min(t, lattice->_max_word_length);k++){
+			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, lattice->_max_word_length);j++){
+				for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, lattice->_max_word_length);i++){
+					grad -= p_conc[t][k][j][i];
+				}
+			}
+		}
+	}
+	int t = sentence->size() + 1;
+	int k = 1;
+	for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, lattice->_max_word_length);j++){
+		for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, lattice->_max_word_length);i++){
+			grad -= p_conc[t][k][j][i];
+		}
+	}
 
+	lattice->reserve(npylm->_max_word_length, sentence->size());
+	npylm->reserve(sentence->size());
+	double Zs = lattice->compute_normalizing_constant(sentence, use_scaling);
 	
-
-	double log_Zs = log(model->compute_normalizing_constant(sentence));
+	double log_Zs = log(Zs);
 	double log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - log_Zs;
 	// cout << log_Zs << " == " << log_py << endl;
 	crf->_parameter->_lambda_0 += 1e-8;
-	double _log_Zs = log(model->compute_normalizing_constant(sentence));
+	double _Zs = lattice->compute_normalizing_constant(sentence, use_scaling);
+	double _log_Zs = log(_Zs);
 	double _log_py = model->compute_log_proportional_p_y_given_sentence(sentence) - _log_Zs;
 	crf->_parameter->_lambda_0 -= 1e-8;
 	// cout << _log_Zs << " == " << _log_py << endl;

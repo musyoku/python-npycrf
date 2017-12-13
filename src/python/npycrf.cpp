@@ -57,7 +57,7 @@ namespace npycrf {
 			_npylm->reserve(sentence->size());
 			double Zs = _lattice->compute_normalizing_constant(sentence, true);
 			#ifdef __DEBUG__
-				double __Zs = _lattice->_compute_normalizing_constant_backward(sentence, _lattice->_beta, _lattice->_pw_h);
+				double __Zs = _lattice->_compute_normalizing_constant_backward(sentence, _lattice->_beta, _lattice->_p_transition_tkji);
 				double ___Zs = _lattice->compute_normalizing_constant(sentence, false);
 				if(std::abs(1 - Zs / __Zs) >= 1e-14){
 					std::cout << std::abs(1 - Zs / __Zs) << std::endl;
