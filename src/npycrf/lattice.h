@@ -33,7 +33,7 @@ namespace npycrf {
 		bool _pure_crf_mode;	// NPYLMを無視
 		void _allocate_capacity(int max_word_length, int max_sentence_length);
 		void _delete_capacity();
-		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** p_transition_tkji, double prod_scaling);
+		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double**** p_transition_tkji, double prod_scaling);
 		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** p_transition_tkji, double* scaling, bool use_scaling);
 		void _backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments);
 		double _lambda_0();
@@ -44,6 +44,7 @@ namespace npycrf {
 		id** _substring_word_id_cache;
 		double*** _alpha;		// 前向き確率
 		double*** _beta;		// 後向き確率
+		double**** _pw_h_tkji;	// n-gram確率のキャッシュ
 		double**** _p_transition_tkji;	// exp(lamda_0 * p(・) + potential)のキャッシュ
 		double* _scaling;		// スケーリング係数
 		double** _pc_s;			// 文の部分文字列が単語になる条件付き確率
@@ -71,8 +72,8 @@ namespace npycrf {
 		double compute_normalizing_constant(Sentence* sentence, bool use_scaling = true);
 		double compute_log_normalizing_constant(Sentence* sentence, bool use_scaling = true);
 		double _compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** p_transition_tkji);
-		void enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, double**** p_conc, bool use_scaling = true);
-		void _enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, double**** p_conc, double*** alpha, double*** beta, double**** p_transition_tkji, double* scaling, bool use_scaling = true);
+		void enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, double**** p_conc_tkji, double**** pw_h_tkji, bool use_scaling = true);
+		void _enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, double**** p_conc_tkji, double*** alpha, double*** beta, double**** p_transition_tkji, double* scaling, bool use_scaling = true);
 		void enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s);
 		void _enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s, double*** alpha, double*** beta, double Zs);
 		void _enumerate_marginal_p_path_given_sentence_using_p_substring(double*** pz_s, int sentence_length, double** pc_s);
@@ -81,9 +82,9 @@ namespace npycrf {
 		double _compute_p_z_case_0_1(int sentence_length, int t, double** pc_s);
 		double _compute_p_z_case_0_0(int sentence_length, int t, double** pc_s);
 		void _enumerate_marginal_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta, double Zs);
-		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** p_transition_tkji, double* scaling, bool use_scaling = true);
+		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double**** p_transition_tkji, double* scaling, bool use_scaling = true);
 		void _enumerate_backward_variables(Sentence* sentence, double*** beta, double**** p_transition_tkji, double* scaling, bool use_scaling = true);
-		void _clear_p_transition_tkji();
+		void _clear_p_tkji();
 		void _clear_word_id_cache();
 	};
 } // namespace npylm
