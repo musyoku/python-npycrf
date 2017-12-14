@@ -323,16 +323,16 @@ namespace npycrf {
 		_enumerate_forward_variables(sentence, _alpha, _pw_h_tkji, _p_transition_tkji, _scaling, use_scaling);
 	}
 	void Lattice::backward_sampling(Sentence* sentence, std::vector<int> &segments){
-		_backward_sampling(sentence, _alpha, segments);
+		_backward_sampling(sentence, _alpha, _p_transition_tkji, segments);
 	}
 	// 求めた前向き確率テーブルをもとに後ろから分割をサンプリング
-	void Lattice::_backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments){
+	void Lattice::_backward_sampling(Sentence* sentence, double*** alpha, double**** p_transition_tkji, std::vector<int> &segments){
 		segments.clear();
 		int k = 0;
 		int j = 0;
 		int sum = 0;
 		int t = sentence->size();
-		sample_backward_k_and_j(sentence, t, 1, k, j);
+		_sample_backward_k_and_j(sentence, alpha, p_transition_tkji, t, 1, k, j);
 		assert(k <= _max_word_length);
 		segments.push_back(k);
 		if(j == 0 && k == t){	// 文章すべてが1単語になる場合
@@ -352,7 +352,7 @@ namespace npycrf {
 				k = 1;
 				j = 0;
 			}else{
-				sample_backward_k_and_j(sentence, t, next_word_length, k, j);
+				_sample_backward_k_and_j(sentence, alpha, p_transition_tkji, t, next_word_length, k, j);
 				assert(k > 0);
 				assert(k <= _max_word_length);
 			}
@@ -375,7 +375,7 @@ namespace npycrf {
 		reverse(segments.begin(), segments.end());
 	}
 	// 後向きにkとjをサンプリング
-	void Lattice::sample_backward_k_and_j(Sentence* sentence, int t, int next_word_length, int &sampled_k, int &sampled_j){
+	void Lattice::_sample_backward_k_and_j(Sentence* sentence, double*** alpha, double**** p_transition_tkji, int t, int next_word_length, int &sampled_k, int &sampled_j){
 		assert(0 < next_word_length && next_word_length <= _max_word_length);
 		assert(_pure_crf_mode == false);
 		int table_index = 0;
@@ -385,77 +385,29 @@ namespace npycrf {
 		double sum_p = 0;
 		int limit_k = std::min(t, _max_word_length);
 		for(int k = 1;k <= limit_k;k++){
-			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-				id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
-				id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
-				id word_t_id = SPECIAL_CHARACTER_END;
-				if(t < sentence->size()){
-					assert(t + next_word_length <= sentence->size());
-					word_t_id = get_substring_word_id_at_t_k(sentence, t + next_word_length, next_word_length);
-					// id word_id = sentence->get_substr_word_id(t - 1, t + next_word_length - 2);
-					// assert(word_t_id == word_id);
-				}
-				_word_ids[0] = word_j_id;
-				_word_ids[1] = word_k_id;
-				_word_ids[2] = word_t_id;
-				double pw_h = 0;
-				if(t == sentence->size()){	// <eos>に接続する確率からサンプリング
-					pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t);
-				}else{
-					pw_h = _p_transition_tkji[t + next_word_length][next_word_length][k][j];
-					#ifdef __DEBUG__
-						double pw_h2 = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + next_word_length - 1);
-						if(pw_h != pw_h2){
-							std::cout << pw_h << " == " << pw_h2 << std::endl;
-							std::cout << "t = " << t << ", k = " << k << ", j = " << j << std::endl;
-							std::cout << "next_word_length = " << next_word_length << std::endl;
-							std::cout << "size = " << sentence->size() << std::endl;
-						}
-						assert(pw_h == pw_h2);
-					#endif
-				}
-				assert(_alpha[t][k][j] > 0);
-				double p = pw_h * _alpha[t][k][j];
-				assert(p > 0);
-				sum_p += p;
-				_backward_sampling_table[table_index] = p;
-				table_index++;
-				// p_k.push_back(p);
-			}
-			if(t - k == 0){
-				id word_j_id = SPECIAL_CHARACTER_BEGIN;
-				id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
-				id word_t_id = SPECIAL_CHARACTER_END;
-				if(t < sentence->size()){
-					assert(t + next_word_length <= sentence->size());
-					assert(next_word_length > 0);
-					word_t_id = get_substring_word_id_at_t_k(sentence, t + next_word_length, next_word_length);
-					// id word_id = sentence->get_substr_word_id(t - 1, t + next_word_length - 2);
-					// assert(word_t_id == word_id);
-				}
-				_word_ids[0] = word_j_id;
-				_word_ids[1] = word_k_id;
-				_word_ids[2] = word_t_id;
-				double pw_h = 0;
-				if(t == sentence->size()){	// <eos>に接続する確率からサンプリング
-					pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t);
-				}else{
-					pw_h = _p_transition_tkji[t + next_word_length][next_word_length][k][0];
-					#ifdef __DEBUG__
-						double pw_h2 = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + next_word_length - 1);
-						if(pw_h != pw_h2){
-							std::cout << "t = " << t << ", k = " << k << ", j = " << 0 << std::endl;
-							std::cout << "next_word_length = " << next_word_length << std::endl;
-							std::cout << "size = " << sentence->size() << std::endl;
-						}
-						assert(pw_h == pw_h2);
-					#endif
-				}
-				assert(_alpha[t][k][0] > 0);
-				double p = pw_h * _alpha[t][k][0];
-				assert(p > 0);
-				sum_p += p;
-				_backward_sampling_table[table_index] = p;
+			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
+				double p_transition = p_transition_tkji[t + next_word_length][next_word_length][k][j];
+				#ifdef __DEBUG__
+					id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
+					id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
+					id word_t_id = SPECIAL_CHARACTER_END;
+					if(t < sentence->size()){
+						assert(t + next_word_length <= sentence->size());
+						word_t_id = get_substring_word_id_at_t_k(sentence, t + next_word_length, next_word_length);
+						// id word_id = sentence->get_substr_word_id(t - 1, t + next_word_length - 2);
+						// assert(word_t_id == word_id);
+					}
+					_word_ids[0] = word_j_id;
+					_word_ids[1] = word_k_id;
+					_word_ids[2] = word_t_id;
+					double potential = _crf->compute_gamma(sentence, t + 1, t + next_word_length + 1);
+					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + next_word_length - 1);
+					double _p_transition = exp(_lambda_0() * log(pw_h) + potential);
+					assert(p_transition == _p_transition);
+				#endif
+				assert(alpha[t][k][j] > 0);
+				sum_p += p_transition * alpha[t][k][j];
+				_backward_sampling_table[table_index] = p_transition * alpha[t][k][j];
 				table_index++;
 			}
 		}
@@ -466,24 +418,13 @@ namespace npycrf {
 		int i = 0;
 		double stack = 0;
 		for(int k = 1;k <= limit_k;k++){
-			for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
+			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
 				assert(i < table_index);
 				assert(_backward_sampling_table[i] > 0);
 				stack += _backward_sampling_table[i] * normalizer;
-				if(r < stack){
+				if(r <= stack){
 					sampled_k = k;
 					sampled_j = j;
-					return;
-				}
-				i++;
-			}
-			if(t - k == 0){
-				assert(i < table_index);
-				assert(_backward_sampling_table[i] > 0);
-				stack += _backward_sampling_table[i] * normalizer;
-				if(r < stack){
-					sampled_k = k;
-					sampled_j = 0;
 					return;
 				}
 				i++;

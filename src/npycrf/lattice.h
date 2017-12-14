@@ -35,7 +35,8 @@ namespace npycrf {
 		void _delete_capacity();
 		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double**** p_transition_tkji, double prod_scaling);
 		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** p_transition_tkji, double* scaling, bool use_scaling);
-		void _backward_sampling(Sentence* sentence, double*** alpha, std::vector<int> &segments);
+		void _backward_sampling(Sentence* sentence, double*** alpha, double**** p_transition_tkji, std::vector<int> &segments);
+		void _sample_backward_k_and_j(Sentence* sentence, double*** alpha, double**** p_transition_tkji, int t, int next_word_length, int &sampled_k, int &sampled_j);
 		double _lambda_0();
 	public:
 		npylm::NPYLM* _npylm;
@@ -62,7 +63,6 @@ namespace npycrf {
 		void reserve(int max_word_length, int max_sentence_length);
 		void forward_filtering(Sentence* sentence, bool use_scaling);
 		void backward_sampling(Sentence* sentence, std::vector<int> &segments);
-		void sample_backward_k_and_j(Sentence* sentence, int t, int next_word_length, int &sampled_k, int &sampled_j);
 		void blocked_gibbs(Sentence* sentence, std::vector<int> &segments, bool use_scaling = true);
 		void viterbi_argmax_alpha_t_k_j(Sentence* sentence, int t, int k, int j);
 		void viterbi_forward(Sentence* sentence);

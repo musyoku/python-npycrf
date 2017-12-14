@@ -275,6 +275,9 @@ namespace npycrf {
 						sampler::mt.seed(seed);
 						_npycrf->_lattice->blocked_gibbs(sentence, segments, false);
 						std::vector<int> b = segments;
+						if(a.size() != b.size()){
+							sentence->dump_words();
+						}
 						assert(a.size() == b.size());
 						for(int i = 0;i < a.size();i++){
 							assert(a[i] == b[i]);
