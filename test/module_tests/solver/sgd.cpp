@@ -1335,7 +1335,7 @@ void test_backward_lambda_0(){
 	double regularization_constant = 1.0;
 	solver::SGD* sgd = new solver::SGD(crf, regularization_constant);
 	sgd->clear_grads();
-	sgd->_backward_lambda_0(sentence, p_conc_tkji, pw_h_tkji, lattice->_max_word_length);
+	sgd->backward_lambda_0(sentence, p_conc_tkji, pw_h_tkji, lattice->_max_word_length);
 
 	array<int> &character_ids = sentence->_character_ids;
 	wchar_t const* characters = sentence->_characters;
@@ -1377,6 +1377,12 @@ int main(int argc, char *argv[]){
 	token_ids[SPECIAL_CHARACTER_BEGIN] = token_ids.size();
 	token_ids[SPECIAL_CHARACTER_END] = token_ids.size();
 	sampler::set_seed(0);
+
+	lattice::array::dual<double> test(10, 100);
+	lattice::array::dual<double> test2 = test;
+	lattice::array::dual<double> &test3 = test;
+	cout << test(0, 10) << endl;
+	cout << test(100, 10) << endl;
 
 	test_backward_lambda_0();
 	cout << "OK" << endl;

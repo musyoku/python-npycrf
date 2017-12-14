@@ -22,8 +22,8 @@ namespace npycrf {
 			NPYCRF* _npycrf;
 			solver::SGD* _sgd;
 			npycrf::array<double> _vpylm_sampling_probability_table;
-			bool* _added_to_npylm_u;
-			bool* _added_to_npylm_l;
+			npycrf::array<bool> _added_to_npylm_u;
+			npycrf::array<bool> _added_to_npylm_l;
 			int _total_gibbs_iterations;
 			void _print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices);
 			double _compute_perplexity(std::vector<Sentence*> &dataset);

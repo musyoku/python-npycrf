@@ -20,7 +20,7 @@ namespace npycrf {
 
 			// 教師なしデータ
 			int num_data = dataset_u->get_size_train();
-			_added_to_npylm_u = new bool[num_data];
+			_added_to_npylm_u = array<bool>(num_data);
 			for(int data_index = 0;data_index < num_data;data_index++){
 				_rand_indices_train_u.push_back(data_index);
 				_added_to_npylm_u[data_index] = false;
@@ -31,7 +31,7 @@ namespace npycrf {
 			
 			// 教師ありデータ
 			num_data = dataset_l->get_size_train();
-			_added_to_npylm_l = new bool[num_data];
+			_added_to_npylm_l = array<bool>(num_data);
 			for(int data_index = 0;data_index < num_data;data_index++){
 				_rand_indices_train_l.push_back(data_index);
 				_added_to_npylm_l[data_index] = false;
