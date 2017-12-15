@@ -10,39 +10,6 @@
 
 namespace npycrf {
 	using namespace npylm;
-	namespace lattice {
-		template<typename T>
-		void _init_array(T* &array, int size_i){
-			array = new T[size_i];
-			assert(array != NULL);
-		}
-		template<typename T>
-		void _init_array(T** &array, int size_i, int size_j){
-			array = new T*[size_i];
-			assert(array != NULL);
-			for(int i = 0;i < size_i;i++){
-				array[i] = new T[size_j];
-				assert(array[i] != NULL);
-			}
-		}
-		template<typename T>
-		void _delete_array(T* &array, int size_i){
-			if(array == NULL){
-				return;
-			}
-			delete[] array;
-		}
-		template<typename T>
-		void _delete_array(T** &array, int size_i, int size_j){
-			if(array == NULL){
-				return;
-			}
-			for(int i = 0;i < size_i;i++){
-				delete[] array[i];
-			}
-			delete[] array;
-		}
-	}
 	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf): Lattice(npylm, crf, 100){
 		
 	}
@@ -55,14 +22,12 @@ namespace npycrf {
 	}
 	Lattice::~Lattice(){
 		delete[] _word_ids;
-		_delete_capacity();
 	}
 	// 必要ならキャッシュの再確保
 	void Lattice::reserve(int max_word_length, int max_sentence_length){
 		if(max_word_length <= _max_word_length && max_sentence_length <= _max_sentence_length){
 			return;
 		}
-		_delete_capacity();
 		_allocate_capacity(max_word_length, max_sentence_length);
 		_max_word_length = max_word_length;
 		_max_sentence_length = max_sentence_length;
@@ -93,10 +58,6 @@ namespace npycrf {
 		_p_transition_tkji = mat::quad<double>(seq_capacity, word_capacity, word_capacity, word_capacity);
 		// 部分文字列のIDのキャッシュ
 		_substring_word_id_cache = mat::dual<id>(seq_capacity, word_capacity);
-	}
-	void Lattice::_delete_capacity(){
-		int seq_capacity = _max_sentence_length + 1;
-		int word_capacity = _max_word_length + 1;
 	}
 	double Lattice::_lambda_0(){
 		return _crf->_parameter->_lambda_0;

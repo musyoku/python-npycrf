@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
-#include <boost/format.hpp>
-#include <boost/assert.hpp>
+#include <cassert>
 
 namespace npycrf {
 	namespace mat {
@@ -38,12 +37,11 @@ namespace npycrf {
 				_alloc();
 			}
 			dual(const dual &a){
-				_t_size = a._t_size;
-				_k_size = a._k_size;
 				if(_array != NULL){
 					_delete();
 				}
-				std::cout << "lattice::array::dual allocated." << std::endl;
+				_t_size = a._t_size;
+				_k_size = a._k_size;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
 					for(int k = 0;k < _k_size;k++){
@@ -57,12 +55,11 @@ namespace npycrf {
 				}
 			}
 			dual &operator=(const dual &a){
-				_t_size = a._t_size;
-				_k_size = a._k_size;
 				if(_array != NULL){
 					_delete();
 				}
-				std::cout << "lattice::array::dual allocated." << std::endl;
+				_t_size = a._t_size;
+				_k_size = a._k_size;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
 					for(int k = 0;k < _k_size;k++){
@@ -85,13 +82,13 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k) {
-				BOOST_ASSERT_MSG(0 <= t && t < _t_size, (boost::format("0 <= %d < %d") % t % _t_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= k && k < _k_size, (boost::format("0 <= %d < %d") % k % _k_size).str().c_str());
+				assert(0 <= t && t < _t_size);
+				assert(0 <= k && k < _k_size);
 				return _array[t][k];
 			}
 			const T &operator()(int t, int k) const {
-				BOOST_ASSERT_MSG(0 <= t && t < _t_size, (boost::format("0 <= %d < %d") % t % _t_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= k && k < _k_size, (boost::format("0 <= %d < %d") % k % _k_size).str().c_str());
+				assert(0 <= t && t < _t_size);
+				assert(0 <= k && k < _k_size);
 				return _array[t][k];
 			}
 		};
@@ -137,12 +134,12 @@ namespace npycrf {
 				_alloc();
 			}
 			tri(const tri &a){
-				_t_size = a._t_size;
-				_k_size = a._k_size;
-				_j_size = a._j_size;
 				if(_array != NULL){
 					_delete();
 				}
+				_t_size = a._t_size;
+				_k_size = a._k_size;
+				_j_size = a._j_size;
 				std::cout << "lattice::array::tri allocated." << std::endl;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
@@ -159,13 +156,15 @@ namespace npycrf {
 				}
 			}
 			tri &operator=(const tri &a){
+				if(_array != NULL){
+					std::cout << _array << std::endl;
+					_delete();
+				}
 				_t_size = a._t_size;
 				_k_size = a._k_size;
 				_j_size = a._j_size;
-				if(_array != NULL){
-					_delete();
-				}
 				std::cout << "lattice::array::tri allocated." << std::endl;
+				std::cout << _t_size << ", " << _k_size << ", " << _j_size << std::endl;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
 					for(int k = 0;k < _k_size;k++){
@@ -195,15 +194,15 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j) {
-				BOOST_ASSERT_MSG(0 <= t && t < _t_size, (boost::format("0 <= %d < %d") % t % _t_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= k && k < _k_size, (boost::format("0 <= %d < %d") % k % _k_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= j && j < _j_size, (boost::format("0 <= %d < %d") % j % _j_size).str().c_str());
+				assert(0 <= t && t < _t_size);
+				assert(0 <= k && k < _k_size);
+				assert(0 <= j && j < _j_size);
 				return _array[t][k][j];
 			}
 			const T &operator()(int t, int k, int j) const {
-				BOOST_ASSERT_MSG(0 <= t && t < _t_size, (boost::format("0 <= %d < %d") % t % _t_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= k && k < _k_size, (boost::format("0 <= %d < %d") % k % _k_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= j && j < _j_size, (boost::format("0 <= %d < %d") % j % _j_size).str().c_str());
+				assert(0 <= t && t < _t_size);
+				assert(0 <= k && k < _k_size);
+				assert(0 <= j && j < _j_size);
 				return _array[t][k][j];
 			}
 		};
@@ -258,13 +257,13 @@ namespace npycrf {
 				_alloc();
 			}
 			quad(const quad &a){
+				if(_array != NULL){
+					_delete();
+				}
 				_t_size = a._t_size;
 				_k_size = a._k_size;
 				_j_size = a._j_size;
 				_i_size = a._i_size;
-				if(_array != NULL){
-					_delete();
-				}
 				std::cout << "lattice::array::quad allocated." << std::endl;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
@@ -283,13 +282,13 @@ namespace npycrf {
 				}
 			}
 			quad &operator=(const quad &a){
+				if(_array != NULL){
+					_delete();
+				}
 				_t_size = a._t_size;
 				_k_size = a._k_size;
 				_j_size = a._j_size;
 				_i_size = a._i_size;
-				if(_array != NULL){
-					_delete();
-				}
 				std::cout << "lattice::array::quad allocated." << std::endl;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
@@ -327,17 +326,17 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j, int i) {
-				BOOST_ASSERT_MSG(0 <= t && t < _t_size, (boost::format("0 <= %d < %d") % t % _t_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= k && k < _k_size, (boost::format("0 <= %d < %d") % k % _k_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= j && j < _j_size, (boost::format("0 <= %d < %d") % j % _j_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= i && i < _i_size, (boost::format("0 <= %d < %d") % i % _i_size).str().c_str());
+				assert(0 <= t && t < _t_size);
+				assert(0 <= k && k < _k_size);
+				assert(0 <= j && j < _j_size);
+				assert(0 <= i && i < _i_size);
 				return _array[t][k][j][i];
 			}
 			const T &operator()(int t, int k, int j, int i) const {
-				BOOST_ASSERT_MSG(0 <= t && t < _t_size, (boost::format("0 <= %d < %d") % t % _t_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= k && k < _k_size, (boost::format("0 <= %d < %d") % k % _k_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= j && j < _j_size, (boost::format("0 <= %d < %d") % j % _j_size).str().c_str());
-				BOOST_ASSERT_MSG(0 <= i && i < _i_size, (boost::format("0 <= %d < %d") % i % _i_size).str().c_str());
+				assert(0 <= t && t < _t_size);
+				assert(0 <= k && k < _k_size);
+				assert(0 <= j && j < _j_size);
+				assert(0 <= i && i < _i_size);
 				return _array[t][k][j][i];
 			}
 		};
@@ -383,11 +382,11 @@ namespace npycrf {
 			return *this;
 		}
 		T &operator[](int i){    // [] 演算子の多重定義
-			BOOST_ASSERT_MSG(0 <= i && i < _size, (boost::format("0 <= %d < %d") % i % _size).str().c_str());
+			assert(0 <= i && i < _size);
 			return _array[i];
 		}
 		const T &operator[](int i) const {    // [] 演算子の多重定義
-			BOOST_ASSERT_MSG(0 <= i && i < _size, (boost::format("0 <= %d < %d") % i % _size).str().c_str());
+			assert(0 <= i && i < _size);
 			return _array[i];
 		}
 		int size(){

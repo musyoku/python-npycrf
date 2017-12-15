@@ -11,7 +11,6 @@ namespace npycrf {
 	private:
 		bool _pure_crf_mode;	// NPYLMを無視
 		void _allocate_capacity(int max_word_length, int max_sentence_length);
-		void _delete_capacity();
 		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, double prod_scaling);
 		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, npycrf::array<double> &scaling, bool use_scaling);
 		void _backward_sampling(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &p_transition_tkji, std::vector<int> &segments);
