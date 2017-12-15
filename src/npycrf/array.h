@@ -322,18 +322,6 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j, int i) {
-				if(0 > k || k >= _k_size){
-					std::cout << k << " < " << _k_size << std::endl;
-					void* callstack[128];
-					int i, frames = backtrace(callstack, 128);
-					std::cout << "frames: " << frames << std::endl;
-					char** strs = backtrace_symbols(callstack, frames);
-					for (i = 0; i < frames; ++i) {
-						printf("%s\n", strs[i]);
-					}
-					free(strs);
-
-				}
 				assert(0 <= t && t < _t_size);
 				assert(0 <= k && k < _k_size);
 				assert(0 <= j && j < _j_size);
