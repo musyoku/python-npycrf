@@ -1,10 +1,13 @@
 #pragma once
+#include <iostream>
 #include <cassert>
+#include <execinfo.h>
+#include <stdio.h>
 
 namespace npycrf {
 	namespace mat {
 		template<typename T>
-		class dual {
+		class bi {
 		private:
 			void _delete(){
 				for(int t = 0;t < _t_size;t++){
@@ -25,17 +28,17 @@ namespace npycrf {
 			T** _array;
 			int _t_size;
 			int _k_size;
-			dual(){
+			bi(){
 				_array = NULL;
 				_t_size = 0;
 				_k_size = 0;
 			}
-			dual(int t_size, int k_size){
+			bi(int t_size, int k_size){
 				_t_size = t_size;
 				_k_size = k_size;
 				_alloc();
 			}
-			dual(const dual &a){
+			bi(const bi &a){
 				if(_array != NULL){
 					_delete();
 				}
@@ -48,12 +51,12 @@ namespace npycrf {
 					}
 				}
 			}
-			~dual(){
+			~bi(){
 				if(_array != NULL){
 					_delete();
 				}
 			}
-			dual &operator=(const dual &a){
+			bi &operator=(const bi &a){
 				if(_array != NULL){
 					_delete();
 				}
@@ -319,6 +322,18 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j, int i) {
+				if(0 > k || k >= _k_size){
+					std::cout << k << " < " << _k_size << std::endl;
+					void* callstack[128];
+					int i, frames = backtrace(callstack, 128);
+					std::cout << "frames: " << frames << std::endl;
+					char** strs = backtrace_symbols(callstack, frames);
+					for (i = 0; i < frames; ++i) {
+						printf("%s\n", strs[i]);
+					}
+					free(strs);
+
+				}
 				assert(0 <= t && t < _t_size);
 				assert(0 <= k && k < _k_size);
 				assert(0 <= j && j < _j_size);

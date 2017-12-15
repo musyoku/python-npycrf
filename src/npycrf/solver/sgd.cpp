@@ -314,6 +314,9 @@ namespace npycrf {
 				t = sentence->_start[n] + k;
 				j = (t - k == 0) ? 0 : sentence->_segments[n - 1];
 				i = (t - k - j == 0) ? 0 : sentence->_segments[n - 2];
+				if(k > max_word_length){
+					sentence->dump_words();
+				}
 				_grad_lambda_0 += log(pw_h_tkji(t, k, j, i));
 			}
 			// <eos>
@@ -328,6 +331,10 @@ namespace npycrf {
 				for(int k = 1;k <= std::min(t, max_word_length);k++){
 					for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, max_word_length);j++){
 						for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, max_word_length);i++){
+
+							if(k > max_word_length){
+								sentence->dump_words();
+							}
 							double p_conc = p_conc_tkji(t, k, j, i);
 							assert(pw_h_tkji(t, k, j, i) > 0);
 							assert(p_conc > 0);
@@ -340,6 +347,10 @@ namespace npycrf {
 			k = 1;
 			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, max_word_length);j++){
 				for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, max_word_length);i++){
+
+					if(k > max_word_length){
+						sentence->dump_words();
+					}
 					double p_conc = p_conc_tkji(t, k, j, i);
 					assert(pw_h_tkji(t, k, j, i) > 0);
 					assert(p_conc > 0);

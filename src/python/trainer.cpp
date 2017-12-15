@@ -40,6 +40,20 @@ namespace npycrf {
 				_rand_indices_dev_l.push_back(data_index);
 			}
 
+			// 単語の最大長をチェック
+			auto check_word_length = [&npycrf](std::vector<Sentence*> &sentences){
+				for(auto &sentence: sentences){
+					for(int t = 0;t < sentence->get_num_segments();t++){
+						int word_length = sentence->get_word_length_at(t);
+						if(word_length > npycrf->get_max_word_length()){
+							std::cout << "max_word_length must be greater or equal to " << word_length << std::endl;
+						}
+					}
+				}
+			};
+			check_word_length(dataset_l->_sentences_train);
+			check_word_length(dataset_l->_sentences_dev);
+
 			// CRF素性を展開
 			for(Sentence* sentence: dataset_l->_sentences_train){
 				assert(sentence->_features == NULL);

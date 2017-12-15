@@ -568,7 +568,7 @@ namespace npycrf {
 			int character_ids_length = sentence->size();
 
 			// CRFのラベルunigram素性の数
-			mat::dual<int> num_crf_features_u(character_ids_length + 3, 2);
+			mat::bi<int> num_crf_features_u(character_ids_length + 3, 2);
 			int*** crf_feature_indices_u = new int**[character_ids_length + 3];
 
 			// ラベルunigram素性

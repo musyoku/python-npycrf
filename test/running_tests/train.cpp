@@ -69,7 +69,7 @@ void run_training_loop(){
 			std::wcout << word << L" ";
 		}
 		std::wcout << std::endl;
-		// corpus_l->add_words(words);
+		corpus_l->add_words(words);
 		if(i > num_labelded_data){
 			break;
 		}
@@ -135,6 +135,7 @@ void run_training_loop(){
 		if(epoch > 3){
 			trainer->update_p_k_given_vpylm();
 		}
+		trainer->print_p_k_vpylm();
 		cout << "lambda_0: " << py_crf->get_lambda_0() << endl;
 		// if(epoch % 10 == 0){
 			// trainer->print_segmentation_labeled_dev(10);

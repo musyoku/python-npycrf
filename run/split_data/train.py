@@ -16,7 +16,7 @@ def printr(string):
 	sys.stdout.write(string)
 	sys.stdout.flush()
 
-def build_corpus(filepath, directory, semi_supervised_split_ratio, neologd_path=None):
+def build_corpus(filepath, directory, semi_supervised_split_ratio, max_word_length, neologd_path=None):
 	assert filepath is not None or directory is not None
 	corpus_l = nlp.corpus()	# 教師あり
 	corpus_u = nlp.corpus()	# 教師なし
@@ -54,6 +54,9 @@ def build_corpus(filepath, directory, semi_supervised_split_ratio, neologd_path=
 		words = []
 		while m:
 			word = m.surface
+			if len(word) > max_word_length:
+				words = []
+				break
 			if len(word) > 0:
 				words.append(word)
 			m = m.next
@@ -73,7 +76,7 @@ def main():
 		pass
 
 	# 学習に用いるテキストデータを準備
-	corpus_l, corpus_u = build_corpus(args.train_filename, args.train_directory, args.semi_supervised_split, args.neologd_path)
+	corpus_l, corpus_u = build_corpus(args.train_filename, args.train_directory, args.semi_supervised_split, max_word_length=args.max_word_length, neologd_path=args.neologd_path)
 
 	# 辞書
 	dictionary = nlp.dictionary()

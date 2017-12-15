@@ -49,7 +49,7 @@ namespace npycrf {
 		// 後向き確率
 		_beta = mat::tri<double>(seq_capacity + 1, word_capacity, word_capacity);
 		// 部分文字列が単語になる条件付き確率テーブル
-		_pc_s = mat::dual<double>(seq_capacity, word_capacity);
+		_pc_s = mat::bi<double>(seq_capacity, word_capacity);
 		// Markov-CRFの周辺確率テーブル
 		_pz_s = mat::tri<double>(seq_capacity + 1, 2, 2);
 		// 3-gram確率のキャッシュ
@@ -57,7 +57,7 @@ namespace npycrf {
 		// 遷移確率のキャッシュ
 		_p_transition_tkji = mat::quad<double>(seq_capacity + 1, word_capacity, word_capacity, word_capacity);
 		// 部分文字列のIDのキャッシュ
-		_substring_word_id_cache = mat::dual<id>(seq_capacity, word_capacity);
+		_substring_word_id_cache = mat::bi<id>(seq_capacity, word_capacity);
 	}
 	double Lattice::_lambda_0(){
 		return _crf->_parameter->_lambda_0;
@@ -823,7 +823,7 @@ namespace npycrf {
 	}
 	// 文の部分文字列が単語になる確率
 	// P_{CONC}(c_{t-k}^t|x)
-	void Lattice::_enumerate_marginal_p_substring_given_sentence(mat::dual<double> &pc_s, int sentence_length, mat::tri<double> &alpha, mat::tri<double> &beta){
+	void Lattice::_enumerate_marginal_p_substring_given_sentence(mat::bi<double> &pc_s, int sentence_length, mat::tri<double> &alpha, mat::tri<double> &beta){
 		assert(sentence_length <= _max_sentence_length);
 		int size = sentence_length + 1;
 		#ifdef __DEBUG__
@@ -842,7 +842,11 @@ namespace npycrf {
 					assert(beta(t, k, j) > 0);
 					sum_probability += alpha(t, k, j) * beta(t, k, j);
 				}
-				assert(sum_probability > 0);
+				if(sum_probability > 1){	// 多少の誤差は丸める
+					assert(sum_probability - 1 < 1e-12);
+					sum_probability = 1;
+				}
+				assert(0 < sum_probability && sum_probability <= 1);
 				pc_s(t, k) = sum_probability;
 			}
 		}
@@ -871,8 +875,12 @@ namespace npycrf {
 						assert(alpha(t - k, j, i) > 0);
 						assert(beta(t, k, j) > 0);
 						double marginal_p = alpha(t - k, j, i) * beta(t, k, j) * p_transition_tkji(t, k, j, i) * prod_scaling;
-						assert(0 < marginal_p && marginal_p <= 1);
-						// std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", pw_h = " << p_transition_tkji(t, k, j, i) << ", marginal_p = " << marginal_p << ", alpha = " << alpha(t - k, j, i) << ", beta = " <<  beta(t, k, j) << ", prod_scaling = " << prod_scaling << std::endl;
+						if(marginal_p > 1){		// 多少の誤差は丸める
+							assert(marginal_p - 1 < 1e-12);
+							marginal_p = 1;
+						}else{
+							assert(0 < marginal_p && marginal_p <= 1);
+						}
 						p_conc(t, k, j, i) = marginal_p;
 					}
 				}
@@ -911,7 +919,7 @@ namespace npycrf {
 	}
 	// p(z_t, z_{t+1}|s)の計算
 	// Zsは統合モデル上での文の確率
-	void Lattice::_enumerate_marginal_p_path_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::dual<double> &pc_s){
+	void Lattice::_enumerate_marginal_p_path_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::bi<double> &pc_s){
 		assert(sentence_length <= _max_sentence_length);
 		pz_s(0, 0, 0) = 0;
 		pz_s(0, 0, 1) = 0;
@@ -961,12 +969,12 @@ namespace npycrf {
 		}
 		assert(pz_s(sentence_length, 1, 1) > 0);
 	}
-	double Lattice::_compute_p_z_case_1_1(int sentence_length, int t, mat::dual<double> &pc_s){
-		assert(0 < pc_s(t, 1) && pc_s(t, 1) <= 1);
+	double Lattice::_compute_p_z_case_1_1(int sentence_length, int t, mat::bi<double> &pc_s){
+		assert(0 <= pc_s(t, 1) && pc_s(t, 1) <= 1);
 		// std::cout << "		pc_s[" << t << "][1] = " << pc_s(t, 1) << std::endl;
 		return pc_s(t, 1);
 	}
-	double Lattice::_compute_p_z_case_1_0(int sentence_length, int t, mat::dual<double> &pc_s){
+	double Lattice::_compute_p_z_case_1_0(int sentence_length, int t, mat::bi<double> &pc_s){
 		if(t == sentence_length){
 			return 0;
 		}
@@ -974,22 +982,22 @@ namespace npycrf {
 		// std::cout << "	case 1-0:" << std::endl;
 		for(int j = 2;j <= std::min(sentence_length - t + 1, _max_word_length);j++){
 			// std::cout << "		pc_s[" << (t + j - 1) << "][" << j << "] = " << pc_s(t + j - 1, j) << std::endl;
-			assert(0 < pc_s(t + j - 1, j) && pc_s(t + j - 1, j) <= 1);
+			assert(0 <= pc_s(t + j - 1, j) && pc_s(t + j - 1, j) <= 1);
 			p_1_0 += pc_s(t + j - 1, j);
 		}
 		return p_1_0;
 	}
-	double Lattice::_compute_p_z_case_0_1(int sentence_length, int t, mat::dual<double> &pc_s){
+	double Lattice::_compute_p_z_case_0_1(int sentence_length, int t, mat::bi<double> &pc_s){
 		double p_0_1 = 0;
 		// std::cout << "	case 0-1:" << std::endl;
 		for(int j = 2;j <= std::min(t, _max_word_length);j++){
 			// std::cout << "		pc_s[" << t << "][" << j << "] = " << pc_s(t, j) << std::endl;
-			assert(0 < pc_s(t, j) && pc_s(t, j) <= 1);
+			assert(0 <= pc_s(t, j) && pc_s(t, j) <= 1);
 			p_0_1 += pc_s(t, j);
 		}
 		return p_0_1;
 	}
-	double Lattice::_compute_p_z_case_0_0(int sentence_length, int t, mat::dual<double> &pc_s){
+	double Lattice::_compute_p_z_case_0_0(int sentence_length, int t, mat::bi<double> &pc_s){
 		if(t == 1){
 			return 0;
 		}

@@ -20,8 +20,8 @@ namespace npycrf {
 		npylm::NPYLM* _npylm;
 		crf::CRF* _crf;
 		id* _word_ids;
-		mat::dual<id> _substring_word_id_cache;
-		mat::dual<double> _pc_s;		// 文の部分文字列が単語になる条件付き確率
+		mat::bi<id> _substring_word_id_cache;
+		mat::bi<double> _pc_s;		// 文の部分文字列が単語になる条件付き確率
 		mat::tri<double> _alpha;		// 前向き確率
 		mat::tri<double> _beta;			// 後向き確率
 		mat::tri<double> _pz_s;			// Markov-CRFの周辺確率
@@ -54,12 +54,12 @@ namespace npycrf {
 		void _enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::tri<double> &alpha, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, npycrf::array<double> &scaling, bool use_scaling = true);
 		void enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s);
 		void _enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s, mat::tri<double> &alpha, mat::tri<double> &beta);
-		void _enumerate_marginal_p_path_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::dual<double> &pc_s);
-		double _compute_p_z_case_1_1(int sentence_length, int t, mat::dual<double> &pc_s);
-		double _compute_p_z_case_1_0(int sentence_length, int t, mat::dual<double> &pc_s);
-		double _compute_p_z_case_0_1(int sentence_length, int t, mat::dual<double> &pc_s);
-		double _compute_p_z_case_0_0(int sentence_length, int t, mat::dual<double> &pc_s);
-		void _enumerate_marginal_p_substring_given_sentence(mat::dual<double> &pc_s, int sentence_length, mat::tri<double> &alpha, mat::tri<double> &beta);
+		void _enumerate_marginal_p_path_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::bi<double> &pc_s);
+		double _compute_p_z_case_1_1(int sentence_length, int t, mat::bi<double> &pc_s);
+		double _compute_p_z_case_1_0(int sentence_length, int t, mat::bi<double> &pc_s);
+		double _compute_p_z_case_0_1(int sentence_length, int t, mat::bi<double> &pc_s);
+		double _compute_p_z_case_0_0(int sentence_length, int t, mat::bi<double> &pc_s);
+		void _enumerate_marginal_p_substring_given_sentence(mat::bi<double> &pc_s, int sentence_length, mat::tri<double> &alpha, mat::tri<double> &beta);
 		void _enumerate_forward_variables(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling = true);
 		void _enumerate_backward_variables(Sentence* sentence, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling = true);
 		void _clear_p_tkji();

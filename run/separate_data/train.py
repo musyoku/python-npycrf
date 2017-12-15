@@ -16,7 +16,7 @@ def printr(string):
 	sys.stdout.write(string)
 	sys.stdout.flush()
 
-def build_corpus(filepath, directory, supervised=False):
+def build_corpus(filepath, directory, max_word_length, supervised=False):
 	assert filepath is not None or directory is not None
 	corpus = nlp.corpus()	# 教師あり
 	sentence_list = []
@@ -48,6 +48,9 @@ def build_corpus(filepath, directory, supervised=False):
 			words = []
 			while m:
 				word = m.surface
+				if len(word) > max_word_length:
+					words = []
+					break
 				if len(word) > 0:
 					words.append(word)
 				m = m.next
@@ -67,8 +70,8 @@ def main():
 		pass
 
 	# 学習に用いるテキストデータを準備
-	corpus_l = build_corpus(args.train_filename_l, args.train_directory_l, supervised=True)
-	corpus_u = build_corpus(args.train_filename_u, args.train_directory_u, supervised=False)
+	corpus_l = build_corpus(args.train_filename_l, args.train_directory_l, max_word_length=args.max_word_length, supervised=True)
+	corpus_u = build_corpus(args.train_filename_u, args.train_directory_u, max_word_length=args.max_word_length, supervised=False)
 
 	# 辞書
 	dictionary = nlp.dictionary()
@@ -175,6 +178,9 @@ def main():
 		# モデルの保存
 		npylm.save(os.path.join(args.working_directory, "npylm.model"))
 		crf.save(os.path.join(args.working_directory, "crf.model"))
+
+		trainer.print_p_k_vpylm()
+		print(crf.get_lambda_0())
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
