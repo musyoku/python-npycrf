@@ -222,7 +222,7 @@ if __name__ == "__main__":
 	parser.add_argument("--crf-feature-x-identical-2-end", type=int, default=1)
 	parser.add_argument("--crf-lambda-0", "-lam-0", type=float, default=1.0, help="モデル補完重みの初期値")
 	parser.add_argument("--crf-prior-sigma", type=float, default=1.0)
-	parser.add_argument("--crf-learning-rate", "-lr", type=float, default=0.001)
+	parser.add_argument("--crf-learning-rate", "-lr", type=float, default=0.01)
 
 	args = parser.parse_args()
 

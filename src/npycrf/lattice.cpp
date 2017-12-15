@@ -10,7 +10,7 @@
 
 namespace npycrf {
 	using namespace npylm;
-	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf): Lattice(npylm, crf, 100){
+	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf): Lattice(npylm, crf, 1){
 		
 	}
 	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, int max_sentence_length){
@@ -18,7 +18,7 @@ namespace npycrf {
 		_crf = crf;
 		_word_ids = new id[3];	// 3-gram
 		_pure_crf_mode = false;
-		_allocate_capacity(npylm->_max_word_length, max_sentence_length);
+		reserve(npylm->_max_word_length, max_sentence_length);
 	}
 	Lattice::~Lattice(){
 		delete[] _word_ids;
@@ -853,6 +853,7 @@ namespace npycrf {
 	}
 	// Pconc(c^{t-k-j}_{t-k-j-i+1}, c^{t-k}_{t-k-j+1}, c^t_{t-k+1}|x)の計算
 	void Lattice::enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, bool use_scaling){
+		reserve(_max_word_length, sentence->size());
 		_clear_word_id_cache();
 		_clear_p_tkji();
 		_enumerate_forward_variables(sentence, _alpha, pw_h_tkji, _p_transition_tkji, _scaling, use_scaling);
@@ -907,6 +908,7 @@ namespace npycrf {
 	}
 	// p(z_t, z_{t+1}|s)の計算
 	void Lattice::enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s){
+		reserve(_max_word_length, sentence->size());
 		_clear_word_id_cache();
 		_clear_p_tkji();
 		_enumerate_forward_variables(sentence, _alpha, _pw_h_tkji, _p_transition_tkji, _scaling, true);
