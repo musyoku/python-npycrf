@@ -27,6 +27,7 @@ namespace npycrf {
 					params->_num_updates[i] += 1;
 				}
 			}
+			params->_lambda_0 += learning_rate * _grad_lambda_0 - _regularization_constant * learning_rate * (params->_lambda_0 - 1);
 		}
 		// CRFの勾配計算について
 		// http://www.ism.ac.jp/editsec/toukei/pdf/64-2-179.pdf

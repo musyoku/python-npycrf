@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 #include <cassert>
 
 namespace npycrf {
@@ -140,7 +139,6 @@ namespace npycrf {
 				_t_size = a._t_size;
 				_k_size = a._k_size;
 				_j_size = a._j_size;
-				std::cout << "lattice::array::tri allocated." << std::endl;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
 					for(int k = 0;k < _k_size;k++){
@@ -157,14 +155,11 @@ namespace npycrf {
 			}
 			tri &operator=(const tri &a){
 				if(_array != NULL){
-					std::cout << _array << std::endl;
 					_delete();
 				}
 				_t_size = a._t_size;
 				_k_size = a._k_size;
 				_j_size = a._j_size;
-				std::cout << "lattice::array::tri allocated." << std::endl;
-				std::cout << _t_size << ", " << _k_size << ", " << _j_size << std::endl;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
 					for(int k = 0;k < _k_size;k++){
@@ -264,7 +259,6 @@ namespace npycrf {
 				_k_size = a._k_size;
 				_j_size = a._j_size;
 				_i_size = a._i_size;
-				std::cout << "lattice::array::quad allocated." << std::endl;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
 					for(int k = 0;k < _k_size;k++){
@@ -289,7 +283,6 @@ namespace npycrf {
 				_k_size = a._k_size;
 				_j_size = a._j_size;
 				_i_size = a._i_size;
-				std::cout << "lattice::array::quad allocated." << std::endl;
 				_alloc();
 				for(int t = 0;t < _t_size;t++){
 					for(int k = 0;k < _k_size;k++){

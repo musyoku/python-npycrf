@@ -53,9 +53,9 @@ namespace npycrf {
 		// Markov-CRFの周辺確率テーブル
 		_pz_s = mat::tri<double>(seq_capacity + 1, 2, 2);
 		// 3-gram確率のキャッシュ
-		_pw_h_tkji = mat::quad<double>(seq_capacity, word_capacity, word_capacity, word_capacity);
+		_pw_h_tkji = mat::quad<double>(seq_capacity + 1, word_capacity, word_capacity, word_capacity);
 		// 遷移確率のキャッシュ
-		_p_transition_tkji = mat::quad<double>(seq_capacity, word_capacity, word_capacity, word_capacity);
+		_p_transition_tkji = mat::quad<double>(seq_capacity + 1, word_capacity, word_capacity, word_capacity);
 		// 部分文字列のIDのキャッシュ
 		_substring_word_id_cache = mat::dual<id>(seq_capacity, word_capacity);
 	}
@@ -240,8 +240,6 @@ namespace npycrf {
 		int limit_k = std::min(t, _max_word_length);
 		for(int k = 1;k <= limit_k;k++){
 			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-				assert(t + next_word_length <= _max_sentence_length);
-				assert(next_word_length <= _max_word_length);
 				double p_transition = p_transition_tkji(t + next_word_length, next_word_length, k, j);
 				#ifdef __DEBUG__
 					id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);

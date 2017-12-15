@@ -135,6 +135,7 @@ void run_training_loop(){
 		if(epoch > 3){
 			trainer->update_p_k_given_vpylm();
 		}
+		cout << "lambda_0: " << py_crf->get_lambda_0() << endl;
 		// if(epoch % 10 == 0){
 			// trainer->print_segmentation_labeled_dev(10);
 			// cout << "ppl: " << trainer->compute_perplexity_train() << endl;
