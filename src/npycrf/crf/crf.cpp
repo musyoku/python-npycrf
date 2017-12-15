@@ -455,11 +455,11 @@ namespace npycrf {
 				cost += _compute_cost_unigram_and_bigram_type_features(character_ids, characters, character_ids_length, i, y_i_1, y_i);
 			}else{
 				FeatureIndices* features = sentence->_features;
-				for(int m = 0;m < features->_num_features_u[i][y_i];m++){
+				for(int m = 0;m < features->_num_features_u(i, y_i);m++){
 					int k = features->_feature_indices_u[i][y_i][m];
 					cost += _parameter->weight_at_index(k);
 				}
-				for(int m = 0;m < features->_num_features_b[i][y_i_1][y_i];m++){
+				for(int m = 0;m < features->_num_features_b(i, y_i_1, y_i);m++){
 					int k = features->_feature_indices_b[i][y_i_1][y_i][m];
 					cost += _parameter->weight_at_index(k);
 				}
@@ -568,12 +568,11 @@ namespace npycrf {
 			int character_ids_length = sentence->size();
 
 			// CRFのラベルunigram素性の数
-			int** num_crf_features_u = new int*[character_ids_length + 3];
+			mat::dual<int> num_crf_features_u(character_ids_length + 3, 2);
 			int*** crf_feature_indices_u = new int**[character_ids_length + 3];
 
 			// ラベルunigram素性
 			for(int i = 2;i <= character_ids_length + 2;i++){	// 末尾に<eos>が2つ入る
-				num_crf_features_u[i] = new int[2];
 				crf_feature_indices_u[i] = new int*[2];
 				for(int y_i = 0;y_i <= 1;y_i++){
 					std::vector<int> indices_u;
@@ -625,7 +624,7 @@ namespace npycrf {
 					indices_u.push_back(_index_w_unigram_type_u(y_i, type_i));
 					indices_u.push_back(_index_w_bigram_type_u(y_i, type_i_1, type_i));
 
-					num_crf_features_u[i][y_i] = indices_u.size();
+					num_crf_features_u(i, y_i) = indices_u.size();
 					crf_feature_indices_u[i][y_i] = new int[indices_u.size()];
 					for(int n = 0;n < indices_u.size();n++){
 						crf_feature_indices_u[i][y_i][n] = indices_u[n];
@@ -634,16 +633,7 @@ namespace npycrf {
 			}
 
 			// CRFのラベルbigram素性の数
-			int*** num_crf_features_b = new int**[character_ids_length + 3];
-			for(int i = 0;i < character_ids_length + 3;i++){
-				num_crf_features_b[i] = new int*[2];
-				num_crf_features_b[i][0] = new int[2];
-				num_crf_features_b[i][1] = new int[2];
-				num_crf_features_b[i][0][0] = 0;
-				num_crf_features_b[i][0][1] = 0;
-				num_crf_features_b[i][1][0] = 0;
-				num_crf_features_b[i][1][1] = 0;
-			}
+			mat::tri<int> num_crf_features_b(character_ids_length + 3, 2, 2);
 			int**** crf_feature_indices_b = new int***[character_ids_length + 3];
 
 			// ラベルbigram素性
@@ -702,7 +692,7 @@ namespace npycrf {
 						indices_b.push_back(_index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i));
 
 						// 更新
-						num_crf_features_b[i][y_i_1][y_i] = indices_b.size();
+						num_crf_features_b(i, y_i_1, y_i) = indices_b.size();
 						crf_feature_indices_b[i][y_i_1][y_i] = new int[indices_b.size()];
 						for(int n = 0;n < indices_b.size();n++){
 							crf_feature_indices_b[i][y_i_1][y_i][n] = indices_b[n];

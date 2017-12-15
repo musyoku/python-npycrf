@@ -116,13 +116,17 @@ void run_training_loop(){
 	double learning_rate = 0.001;
 	unsigned int batchsize = 32;
 	double crf_regularization_constant = 1;
-
+	
+	std::cout << "initializing ..." << std::endl;
 	Trainer* trainer = new Trainer(dataset_l, dataset_u, dict, model, crf_regularization_constant);
 	trainer->add_labeled_data_to_npylm();
 	trainer->sgd(learning_rate, batchsize, true);
 	for(int epoch = 1;epoch < 200;epoch++){
+		std::cout << "epoch " << epoch << std::endl;
 		auto start_time = std::chrono::system_clock::now();
+		std::cout << "gibbs ..." << std::endl;
 		trainer->gibbs();
+		std::cout << "sgd ..." << std::endl;
 		trainer->sgd(learning_rate, batchsize, false);
 	    auto diff = std::chrono::system_clock::now() - start_time;
 	    cout << (std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0) << endl;

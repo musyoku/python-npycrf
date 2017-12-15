@@ -7,11 +7,11 @@ namespace npycrf {
 		SGD::SGD(crf::CRF* crf, double regularization_constant){
 			_crf = crf;
 			_regularization_constant = regularization_constant;
-			_grad_weight = new double[crf->_parameter->_weight_size];
+			_grad_weight = array<double>(crf->_parameter->_weight_size);
 			clear_grads();
 		}
 		SGD::~SGD(){
-			delete[] _grad_weight;
+			
 		}
 		void SGD::clear_grads(){
 			_grad_lambda_0 = 0;
