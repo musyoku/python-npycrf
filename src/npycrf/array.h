@@ -1,10 +1,9 @@
 #pragma once
-#include <iostream>
-#include <cassert>
-#include <execinfo.h>
-#include <stdio.h>
 
 namespace npycrf {
+	namespace index {
+		void check(int i, int size);
+	}
 	namespace mat {
 		template<typename T>
 		class bi {
@@ -29,7 +28,7 @@ namespace npycrf {
 			int _t_size;
 			int _k_size;
 			bi(){
-				_array = NULL;
+				_array = nullptr;
 				_t_size = 0;
 				_k_size = 0;
 			}
@@ -39,7 +38,7 @@ namespace npycrf {
 				_alloc();
 			}
 			bi(const bi &a){
-				if(_array != NULL){
+				if(_array != nullptr){
 					_delete();
 				}
 				_t_size = a._t_size;
@@ -52,12 +51,12 @@ namespace npycrf {
 				}
 			}
 			~bi(){
-				if(_array != NULL){
+				if(_array != nullptr){
 					_delete();
 				}
 			}
 			bi &operator=(const bi &a){
-				if(_array != NULL){
+				if(_array != nullptr){
 					_delete();
 				}
 				_t_size = a._t_size;
@@ -84,13 +83,13 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k) {
-				assert(0 <= t && t < _t_size);
-				assert(0 <= k && k < _k_size);
+				index::check(t, _t_size);
+				index::check(k, _k_size);
 				return _array[t][k];
 			}
 			const T &operator()(int t, int k) const {
-				assert(0 <= t && t < _t_size);
-				assert(0 <= k && k < _k_size);
+				index::check(t, _t_size);
+				index::check(k, _k_size);
 				return _array[t][k];
 			}
 		};
@@ -124,7 +123,7 @@ namespace npycrf {
 			int _k_size;
 			int _j_size;
 			tri(){
-				_array = NULL;
+				_array = nullptr;
 				_t_size = 0;
 				_k_size = 0;
 				_j_size = 0;
@@ -136,7 +135,7 @@ namespace npycrf {
 				_alloc();
 			}
 			tri(const tri &a){
-				if(_array != NULL){
+				if(_array != nullptr){
 					_delete();
 				}
 				_t_size = a._t_size;
@@ -152,12 +151,12 @@ namespace npycrf {
 				}
 			}
 			~tri(){
-				if(_array != NULL){
+				if(_array != nullptr){
 					_delete();
 				}
 			}
 			tri &operator=(const tri &a){
-				if(_array != NULL){
+				if(_array != nullptr){
 					_delete();
 				}
 				_t_size = a._t_size;
@@ -192,15 +191,15 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j) {
-				assert(0 <= t && t < _t_size);
-				assert(0 <= k && k < _k_size);
-				assert(0 <= j && j < _j_size);
+				index::check(t, _t_size);
+				index::check(k, _k_size);
+				index::check(j, _j_size);
 				return _array[t][k][j];
 			}
 			const T &operator()(int t, int k, int j) const {
-				assert(0 <= t && t < _t_size);
-				assert(0 <= k && k < _k_size);
-				assert(0 <= j && j < _j_size);
+				index::check(t, _t_size);
+				index::check(k, _k_size);
+				index::check(j, _j_size);
 				return _array[t][k][j];
 			}
 		};
@@ -241,7 +240,7 @@ namespace npycrf {
 			int _j_size;
 			int _i_size;
 			quad(){
-				_array = NULL;
+				_array = nullptr;
 				_t_size = 0;
 				_k_size = 0;
 				_j_size = 0;
@@ -255,7 +254,7 @@ namespace npycrf {
 				_alloc();
 			}
 			quad(const quad &a){
-				if(_array != NULL){
+				if(_array != nullptr){
 					_delete();
 				}
 				_t_size = a._t_size;
@@ -274,12 +273,12 @@ namespace npycrf {
 				}
 			}
 			~quad(){
-				if(_array != NULL){
+				if(_array != nullptr){
 					_delete();
 				}
 			}
 			quad &operator=(const quad &a){
-				if(_array != NULL){
+				if(_array != nullptr){
 					_delete();
 				}
 				_t_size = a._t_size;
@@ -322,17 +321,17 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j, int i) {
-				assert(0 <= t && t < _t_size);
-				assert(0 <= k && k < _k_size);
-				assert(0 <= j && j < _j_size);
-				assert(0 <= i && i < _i_size);
+				index::check(t, _t_size);
+				index::check(k, _k_size);
+				index::check(j, _j_size);
+				index::check(i, _i_size);
 				return _array[t][k][j][i];
 			}
 			const T &operator()(int t, int k, int j, int i) const {
-				assert(0 <= t && t < _t_size);
-				assert(0 <= k && k < _k_size);
-				assert(0 <= j && j < _j_size);
-				assert(0 <= i && i < _i_size);
+				index::check(t, _t_size);
+				index::check(k, _k_size);
+				index::check(j, _j_size);
+				index::check(i, _i_size);
 				return _array[t][k][j][i];
 			}
 		};
@@ -344,7 +343,7 @@ namespace npycrf {
 		int _size;
 	public:
 		array(){
-			_array = NULL;
+			_array = nullptr;
 			_size = 0;
 		}
 		array(int size){
@@ -353,7 +352,7 @@ namespace npycrf {
 		}
 		array(const array &a){
 			_size = a._size;
-			if(_array != NULL){
+			if(_array != nullptr){
 				delete[] _array;
 			}
 			_array = new T[_size];
@@ -362,12 +361,12 @@ namespace npycrf {
 			}
 		}
 		~array(){
-			if(_array != NULL){
+			if(_array != nullptr){
 				delete[] _array;
 			}
 		}
 		array &operator=(const array &a){
-			if(_array != NULL){
+			if(_array != nullptr){
 				delete[] _array;
 			}
 			_size = a._size;
@@ -378,11 +377,11 @@ namespace npycrf {
 			return *this;
 		}
 		T &operator[](int i){    // [] 演算子の多重定義
-			assert(0 <= i && i < _size);
+			index::check(i, _size);
 			return _array[i];
 		}
 		const T &operator[](int i) const {    // [] 演算子の多重定義
-			assert(0 <= i && i < _size);
+			index::check(i, _size);
 			return _array[i];
 		}
 		int size(){
