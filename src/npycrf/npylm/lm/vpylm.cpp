@@ -22,18 +22,14 @@ namespace npycrf {
 				_depth = 0;
 				_g0 = g0;
 				_max_depth = max_possible_depth;	// 訓練データ中の最大長の文の文字数が可能な最大深さになる
-				_parent_pw_cache = new double[max_possible_depth + 1];
-				_sampling_table = new double[max_possible_depth + 1];
-				_path_nodes = new Node<int>*[max_possible_depth + 1];
+				_parent_pw_cache = array<double>(max_possible_depth + 1);
+				_sampling_table = array<double>(max_possible_depth + 1);
+				_path_nodes = array<Node<int>*>(max_possible_depth + 1);
 			}
 			VPYLM::~VPYLM(){
 				_delete_node(_root);
-				delete[] _sampling_table;
-				delete[] _parent_pw_cache;
-				delete[] _path_nodes;
 			}
 			bool VPYLM::add_customer_at_time_t(array<int> &character_ids, int t, int depth_t){
-				assert(_parent_pw_cache != NULL);
 				assert(0 <= depth_t && depth_t <= t);
 				Node<int>* node = find_node_by_tracing_back_context(character_ids, t, depth_t, _parent_pw_cache);
 				assert(node != NULL);
@@ -47,8 +43,7 @@ namespace npycrf {
 			}
 			// parent_pw_cacheがすでにセットされていてpath_nodesを更新する
 			// NPYLMから呼ぶ用
-			bool VPYLM::add_customer_at_time_t(array<int> &character_ids, int t, int depth_t, double* parent_pw_cache, Node<int>** path_nodes){
-				assert(path_nodes != NULL);
+			bool VPYLM::add_customer_at_time_t(array<int> &character_ids, int t, int depth_t, array<double> &parent_pw_cache, array<Node<int>*> &path_nodes){
 				assert(0 <= depth_t && depth_t <= t);
 				Node<int>* node = find_node_by_tracing_back_context(character_ids, t, depth_t, path_nodes);
 				assert(node != NULL);
@@ -111,8 +106,7 @@ namespace npycrf {
 			}
 			// add_customer用
 			// 辿りながら確率をキャッシュ
-			Node<int>* VPYLM::find_node_by_tracing_back_context(array<int> &character_ids, int t, int depth_t, double* parent_pw_cache){
-				assert(parent_pw_cache != NULL);
+			Node<int>* VPYLM::find_node_by_tracing_back_context(array<int> &character_ids, int t, int depth_t, array<double> &parent_pw_cache){
 				if(t - depth_t < 0){
 					return NULL;
 				}
@@ -138,8 +132,7 @@ namespace npycrf {
 				return node;
 			}
 			// すでに辿ったノードのキャッシュを使いながら辿る
-			Node<int>* VPYLM::find_node_by_tracing_back_context(array<int> &character_ids, int t, int depth_t, Node<int>** path_nodes_cache){
-				assert(path_nodes_cache != NULL);
+			Node<int>* VPYLM::find_node_by_tracing_back_context(array<int> &character_ids, int t, int depth_t, array<Node<int>*> &path_nodes_cache){
 				if(t - depth_t < 0){
 					return NULL;
 				}
@@ -232,9 +225,7 @@ namespace npycrf {
 				return p;
 			}
 			// 辿ったノードとそれぞれのノードからの出力確率をキャッシュしながらオーダーをサンプリング
-			int VPYLM::sample_depth_at_time_t(array<int> &character_ids, int t, double* parent_pw_cache, Node<int>** path_nodes){
-				assert(path_nodes != NULL);
-				assert(parent_pw_cache != NULL);
+			int VPYLM::sample_depth_at_time_t(array<int> &character_ids, int t, array<double> &parent_pw_cache, array<Node<int>*> &path_nodes){
 				if(t == 0){
 					return 0;
 				}
@@ -329,9 +320,9 @@ namespace npycrf {
 				archive & _b_m;
 				archive & _alpha_m;
 				archive & _beta_m;
-				_parent_pw_cache = new double[_max_depth + 1];
-				_sampling_table = new double[_max_depth + 1];
-				_path_nodes = new Node<int>*[_max_depth + 1];
+				_parent_pw_cache = array<double>(_max_depth + 1);
+				_sampling_table = array<double>(_max_depth + 1);
+				_path_nodes = array<Node<int>*>(_max_depth + 1);
 			}
 		};
 	}

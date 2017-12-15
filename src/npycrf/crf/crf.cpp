@@ -7,23 +7,22 @@
 namespace npycrf {
 	namespace crf {
 		Parameter::Parameter(){
-			_all_weights = NULL;
-			_num_updates = NULL;
 			_lambda_0 = 1;
+			_pruned = false;
 		}
 		Parameter::~Parameter(){
-			delete[] _all_weights;
-			delete[] _num_updates;
+
 		}
 		Parameter::Parameter(int weight_size, double initial_lambda_0){
 			_weight_size = weight_size;
 			_bias = 0;
-			_all_weights = new double[weight_size];
+			_pruned = false;
+			_all_weights = array<double>(weight_size);
 			for(int i = 0;i < weight_size;i++){
 				_all_weights[i] = sampler::uniform(-0.0001, 0.0001);
 			}
 
-			_num_updates = new int[weight_size];
+			_num_updates = array<int>(weight_size);
 			for(int i = 0;i < weight_size;i++){
 				_num_updates[i] = 0;
 			}
@@ -31,7 +30,7 @@ namespace npycrf {
 			_lambda_0 = initial_lambda_0;
 		}
 		double Parameter::weight_at_index(int index){
-			if(_all_weights == NULL){
+			if(_pruned){
 				auto itr = _effective_weights.find(index);
 				if(itr == _effective_weights.end()){
 					return 0;
@@ -41,14 +40,14 @@ namespace npycrf {
 			return _all_weights[index];
 		}
 		void Parameter::set_weight_at_index(int index, double value){
-			if(_all_weights == NULL){
+			if(_pruned){
 				_effective_weights[index] = value;
 			}else{
 				_all_weights[index] = value;
 			}
 		}
 		int Parameter::get_num_features(){
-			if(_all_weights == NULL){
+			if(_pruned){
 				return _effective_weights.size();
 			}
 			return _weight_size;
@@ -59,6 +58,7 @@ namespace npycrf {
 			ar & _weight_size;
 			ar & _bias;
 			ar & _lambda_0;
+			ar & _pruned;
 		}
 
 		CRF::CRF(){
@@ -777,6 +777,7 @@ namespace npycrf {
 				}
 				_parameter->_effective_weights[i] = _parameter->_all_weights[i];
 			}
+			_parameter->_pruned = true;
 			ar & _parameter;
 		}
 		void CRF::load(boost::archive::binary_iarchive &ar, unsigned int version) {

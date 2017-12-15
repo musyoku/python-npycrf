@@ -31,8 +31,8 @@ namespace npycrf {
 		NPYLM::NPYLM(int max_word_length, int max_sentence_length, double g0, double initial_lambda_a, double initial_lambda_b, double vpylm_beta_stop, double vpylm_beta_pass){
 			_hpylm = new HPYLM(3);		// 3-gram以外を指定すると動かないので注意
 			_vpylm = new VPYLM(g0, max_sentence_length, vpylm_beta_stop, vpylm_beta_pass);
-			_lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];	// 文字種ごとの単語長のポアソン分布のハイパーパラメータ
-			_hpylm_parent_pw_cache = new double[3];		// 3-gram
+			_lambda_for_type = array<double>(WORDTYPE_NUM_TYPES + 1);	// 文字種ごとの単語長のポアソン分布のハイパーパラメータ
+			_hpylm_parent_pw_cache = array<double>(3);		// 3-gram
 			set_lambda_prior(initial_lambda_a, initial_lambda_b);
 
 			_max_sentence_length = max_sentence_length;
@@ -50,8 +50,6 @@ namespace npycrf {
 		NPYLM::~NPYLM(){
 			delete _hpylm;
 			delete _vpylm;
-			delete[] _hpylm_parent_pw_cache;
-			delete[] _lambda_for_type;
 		}
 		void NPYLM::reserve(int max_sentence_length){
 			if(max_sentence_length <= _max_sentence_length){
@@ -198,7 +196,7 @@ namespace npycrf {
 		}
 		// add_customer用
 		Node<id>* NPYLM::find_node_by_tracing_back_context_from_time_t(
-				Sentence* sentence, int word_t_index, double* parent_pw_cache, 
+				Sentence* sentence, int word_t_index, array<double> &parent_pw_cache, 
 				bool generate_node_if_needed, bool return_middle_node)
 		{
 			assert(word_t_index >= 2);
@@ -217,7 +215,7 @@ namespace npycrf {
 				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
 				id const* word_ids, int word_ids_length, 
 				int word_t_index, int substr_t_start_index, int substr_t_end_index, 
-				double* parent_pw_cache, bool generate_node_if_needed, bool return_middle_node)
+				array<double> &parent_pw_cache, bool generate_node_if_needed, bool return_middle_node)
 		{
 			assert(word_t_index >= 2);
 			assert(word_t_index < word_ids_length);
@@ -433,9 +431,9 @@ namespace npycrf {
 			archive & _lambda_b;
 
 			_pk_vpylm = npycrf::array<double>(_max_word_length + 2);
-			_lambda_for_type = new double[WORDTYPE_NUM_TYPES + 1];
+			_lambda_for_type = array<double>(WORDTYPE_NUM_TYPES + 1);
 
-			_hpylm_parent_pw_cache = new double[3];
+			_hpylm_parent_pw_cache = array<double>(3);
 			_token_ids = array<int>(_max_sentence_length + 1);
 
 			for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){

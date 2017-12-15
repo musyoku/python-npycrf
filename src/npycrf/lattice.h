@@ -7,52 +7,30 @@
 #include "npylm/npylm.h"
 
 namespace npycrf {
-	namespace lattice {
-		template<typename T>
-		void _init_table(T*** &table, int size, int max_word_length);
-		template<typename T>
-		void _delete_table(T*** &table, int size, int max_word_length);
-		template<typename T>
-		void _init_array(T* &array, int size_i);
-		template<typename T>
-		void _init_array(T** &array, int size_i, int size_j);
-		template<typename T>
-		void _init_array(T*** &array, int size_i, int size_j, int size_k);
-		template<typename T>
-		void _init_array(T**** &array, int size_i, int size_j, int size_k, int size_l);
-		template<typename T>
-		void _delete_array(T* &array, int size_i);
-		template<typename T>
-		void _delete_array(T** &array, int size_i, int size_j);
-		template<typename T>
-		void _delete_array(T*** &array, int size_i, int size_j, int size_k);
-		template<typename T>
-		void _delete_array(T**** &array, int size_i, int size_j, int size_k, int size_l);
-	}
 	class Lattice {
 	private:
 		bool _pure_crf_mode;	// NPYLMを無視
 		void _allocate_capacity(int max_word_length, int max_sentence_length);
 		void _delete_capacity();
-		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double**** p_transition_tkji, double prod_scaling);
-		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** p_transition_tkji, npycrf::array<double> &scaling, bool use_scaling);
-		void _backward_sampling(Sentence* sentence, double*** alpha, double**** p_transition_tkji, std::vector<int> &segments);
-		void _sample_backward_k_and_j(Sentence* sentence, double*** alpha, double**** p_transition_tkji, int t, int next_word_length, int &sampled_k, int &sampled_j);
+		void _sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, double prod_scaling);
+		void _sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, npycrf::array<double> &scaling, bool use_scaling);
+		void _backward_sampling(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &p_transition_tkji, std::vector<int> &segments);
+		void _sample_backward_k_and_j(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &p_transition_tkji, int t, int next_word_length, int &sampled_k, int &sampled_j);
 		double _lambda_0();
 	public:
 		npylm::NPYLM* _npylm;
 		crf::CRF* _crf;
 		id* _word_ids;
-		id** _substring_word_id_cache;
-		double*** _alpha;		// 前向き確率
-		double*** _beta;		// 後向き確率
-		double**** _pw_h_tkji;	// n-gram確率のキャッシュ
-		double**** _p_transition_tkji;	// exp(lamda_0 * p(・) + potential)のキャッシュ
-		npycrf::array<double> _scaling;		// スケーリング係数
-		double** _pc_s;			// 文の部分文字列が単語になる条件付き確率
-		double*** _pz_s;		// Markov-CRFの周辺確率
-		npycrf::array<double> _backward_sampling_table;
-		int*** _viterbi_backward;
+		mat::dual<id> _substring_word_id_cache;
+		mat::dual<double> _pc_s;		// 文の部分文字列が単語になる条件付き確率
+		mat::tri<double> _alpha;		// 前向き確率
+		mat::tri<double> _beta;			// 後向き確率
+		mat::tri<double> _pz_s;			// Markov-CRFの周辺確率
+		mat::tri<int> _viterbi_backward;
+		mat::quad<double> _pw_h_tkji;	// n-gram確率のキャッシュ
+		mat::quad<double> _p_transition_tkji;	// exp(lamda_0 * p(・) + potential)のキャッシュ
+		array<double> _scaling;			// スケーリング係数
+		array<double> _backward_sampling_table;
 		int _max_word_length;
 		int _max_sentence_length;
 		Lattice(npylm::NPYLM* npylm, crf::CRF* crf);
@@ -72,19 +50,19 @@ namespace npycrf {
 		void viterbi_decode(Sentence* sentence, std::vector<int> &segments);
 		double compute_normalizing_constant(Sentence* sentence, bool use_scaling = true);
 		double compute_log_normalizing_constant(Sentence* sentence, bool use_scaling = true);
-		double _compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** p_transition_tkji);
-		void enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, double**** p_conc_tkji, double**** pw_h_tkji, bool use_scaling = true);
-		void _enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, double**** p_conc_tkji, double*** alpha, double*** beta, double**** p_transition_tkji, npycrf::array<double> &scaling, bool use_scaling = true);
-		void enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s);
-		void _enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s, double*** alpha, double*** beta);
-		void _enumerate_marginal_p_path_given_sentence_using_p_substring(double*** pz_s, int sentence_length, double** pc_s);
-		double _compute_p_z_case_1_1(int sentence_length, int t, double** pc_s);
-		double _compute_p_z_case_1_0(int sentence_length, int t, double** pc_s);
-		double _compute_p_z_case_0_1(int sentence_length, int t, double** pc_s);
-		double _compute_p_z_case_0_0(int sentence_length, int t, double** pc_s);
-		void _enumerate_marginal_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta);
-		void _enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double**** p_transition_tkji, npycrf::array<double> &scaling, bool use_scaling = true);
-		void _enumerate_backward_variables(Sentence* sentence, double*** beta, double**** p_transition_tkji, npycrf::array<double> &scaling, bool use_scaling = true);
+		double _compute_normalizing_constant_backward(Sentence* sentence, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji);
+		void enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, bool use_scaling = true);
+		void _enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::tri<double> &alpha, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, npycrf::array<double> &scaling, bool use_scaling = true);
+		void enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s);
+		void _enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s, mat::tri<double> &alpha, mat::tri<double> &beta);
+		void _enumerate_marginal_p_path_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::dual<double> &pc_s);
+		double _compute_p_z_case_1_1(int sentence_length, int t, mat::dual<double> &pc_s);
+		double _compute_p_z_case_1_0(int sentence_length, int t, mat::dual<double> &pc_s);
+		double _compute_p_z_case_0_1(int sentence_length, int t, mat::dual<double> &pc_s);
+		double _compute_p_z_case_0_0(int sentence_length, int t, mat::dual<double> &pc_s);
+		void _enumerate_marginal_p_substring_given_sentence(mat::dual<double> &pc_s, int sentence_length, mat::tri<double> &alpha, mat::tri<double> &beta);
+		void _enumerate_forward_variables(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling = true);
+		void _enumerate_backward_variables(Sentence* sentence, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling = true);
 		void _clear_p_tkji();
 		void _clear_word_id_cache();
 	};

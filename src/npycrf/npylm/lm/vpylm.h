@@ -23,23 +23,23 @@ namespace npycrf {
 				double _beta_pass;		// 停止確率q_iのベータ分布の初期パラメータ
 				int _max_depth;
 				// 計算高速化用
-				double* _sampling_table;
-				double* _parent_pw_cache;
-				Node<int>** _path_nodes;
+				npycrf::array<double> _sampling_table;
+				npycrf::array<double> _parent_pw_cache;
+				npycrf::array<Node<int>*> _path_nodes;
 				VPYLM(){}
 				VPYLM(double g0, int max_possible_depth, double beta_stop, double beta_pass);
 				~VPYLM();
 				bool add_customer_at_time_t(npycrf::array<int> &character_ids, int t, int depth_t);
-				bool add_customer_at_time_t(npycrf::array<int> &character_ids, int t, int depth_t, double* parent_pw_cache, Node<int>** path_nodes);
+				bool add_customer_at_time_t(npycrf::array<int> &character_ids, int t, int depth_t, npycrf::array<double> &parent_pw_cache, npycrf::array<Node<int>*> &path_nodes);
 				bool remove_customer_at_time_t(npycrf::array<int> &character_ids, int t, int depth_t);
 				Node<int>* find_node_by_tracing_back_context(npycrf::array<int> &character_ids, int t, int depth_t, bool generate_node_if_needed = false, bool return_middle_node = false);
-				Node<int>* find_node_by_tracing_back_context(npycrf::array<int> &character_ids, int t, int depth_t, double* parent_pw_cache);
-				Node<int>* find_node_by_tracing_back_context(npycrf::array<int> &character_ids, int t, int depth_t, Node<int>** path_nodes_cache);
+				Node<int>* find_node_by_tracing_back_context(npycrf::array<int> &character_ids, int t, int depth_t, npycrf::array<double> &parent_pw_cache);
+				Node<int>* find_node_by_tracing_back_context(npycrf::array<int> &character_ids, int t, int depth_t, npycrf::array<Node<int>*> &path_nodes_cache);
 				double compute_p_w(npycrf::array<int> &character_ids, int substr_start, int substr_end);
 				double compute_log_p_w(npycrf::array<int> &character_ids, int substr_start, int substr_end);
 				double compute_p_w_given_h(npycrf::array<int> &character_ids, int context_substr_start, int context_substr_end);
 				double compute_p_w_given_h(int target_id, npycrf::array<int> &character_ids, int context_substr_start, int context_substr_end);
-				int sample_depth_at_time_t(npycrf::array<int> &character_ids, int t, double* parent_pw_cache, Node<int>** path_nodes);
+				int sample_depth_at_time_t(npycrf::array<int> &character_ids, int t, npycrf::array<double> &parent_pw_cache, npycrf::array<Node<int>*> &path_nodes);
 			};
 		}
 	}

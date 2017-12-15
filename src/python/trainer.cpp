@@ -342,8 +342,7 @@ namespace npycrf {
 			bool original_mode = lattice->get_pure_crf_mode();
 			int seq_capacity = lattice->_max_sentence_length + 1;
 			int word_capacity = lattice->_max_word_length + 1;
-			double**** p_conc_tkji = NULL;
-			lattice::_init_array(p_conc_tkji, seq_capacity, word_capacity, word_capacity, word_capacity);
+			mat::quad<double> p_conc_tkji(seq_capacity, word_capacity, word_capacity, word_capacity);
 			lattice->set_pure_crf_mode(pure_crf);
 			for(int b = 0;b < total_batches;b++){
 				_sgd->clear_grads();
@@ -358,19 +357,18 @@ namespace npycrf {
 					Sentence* sentence = _dataset_l->_sentences_train[data_index];
 					assert(sentence->_features != NULL);
 					// 周辺確率を求める
-					double*** pz_s = lattice->_pz_s;
+					mat::tri<double> &pz_s = lattice->_pz_s;
 					lattice->enumerate_marginal_p_path_given_sentence(sentence, pz_s);
 					// 更新
 					_sgd->backward_crf(sentence, pz_s);
 					if(pure_crf == false){
-						double**** pw_h_tkji = lattice->_pw_h_tkji;
+						mat::quad<double> &pw_h_tkji = lattice->_pw_h_tkji;
 						lattice->enumerate_marginal_p_trigram_given_sentence(sentence, p_conc_tkji, pw_h_tkji, true);
 						_sgd->backward_lambda_0(sentence, p_conc_tkji, pw_h_tkji, lattice->_max_word_length);
 					}
 				}
 				_sgd->update(learning_rate / (double)size);	// 勾配の平均をとるため学習率を調整
 			}
-			lattice::_delete_array(p_conc_tkji, seq_capacity, word_capacity, word_capacity, word_capacity);
 			lattice->set_pure_crf_mode(original_mode);
 		}
 		double Trainer::compute_perplexity_train(){

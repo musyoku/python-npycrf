@@ -26,36 +26,6 @@ namespace npycrf {
 			}
 		}
 		template<typename T>
-		void _init_array(T*** &array, int size_i, int size_j, int size_k){
-			array = new T**[size_i];
-			assert(array != NULL);
-			for(int i = 0;i < size_i;i++){
-				array[i] = new T*[size_j];
-				assert(array[i] != NULL);
-				for(int j = 0;j < size_j;j++){
-					array[i][j] = new T[size_k];
-					assert(array[i][j] != NULL);
-				}
-			}
-		}
-		template<typename T>
-		void _init_array(T**** &array, int size_i, int size_j, int size_k, int size_l){
-			array = new T***[size_i];
-			assert(array != NULL);
-			for(int i = 0;i < size_i;i++){
-				array[i] = new T**[size_j];
-				assert(array[i] != NULL);
-				for(int j = 0;j < size_j;j++){
-					array[i][j] = new T*[size_k];
-					assert(array[i][j] != NULL);
-					for(int k = 0;k < size_k;k++){
-						array[i][j][k] = new T[size_l];
-						assert(array[i][j][k] != NULL);
-					}
-				}
-			}
-		}
-		template<typename T>
 		void _delete_array(T* &array, int size_i){
 			if(array == NULL){
 				return;
@@ -72,65 +42,6 @@ namespace npycrf {
 			}
 			delete[] array;
 		}
-		template<typename T>
-		void _delete_array(T*** &array, int size_i, int size_j, int size_k){
-			if(array == NULL){
-				return;
-			}
-			for(int i = 0;i < size_i;i++){
-				for(int j = 0;j < size_j;j++){
-					delete[] array[i][j];
-				}
-				delete[] array[i];
-			}
-			delete[] array;
-		}
-		template<typename T>
-		void _delete_array(T**** &array, int size_i, int size_j, int size_k, int size_l){
-			if(array == NULL){
-				return;
-			}
-			for(int i = 0;i < size_i;i++){
-				for(int j = 0;j < size_j;j++){
-					for(int k = 0;k < size_j;k++){
-						delete[] array[i][j][k];
-					}
-					delete[] array[i][j];
-				}
-				delete[] array[i];
-			}
-			delete[] array;
-		}
-		template<typename T>
-		void _init_table(T*** &table, int size, int max_word_length){
-			table = new T**[size];
-			assert(table != NULL);
-			for(int t = 0;t < size;t++){
-				table[t] = new T*[max_word_length + 1];
-				assert(table[t] != NULL);
-				for(int k = 0;k < max_word_length + 1;k++){
-					table[t][k] = new T[max_word_length + 1];
-					assert(table[t][k] != NULL);
-					for(int j = 0;j < max_word_length + 1;j++){
-						table[t][k][j] = 0;
-					}
-				}
-			}
-		}
-		template<typename T>
-		void _delete_table(T*** &table, int size, int max_word_length){
-			if(table == NULL){
-				return;
-			}
-			for(int t = 0;t < size;t++){
-				for(int k = 0;k < max_word_length + 1;k++){
-					delete[] table[t][k];
-				}
-				delete[] table[t];
-			}
-			delete[] table;
-			table = NULL;
-		}
 	}
 	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf): Lattice(npylm, crf, 100){
 		
@@ -139,12 +50,6 @@ namespace npycrf {
 		_npylm = npylm;
 		_crf = crf;
 		_word_ids = new id[3];	// 3-gram
-		_alpha = NULL;
-		_beta = NULL;
-		_p_transition_tkji = NULL;
-		_pc_s = NULL;
-		_viterbi_backward = NULL;
-		_substring_word_id_cache = NULL;
 		_pure_crf_mode = false;
 		_allocate_capacity(npylm->_max_word_length, max_sentence_length);
 	}
@@ -171,35 +76,27 @@ namespace npycrf {
 		// 前向き確率のスケーリング係数
 		_scaling = array<double>(seq_capacity + 1);
 		// ビタビアルゴリズム用
-		lattice::_init_array(_viterbi_backward, seq_capacity, word_capacity, word_capacity);
+		_viterbi_backward = mat::tri<int>(seq_capacity, word_capacity, word_capacity);
 		// 後ろ向きアルゴリズムでkとjをサンプリングするときの確率表
 		_backward_sampling_table = array<double>(word_capacity * word_capacity);
 		// 前向き確率
-		lattice::_init_array(_alpha, seq_capacity + 1, word_capacity, word_capacity);
+		_alpha = mat::tri<double>(seq_capacity + 1, word_capacity, word_capacity);
 		// 後向き確率
-		lattice::_init_array(_beta, seq_capacity + 1, word_capacity, word_capacity);
+		_beta = mat::tri<double>(seq_capacity + 1, word_capacity, word_capacity);
 		// 部分文字列が単語になる条件付き確率テーブル
-		lattice::_init_array(_pc_s, seq_capacity, word_capacity);
+		_pc_s = mat::dual<double>(seq_capacity, word_capacity);
 		// Markov-CRFの周辺確率テーブル
-		lattice::_init_array(_pz_s, seq_capacity + 1, 2, 2);
+		_pz_s = mat::tri<double>(seq_capacity + 1, 2, 2);
 		// 3-gram確率のキャッシュ
-		lattice::_init_array(_pw_h_tkji, seq_capacity, word_capacity, word_capacity, word_capacity);
+		_pw_h_tkji = mat::quad<double>(seq_capacity, word_capacity, word_capacity, word_capacity);
 		// 遷移確率のキャッシュ
-		lattice::_init_array(_p_transition_tkji, seq_capacity, word_capacity, word_capacity, word_capacity);
+		_p_transition_tkji = mat::quad<double>(seq_capacity, word_capacity, word_capacity, word_capacity);
 		// 部分文字列のIDのキャッシュ
-		lattice::_init_array(_substring_word_id_cache, seq_capacity, word_capacity);
+		_substring_word_id_cache = mat::dual<id>(seq_capacity, word_capacity);
 	}
 	void Lattice::_delete_capacity(){
 		int seq_capacity = _max_sentence_length + 1;
 		int word_capacity = _max_word_length + 1;
-		lattice::_delete_array(_viterbi_backward, seq_capacity, word_capacity, word_capacity);
-		lattice::_delete_array(_alpha, seq_capacity + 1, word_capacity, word_capacity);
-		lattice::_delete_array(_beta, seq_capacity + 1, word_capacity, word_capacity);
-		lattice::_delete_array(_pc_s, seq_capacity, word_capacity);
-		lattice::_delete_array(_pz_s, seq_capacity + 1, 2, 2);
-		lattice::_delete_array(_pw_h_tkji, seq_capacity, word_capacity, word_capacity, word_capacity);
-		lattice::_delete_array(_p_transition_tkji, seq_capacity, word_capacity, word_capacity, word_capacity);
-		lattice::_delete_array(_substring_word_id_cache, seq_capacity, word_capacity);
 	}
 	double Lattice::_lambda_0(){
 		return _crf->_parameter->_lambda_0;
@@ -217,18 +114,18 @@ namespace npycrf {
 		if(t == 0){
 			return SPECIAL_CHARACTER_BEGIN;
 		}
-		id word_id = _substring_word_id_cache[t][k];
+		id word_id = _substring_word_id_cache(t, k);
 		if(word_id == 0){
 			word_id = sentence->get_substr_word_id(t - k, t - 1);	// 引数はインデックスなので注意
-			_substring_word_id_cache[t][k] = word_id;
+			_substring_word_id_cache(t, k) = word_id;
 		}
 		return word_id;
 	}
-	// alpha[t-k][j][i]自体は正規化されている場合があるが、alpha[t][k][j]の正規化はここでは行わない
+	// alpha[t-k][j][i]自体は正規化されている場合があるが、alpha(t, k, j)の正規化はここでは行わない
 	// @args
 	// 	p_transition_tkji;	NPYLMによる確率計算の結果をpw_h_tkjiにキャッシュする
 	// 				このキャッシュは後向き確率の計算時に使う
-	void Lattice::_sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, double*** alpha, double**** pw_h_tkji, double**** p_transition_tkji, double prod_scaling){
+	void Lattice::_sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, double prod_scaling){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
 		array<int> &character_ids = sentence->_character_ids;
@@ -250,11 +147,11 @@ namespace npycrf {
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				p_transition = exp(_lambda_0() * log(pw_h) + potential);
-				pw_h_tkji[t][k][0][0] = pw_h;
-				p_transition_tkji[t][k][0][0] = p_transition;
+				pw_h_tkji(t, k, 0, 0) = pw_h;
+				p_transition_tkji(t, k, 0, 0) = p_transition;
 			}
 			assert(p_transition > 0);
-			alpha[t][k][0] = p_transition * prod_scaling;
+			alpha(t, k, 0) = p_transition * prod_scaling;
 			return;
 		}
 		// i=0に相当
@@ -269,14 +166,14 @@ namespace npycrf {
 				_word_ids[2] = word_k_id;
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
-				assert(alpha[t - k][j][0] > 0);
+				assert(alpha(t - k, j, 0) > 0);
 				p_transition = exp(_lambda_0() * log(pw_h) + potential);
-				pw_h_tkji[t][k][j][0] = pw_h;
-				p_transition_tkji[t][k][j][0] = p_transition;
+				pw_h_tkji(t, k, j, 0) = pw_h;
+				p_transition_tkji(t, k, j, 0) = p_transition;
 			}
 			assert(p_transition > 0);
-			alpha[t][k][j] = p_transition * alpha[t - k][j][0] * prod_scaling;
-			assert(alpha[t][k][j] > 0);
+			alpha(t, k, j) = p_transition * alpha(t - k, j, 0) * prod_scaling;
+			assert(alpha(t, k, j) > 0);
 			return;
 		}
 		// それ以外の場合は周辺化
@@ -293,18 +190,18 @@ namespace npycrf {
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				assert(i <= _max_word_length);
-				assert(alpha[t - k][j][i] > 0);
+				assert(alpha(t - k, j, i) > 0);
 				p_transition = exp(_lambda_0() * log(pw_h) + potential);
-				pw_h_tkji[t][k][j][i] = pw_h;
-				p_transition_tkji[t][k][j][i] = p_transition;
+				pw_h_tkji(t, k, j, i) = pw_h;
+				p_transition_tkji(t, k, j, i) = p_transition;
 			}
 			assert(p_transition > 0);
-			double value = p_transition * alpha[t - k][j][i];
+			double value = p_transition * alpha(t - k, j, i);
 
 			#ifdef __DEBUG__
 				if(value == 0){
 					// std::cout << pw_h << std::endl;
-					std::cout << alpha[t - k][j][i] << std::endl;
+					std::cout << alpha(t - k, j, i) << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
 			#endif
@@ -313,7 +210,7 @@ namespace npycrf {
 			sum += value;
 		}
 		assert(sum > 0);
-		alpha[t][k][j] = sum * prod_scaling;
+		alpha(t, k, j) = sum * prod_scaling;
 	}
 	void Lattice::forward_filtering(Sentence* sentence, bool use_scaling){
 		_enumerate_forward_variables(sentence, _alpha, _pw_h_tkji, _p_transition_tkji, _scaling, use_scaling);
@@ -322,7 +219,7 @@ namespace npycrf {
 		_backward_sampling(sentence, _alpha, _p_transition_tkji, segments);
 	}
 	// 求めた前向き確率テーブルをもとに後ろから分割をサンプリング
-	void Lattice::_backward_sampling(Sentence* sentence, double*** alpha, double**** p_transition_tkji, std::vector<int> &segments){
+	void Lattice::_backward_sampling(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &p_transition_tkji, std::vector<int> &segments){
 		segments.clear();
 		int k = 0;
 		int j = 0;
@@ -371,7 +268,7 @@ namespace npycrf {
 		reverse(segments.begin(), segments.end());
 	}
 	// 後向きにkとjをサンプリング
-	void Lattice::_sample_backward_k_and_j(Sentence* sentence, double*** alpha, double**** p_transition_tkji, int t, int next_word_length, int &sampled_k, int &sampled_j){
+	void Lattice::_sample_backward_k_and_j(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &p_transition_tkji, int t, int next_word_length, int &sampled_k, int &sampled_j){
 		assert(0 < next_word_length && next_word_length <= _max_word_length);
 		assert(_pure_crf_mode == false);
 		int table_index = 0;
@@ -384,7 +281,7 @@ namespace npycrf {
 			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
 				assert(t + next_word_length <= _max_sentence_length);
 				assert(next_word_length <= _max_word_length);
-				double p_transition = p_transition_tkji[t + next_word_length][next_word_length][k][j];
+				double p_transition = p_transition_tkji(t + next_word_length, next_word_length, k, j);
 				#ifdef __DEBUG__
 					id word_j_id = get_substring_word_id_at_t_k(sentence, t - k, j);
 					id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
@@ -403,9 +300,9 @@ namespace npycrf {
 					double _p_transition = exp(_lambda_0() * log(pw_h) + potential);
 					assert(p_transition == _p_transition);
 				#endif
-				assert(alpha[t][k][j] > 0);
-				sum_p += p_transition * alpha[t][k][j];
-				_backward_sampling_table[table_index] = p_transition * alpha[t][k][j];
+				assert(alpha(t, k, j) > 0);
+				sum_p += p_transition * alpha(t, k, j);
+				_backward_sampling_table[table_index] = p_transition * alpha(t, k, j);
 				table_index++;
 			}
 		}
@@ -441,7 +338,7 @@ namespace npycrf {
 				_scaling[t] = 0;
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
-						_alpha[t][k][j] = -1;
+						_alpha(t, k, j) = -1;
 					}
 				}
 			}
@@ -452,7 +349,7 @@ namespace npycrf {
 			}
 		#endif
 
-		_alpha[0][0][0] = 1;
+		_alpha(0, 0, 0) = 1;
 		_scaling[0] = 1;
 		_clear_word_id_cache();
 		_clear_p_tkji();
@@ -484,8 +381,8 @@ namespace npycrf {
 				p_transition = exp(_lambda_0() * log(pw_h) + potential);
 			}
 			assert(p_transition > 0);
-			_alpha[t][k][0] = log(p_transition);
-			_viterbi_backward[t][k][0] = 0;
+			_alpha(t, k, 0) = log(p_transition);
+			_viterbi_backward(t, k, 0) = 0;
 			return;
 		}
 		// i=0に相当
@@ -502,10 +399,10 @@ namespace npycrf {
 				assert(pw_h > 0);
 				p = exp(_lambda_0() * log(pw_h) + potential);
 			}
-			assert(_alpha[t - k][j][0] != 0);
-			_alpha[t][k][j] = log(p) + _alpha[t - k][j][0];
-			assert(_alpha[t][k][j] != 0);
-			_viterbi_backward[t][k][j] = 0;
+			assert(_alpha(t - k, j, 0) != 0);
+			_alpha(t, k, j) = log(p) + _alpha(t - k, j, 0);
+			assert(_alpha(t, k, j) != 0);
+			_viterbi_backward(t, k, j) = 0;
 			return;
 		}
 		// それ以外の場合は周辺化
@@ -525,8 +422,8 @@ namespace npycrf {
 				p_transition = exp(_lambda_0() * log(pw_h) + potential);
 			}
 			assert(i <= _max_word_length);
-			assert(_alpha[t - k][j][i] != 0);
-			double value = log(p_transition) + _alpha[t - k][j][i];
+			assert(_alpha(t - k, j, i) != 0);
+			double value = log(p_transition) + _alpha(t - k, j, i);
 			assert(value != 0);
 			if(argmax == 0 || value > max_log_p){
 				argmax = i;
@@ -534,8 +431,8 @@ namespace npycrf {
 			}
 		}
 		assert(argmax > 0);
-		_alpha[t][k][j] = max_log_p;
-		_viterbi_backward[t][k][j] = argmax;
+		_alpha(t, k, j) = max_log_p;
+		_viterbi_backward(t, k, j) = argmax;
 	}
 	void Lattice::viterbi_forward(Sentence* sentence){
 		for(int t = 1;t <= sentence->size();t++){
@@ -573,8 +470,8 @@ namespace npycrf {
 					assert(pw_h > 0);
 					log_p_transition = _lambda_0() * log(pw_h) + potential;	// expしない
 				}
-				assert(_alpha[t][k][j] != 0);
-				double value = log_p_transition + _alpha[t][k][j];
+				assert(_alpha(t, k, j) != 0);
+				double value = log_p_transition + _alpha(t, k, j);
 				assert(value != 0);
 				if(argmax_k == 0 || value > max_log_p){
 					max_log_p = value;
@@ -601,7 +498,7 @@ namespace npycrf {
 		assert(k > 0 && j > 0);
 		assert(j <= _max_word_length);
 		segments.push_back(j);
-		int i = _viterbi_backward[t][k][j];
+		int i = _viterbi_backward(t, k, j);
 		assert(i >= 0);
 		assert(i <= _max_word_length);
 		t -= k;
@@ -615,7 +512,7 @@ namespace npycrf {
 		}
 		segments.push_back(i);
 		while(t > 0){
-			i = _viterbi_backward[t][k][j];
+			i = _viterbi_backward(t, k, j);
 			assert(i >= 0);
 			assert(i <= _max_word_length);
 			if(i != 0){
@@ -642,18 +539,18 @@ namespace npycrf {
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
-						_alpha[t][k][j] = -1;
+						_alpha(t, k, j) = -1;
 					}
 				}
 				for(int k = 0;k < _max_word_length;k++){
 					for(int j = 0;j < _max_word_length;j++){
-						_viterbi_backward[t][k][j] = -1;
+						_viterbi_backward(t, k, j) = -1;
 					}
 				}
 			}
 		#endif
 
-		_alpha[0][0][0] = 0;
+		_alpha(0, 0, 0) = 0;
 		_scaling[0] = 1;
 		_clear_word_id_cache();
 		_clear_p_tkji();
@@ -681,18 +578,18 @@ namespace npycrf {
 		}
 		double px = 0;
 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-			px += _alpha[t][k][j];
+			px += _alpha(t, k, j);
 		}
 		return px;
 	}
 	// 可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// スケーリング係数は前向き時のみ計算可能なので注意
-	double Lattice::_compute_normalizing_constant_backward(Sentence* sentence, double*** beta, double**** p_transition_tkji){
+	double Lattice::_compute_normalizing_constant_backward(Sentence* sentence, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji){
 		assert(sentence->size() <= _max_sentence_length);
 		_clear_word_id_cache();
 		// 後向き確率を求める
 		_enumerate_backward_variables(sentence, beta, p_transition_tkji, _scaling, false);
-		double px = _beta[0][1][1];
+		double px = _beta(0, 1, 1);
 		assert(px > 0);
 		return px;
 	}
@@ -716,11 +613,11 @@ namespace npycrf {
 		}
 		double px = 0;
 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
-			px += _alpha[t][k][j];
+			px += _alpha(t, k, j);
 		}
 		return log(px);
 	}
-	void Lattice::_enumerate_forward_variables(Sentence* sentence, double*** alpha, double**** pw_h_tkji, double**** p_transition_tkji, array<double> &scaling, bool use_scaling){
+	void Lattice::_enumerate_forward_variables(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		#ifdef __DEBUG__
@@ -731,13 +628,13 @@ namespace npycrf {
 				}
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
-						alpha[t][k][j] = -1;
+						alpha(t, k, j) = -1;
 					}
 				}
 			}
 		#endif 
 		// <eos>未満の前向き確率を計算
-		alpha[0][0][0] = 1;
+		alpha(0, 0, 0) = 1;
 		if(use_scaling){
 			scaling[0] = 1;
 		}
@@ -756,15 +653,15 @@ namespace npycrf {
 				double sum_alpha = 0;
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
 					for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-						assert(alpha[t][k][j] > 0);
-						sum_alpha += alpha[t][k][j];
+						assert(alpha(t, k, j) > 0);
+						sum_alpha += alpha(t, k, j);
 					}
 				}
 				assert(sum_alpha > 0);
 				scaling[t] = 1.0 / sum_alpha;
 				for(int k = 1;k <= std::min(t, _max_word_length);k++){
 					for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-						alpha[t][k][j] *= scaling[t];
+						alpha(t, k, j) *= scaling[t];
 					}
 				}
 			}
@@ -791,27 +688,27 @@ namespace npycrf {
 					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2);
 					assert(pw_h > 0);
 					p_transition = exp(_lambda_0() * log(pw_h) + potential);
-					pw_h_tkji[t][k][j][i] = pw_h;
-					p_transition_tkji[t][k][j][i] = p_transition;
+					pw_h_tkji(t, k, j, i) = pw_h;
+					p_transition_tkji(t, k, j, i) = p_transition;
 				}
 				assert(p_transition > 0);
-				sum_prob += p_transition * alpha[t - k][j][i];
+				sum_prob += p_transition * alpha(t - k, j, i);
 			}
-			alpha[t][k][j] = sum_prob;
+			alpha(t, k, j) = sum_prob;
 			alpha_eos += sum_prob;
 		}
 		if(use_scaling){
 			scaling[t] = 1.0 / alpha_eos;
 		}
 	}
-	void Lattice::_enumerate_backward_variables(Sentence* sentence, double*** beta, double**** p_transition_tkji, array<double> &scaling, bool use_scaling){
+	void Lattice::_enumerate_backward_variables(Sentence* sentence, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
 		int size = sentence->size() + 1;
 		#ifdef __DEBUG__
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < _max_word_length + 1;k++){
 					for(int j = 0;j < _max_word_length + 1;j++){
-						beta[t][k][j] = -1;	// 変な値を入れる
+						beta(t, k, j) = -1;	// 変な値を入れる
 					}
 				}
 			}
@@ -833,8 +730,8 @@ namespace npycrf {
 				if(_pure_crf_mode){
 					p_transition = exp(potential);
 				}else{
-					if(p_transition_tkji[t + 1][1][k][j] > 0){
-						p_transition = p_transition_tkji[t + 1][1][k][j];
+					if(p_transition_tkji(t + 1, 1, k, j) > 0){
+						p_transition = p_transition_tkji(t + 1, 1, k, j);
 						#ifdef __DEBUG__
 							_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k, j);
 							_word_ids[1] = word_k_id;
@@ -857,14 +754,14 @@ namespace npycrf {
 				if(use_scaling){
 					p_transition *= scaling[t + 1];
 				}
-				beta[t][k][j] = p_transition;
+				beta(t, k, j) = p_transition;
 			}
 		}
 		// それ以外の場合
 		for(int t = sentence->size() - 1;t >= 1;t--){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
 				for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-					beta[t][k][j] = 0;
+					beta(t, k, j) = 0;
 					_sum_beta_t_k_j(sentence, t, k, j, beta, p_transition_tkji, scaling, use_scaling);
 				}
 			}
@@ -892,14 +789,14 @@ namespace npycrf {
 				p_transition = exp(_lambda_0() * log(pw_h) + potential);
 			}
 			assert(p_transition > 0);
-			beta_0_1_1 += _beta[i][i][0] * p_transition * prod_scaling;
+			beta_0_1_1 += _beta(i, i, 0) * p_transition * prod_scaling;
 		}
-		_beta[0][1][1] = beta_0_1_1;
+		_beta(0, 1, 1) = beta_0_1_1;
 	}
 	// 後ろ向き確率を計算
 	// 正規化定数をここでは掛けないことに注意
 	// pw_h_tkjiは前向き確率計算時にキャッシュされている（-1が入っている場合再計算する）
-	void Lattice::_sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, double*** beta, double**** p_transition_tkji, array<double> &scaling, bool use_scaling){
+	void Lattice::_sum_beta_t_k_j(Sentence* sentence, int t, int k, int j, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
 		array<int> &character_ids = sentence->_character_ids;
@@ -926,8 +823,8 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				p_transition = exp(potential);
 			}else{
-				if(p_transition_tkji[t + i][i][k][j] > 0){
-					p_transition = p_transition_tkji[t + i][i][k][j];
+				if(p_transition_tkji(t + i, i, k, j) > 0){
+					p_transition = p_transition_tkji(t + i, i, k, j);
 				}else{
 					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
 					assert(pw_h > 0);
@@ -935,45 +832,45 @@ namespace npycrf {
 				}
 			}
 			assert(p_transition > 0);
-			assert(beta[t + i][i][k] > 0);
-			double value = p_transition * beta[t + i][i][k] * prod_scaling;
+			assert(beta(t + i, i, k) > 0);
+			double value = p_transition * beta(t + i, i, k) * prod_scaling;
 			assert(p_transition > 0);
 
 			#ifdef __DEBUG__
 				if(_pure_crf_mode == false){
-					if(p_transition_tkji[t + i][i][k][j] > 0){
+					if(p_transition_tkji(t + i, i, k, j) > 0){
 						double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
 						assert(pw_h > 0);
 						double p_transition = exp(_lambda_0() * log(pw_h) + potential);
-						assert(p_transition == p_transition_tkji[t + i][i][k][j]);
+						assert(p_transition == p_transition_tkji(t + i, i, k, j));
 					}
 				}
 				if(value <= 0){
 					std::cout << value << std::endl;
 					std::cout << prod_scaling << std::endl;
 					// std::cout << pw_h << std::endl;
-					std::cout << beta[t + i][i][k] << std::endl;
+					std::cout << beta(t + i, i, k) << std::endl;
 					std::cout << t << ", " << k << ", " << j << ", " << i << std::endl;
 				}
 			#endif
 
 			assert(value > 0);
 			sum += value;
-			// assert(_p_transition_tkji[t + i][i][k][j] == pw_h);
+			// assert(_p_transition_tkji(t + i, i, k, j) == pw_h);
 		}
 		assert(sum > 0);
-		beta[t][k][j] = sum;
+		beta(t, k, j) = sum;
 		return;
 	}
 	// 文の部分文字列が単語になる確率
 	// P_{CONC}(c_{t-k}^t|x)
-	void Lattice::_enumerate_marginal_p_substring_given_sentence(double** pc_s, int sentence_length, double*** alpha, double*** beta){
+	void Lattice::_enumerate_marginal_p_substring_given_sentence(mat::dual<double> &pc_s, int sentence_length, mat::tri<double> &alpha, mat::tri<double> &beta){
 		assert(sentence_length <= _max_sentence_length);
 		int size = sentence_length + 1;
 		#ifdef __DEBUG__
 			for(int t = 0;t < size;t++){
 				for(int k = 0;k < _max_word_length + 1;k++){
-						pc_s[t][k] = -1;
+						pc_s(t, k) = -1;
 				}
 			}
 		#endif 
@@ -982,24 +879,24 @@ namespace npycrf {
 				// jを網羅する
 				double sum_probability = 0;
 				for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-					assert(alpha[t][k][j] > 0);
-					assert(beta[t][k][j] > 0);
-					sum_probability += alpha[t][k][j] * beta[t][k][j];
+					assert(alpha(t, k, j) > 0);
+					assert(beta(t, k, j) > 0);
+					sum_probability += alpha(t, k, j) * beta(t, k, j);
 				}
 				assert(sum_probability > 0);
-				pc_s[t][k] = sum_probability;
+				pc_s(t, k) = sum_probability;
 			}
 		}
 	}
 	// Pconc(c^{t-k-j}_{t-k-j-i+1}, c^{t-k}_{t-k-j+1}, c^t_{t-k+1}|x)の計算
-	void Lattice::enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, double**** p_conc_tkji, double**** pw_h_tkji, bool use_scaling){
+	void Lattice::enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, bool use_scaling){
 		_clear_word_id_cache();
 		_clear_p_tkji();
 		_enumerate_forward_variables(sentence, _alpha, pw_h_tkji, _p_transition_tkji, _scaling, use_scaling);
 		_enumerate_backward_variables(sentence, _beta, _p_transition_tkji, _scaling, use_scaling);
 		_enumerate_marginal_p_trigram_given_sentence(sentence, p_conc_tkji, _alpha, _beta, _p_transition_tkji, _scaling, use_scaling);
 	}	
-	void Lattice::_enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, double**** p_conc, double*** alpha, double*** beta, double**** p_transition_tkji, array<double> &scaling, bool use_scaling){
+	void Lattice::_enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc, mat::tri<double> &alpha, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling){
 		assert(_pure_crf_mode == false);
 		for(int t = 1;t <= sentence->size();t++){
 			for(int k = 1;k <= std::min(t, _max_word_length);k++){
@@ -1011,28 +908,14 @@ namespace npycrf {
 				}
 				for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
 					for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, _max_word_length);i++){
-						assert(p_transition_tkji[t][k][j][i] > 0);
-						assert(alpha[t - k][j][i] > 0);
-						assert(beta[t][k][j] > 0);
-						double marginal_p = alpha[t - k][j][i] * beta[t][k][j] * p_transition_tkji[t][k][j][i] * prod_scaling;
+						assert(p_transition_tkji(t, k, j, i) > 0);
+						assert(alpha(t - k, j, i) > 0);
+						assert(beta(t, k, j) > 0);
+						double marginal_p = alpha(t - k, j, i) * beta(t, k, j) * p_transition_tkji(t, k, j, i) * prod_scaling;
 						assert(0 < marginal_p && marginal_p <= 1);
-						// std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", pw_h = " << p_transition_tkji[t][k][j][i] << ", marginal_p = " << marginal_p << ", alpha = " << alpha[t - k][j][i] << ", beta = " <<  beta[t][k][j] << ", prod_scaling = " << prod_scaling << std::endl;
-						p_conc[t][k][j][i] = marginal_p;
+						// std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", pw_h = " << p_transition_tkji(t, k, j, i) << ", marginal_p = " << marginal_p << ", alpha = " << alpha(t - k, j, i) << ", beta = " <<  beta(t, k, j) << ", prod_scaling = " << prod_scaling << std::endl;
+						p_conc(t, k, j, i) = marginal_p;
 					}
-					// double cost = 0;
-					// if(_pure_crf_mode){
-					// 	double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-					// 	cost = exp(potential);
-					// }else{
-					// 	double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-					// 	_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k - j, i);
-					// 	_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);
-					// 	_word_ids[2] = get_substring_word_id_at_t_k(sentence, t, k);
-					// 	// std::cout << "[0] = " << _word_ids[0] << ", [1] = " << _word_ids[1] << ", [2] = " << _word_ids[2] << std::endl;
-					// 	assert(pw_h > 0);
-					// 	cost = exp(_lambda_0() * log(pw_h) + potential);
-					// }
-					// double marginal_p = alpha[t - k][j][i] * beta[t][k][j] * cost * prod_scaling;
 				}
 			}
 		}
@@ -1047,162 +930,107 @@ namespace npycrf {
 		}
 		for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
 			for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, _max_word_length);i++){
-				assert(p_transition_tkji[t][k][j][i] > 0);
-				double marginal_p = alpha[t - k][j][i] * p_transition_tkji[t][k][j][i] * prod_scaling;
+				assert(p_transition_tkji(t, k, j, i) > 0);
+				double marginal_p = alpha(t - k, j, i) * p_transition_tkji(t, k, j, i) * prod_scaling;
 				assert(0 < marginal_p && marginal_p <= 1);
-				// std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", pw_h = " << p_transition_tkji[t][k][j][i] << ", marginal_p = " << marginal_p << ", alpha = " << alpha[t - k][j][i] << ", beta = " <<  beta[t][k][j] << ", prod_scaling = " << prod_scaling << std::endl;
-				p_conc[t][k][j][i] = marginal_p;
+				// std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << ", pw_h = " << p_transition_tkji(t, k, j, i) << ", marginal_p = " << marginal_p << ", alpha = " << alpha(t - k, j, i) << ", beta = " <<  beta(t, k, j) << ", prod_scaling = " << prod_scaling << std::endl;
+				p_conc(t, k, j, i) = marginal_p;
 			}
 		}
-		// int t, k, j, i;
-		// for(int n = 2;n < sentence->get_num_segments() - 1;n++){	// <eos>を除く
-		// 	k = sentence->_segments[n];
-		// 	t = sentence->_start[n] + k;
-		// 	j = (t - k == 0) ? 0 : sentence->_segments[n - 1];
-		// 	i = (t - k - j == 0) ? 0 : sentence->_segments[n - 2];
-		// 	std::cout << "t = " << t << ", k = " << k << ", j = " << j << ", i = " << i << std::endl;
-		// 	double prod_scaling = 1;
-		// 	for(int m = t - k;m <= t;m++){
-		// 		prod_scaling *= scaling[m];
-		// 	}
-		// 	std::cout << "prod_scaling = " << prod_scaling << std::endl;
-		// 	double cost = 0;
-		// 	if(_pure_crf_mode){
-		// 		double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-		// 		cost = exp(potential);
-		// 	}else{
-		// 		double potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-		// 		_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k - j, i);
-		// 		_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);
-		// 		_word_ids[2] = get_substring_word_id_at_t_k(sentence, t, k);
-		// 		// std::cout << "[0] = " << _word_ids[0] << ", [1] = " << _word_ids[1] << ", [2] = " << _word_ids[2] << std::endl;
-		// 		assert(pw_h > 0);
-		// 		cost = exp(_lambda_0() * log(pw_h) + potential);
-		// 	}
-		// 	double marginal_p = alpha[t - k][j][i] * beta[t][k][j] * cost * prod_scaling;
-		// 	p_conc[n - 2] = marginal_p;
-		// }
-
-		// // <eos>
-		// t += 1;
-		// i = j;
-		// j = k;
-		// k = 1;
-		// double prod_scaling = 1;
-		// for(int m = t - k;m <= t;m++){
-		// 	prod_scaling *= scaling[m];
-		// }
-		// double cost = 0;
-		// if(_pure_crf_mode){
-		// 	double potential = _crf->compute_gamma(sentence, t, t + 1);
-		// 	cost = exp(potential);
-		// }else{
-		// 	double potential = _crf->compute_gamma(sentence, t, t + 1);
-		// 	_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k - j, i);
-		// 	_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);
-		// 	_word_ids[2] = SPECIAL_CHARACTER_END;
-		// 	// std::cout << "[0] = " << _word_ids[0] << ", [1] = " << _word_ids[1] << ", [2] = " << _word_ids[2] << std::endl;
-		// 	assert(pw_h > 0);
-		// 	cost = exp(_lambda_0() * log(pw_h) + potential);
-		// }
-		// double marginal_p = alpha[t - k][j][i] * beta[t][k][j] * cost * prod_scaling;
-		// p_conc[sentence->get_num_segments() - 3] = marginal_p;
 	}
 	// p(z_t, z_{t+1}|s)の計算
-	void Lattice::enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s){
+	void Lattice::enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s){
 		_clear_word_id_cache();
 		_clear_p_tkji();
 		_enumerate_forward_variables(sentence, _alpha, _pw_h_tkji, _p_transition_tkji, _scaling, true);
 		_enumerate_backward_variables(sentence, _beta, _p_transition_tkji, _scaling, true);
 		_enumerate_marginal_p_path_given_sentence(sentence, pz_s, _alpha, _beta);
 	}
-	void Lattice::_enumerate_marginal_p_path_given_sentence(Sentence* sentence, double*** pz_s, double*** alpha, double*** beta){
+	void Lattice::_enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s, mat::tri<double> &alpha, mat::tri<double> &beta){
 		_enumerate_marginal_p_substring_given_sentence(_pc_s, sentence->size(), alpha, beta);
 		_enumerate_marginal_p_path_given_sentence_using_p_substring(pz_s, sentence->size(), _pc_s);
 	}
 	// p(z_t, z_{t+1}|s)の計算
 	// Zsは統合モデル上での文の確率
-	void Lattice::_enumerate_marginal_p_path_given_sentence_using_p_substring(double*** pz_s, int sentence_length, double** pc_s){
+	void Lattice::_enumerate_marginal_p_path_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::dual<double> &pc_s){
 		assert(sentence_length <= _max_sentence_length);
-		assert(pz_s != NULL);
-		pz_s[0][0][0] = 0;
-		pz_s[0][0][1] = 0;
-		pz_s[0][1][0] = 0;
-		pz_s[0][1][1] = 1;
+		pz_s(0, 0, 0) = 0;
+		pz_s(0, 0, 1) = 0;
+		pz_s(0, 1, 0) = 0;
+		pz_s(0, 1, 1) = 1;
 		for(int t = 1;t <= sentence_length;t++){
 			// std::cout << "z" << t << ", z" << (t + 1) << std::endl;
-			pz_s[t][1][1] = _compute_p_z_case_1_1(sentence_length, t, pc_s);
-			pz_s[t][1][0] = _compute_p_z_case_1_0(sentence_length, t, pc_s);
-			pz_s[t][0][1] = _compute_p_z_case_0_1(sentence_length, t, pc_s);
-			pz_s[t][0][0] = std::max(0.0, 1.0 - pz_s[t][1][1] - pz_s[t][1][0] - pz_s[t][0][1]);
+			pz_s(t, 1, 1) = _compute_p_z_case_1_1(sentence_length, t, pc_s);
+			pz_s(t, 1, 0) = _compute_p_z_case_1_0(sentence_length, t, pc_s);
+			pz_s(t, 0, 1) = _compute_p_z_case_0_1(sentence_length, t, pc_s);
+			pz_s(t, 0, 0) = std::max(0.0, 1.0 - pz_s(t, 1, 1) - pz_s(t, 1, 0) - pz_s(t, 0, 1));
 			#ifdef __DEBUG__
-				// std::cout << "1-1: " << pz_s[t][1][1] << std::endl;
-				// std::cout << "1-0: " << pz_s[t][1][0] << std::endl;
-				// std::cout << "0-1: " << pz_s[t][0][1] << std::endl;
-				// std::cout << "0-0: " << pz_s[t][0][0] << std::endl;
-				// std::cout << "*-* - 0-0: " << pz_s[t][1][1] + pz_s[t][1][0] + pz_s[t][0][1] << std::endl;
+				// std::cout << "1-1: " << pz_s(t, 1, 1] << std::endl;
+				// std::cout << "1-0: " << pz_s(t, 1, 0] << std::endl;
+				// std::cout << "0-1: " << pz_s(t, 0, 1] << std::endl;
+				// std::cout << "0-0: " << pz_s(t, 0, 0] << std::endl;
+				// std::cout << "*-* - 0-0: " << pz_s(t, 1, 1] + pz_s(t, 1, 0] + pz_s(t, 0, 1] << std::endl;
 				double p_0_0 = _compute_p_z_case_0_0(sentence_length, t, pc_s);
 				// std::cout << "0-0*: " << p_0_0 << std::endl;
-				assert(std::abs(p_0_0 - pz_s[t][0][0]) < 1e-12);
+				assert(std::abs(p_0_0 - pz_s(t, 0, 0)) < 1e-12);
 				if(1 < t && t < sentence_length){
-					if(pz_s[t][0][0] <= 0){
+					if(pz_s(t, 0, 0) <= 0){
 						std::cout << "t: " << t << std::endl;
-						std::cout << "1-1: " << pz_s[t][1][1] << std::endl;
-						std::cout << "1-0: " << pz_s[t][1][0] << std::endl;
-						std::cout << "0-1: " << pz_s[t][0][1] << std::endl;
-						std::cout << "0-0: " << pz_s[t][0][0] << std::endl;
-						std::cout << "*-* - 0-0: " << pz_s[t][1][1] + pz_s[t][1][0] + pz_s[t][0][1] << std::endl;
+						std::cout << "1-1: " << pz_s(t, 1, 1) << std::endl;
+						std::cout << "1-0: " << pz_s(t, 1, 0) << std::endl;
+						std::cout << "0-1: " << pz_s(t, 0, 1) << std::endl;
+						std::cout << "0-0: " << pz_s(t, 0, 0) << std::endl;
+						std::cout << "*-* - 0-0: " << pz_s(t, 1, 1) + pz_s(t, 1, 0) + pz_s(t, 0, 1) << std::endl;
 					}
-					// assert(pz_s[t][0][0] > 0);
+					// assert(pz_s(t, 0, 0] > 0);
 				}
 			#endif
 		}
 		// 2つめの<eos>への遷移
-		pz_s[sentence_length + 1][0][0] = 0;
-		pz_s[sentence_length + 1][0][1] = 0;
-		pz_s[sentence_length + 1][1][0] = 0;
-		pz_s[sentence_length + 1][1][1] = 1;
-		// std::cout << "1-1: " << pz_s[sentence_length][1][1] << std::endl;
-		// std::cout << "1-0: " << pz_s[sentence_length][1][0] << std::endl;
-		// std::cout << "0-1: " << pz_s[sentence_length][0][1] << std::endl;
-		// std::cout << "0-0: " << pz_s[sentence_length][0][0] << std::endl;
-		assert(pz_s[sentence_length][0][0] < 1e-12);
-		assert(pz_s[sentence_length][1][0] < 1e-12);
+		pz_s(sentence_length + 1, 0, 0) = 0;
+		pz_s(sentence_length + 1, 0, 1) = 0;
+		pz_s(sentence_length + 1, 1, 0) = 0;
+		pz_s(sentence_length + 1, 1, 1) = 1;
+		// std::cout << "1-1: " << pz_s(sentence_length, 1, 1] << std::endl;
+		// std::cout << "1-0: " << pz_s(sentence_length, 1, 0] << std::endl;
+		// std::cout << "0-1: " << pz_s(sentence_length, 0, 1] << std::endl;
+		// std::cout << "0-0: " << pz_s(sentence_length, 0, 0] << std::endl;
+		assert(pz_s(sentence_length, 0, 0) < 1e-12);
+		assert(pz_s(sentence_length, 1, 0) < 1e-12);
 		if(sentence_length > 1){
-			assert(pz_s[sentence_length][0][1] > 0);
+			assert(pz_s(sentence_length, 0, 1) > 0);
 		}
-		assert(pz_s[sentence_length][1][1] > 0);
+		assert(pz_s(sentence_length, 1, 1) > 0);
 	}
-	double Lattice::_compute_p_z_case_1_1(int sentence_length, int t, double** pc_s){
-		assert(t <= sentence_length);
-		assert(0 < pc_s[t][1] && pc_s[t][1] <= 1);
-		// std::cout << "		pc_s[" << t << "][1] = " << pc_s[t][1] << std::endl;
-		return pc_s[t][1];
+	double Lattice::_compute_p_z_case_1_1(int sentence_length, int t, mat::dual<double> &pc_s){
+		assert(0 < pc_s(t, 1) && pc_s(t, 1) <= 1);
+		// std::cout << "		pc_s[" << t << "][1] = " << pc_s(t, 1) << std::endl;
+		return pc_s(t, 1);
 	}
-	double Lattice::_compute_p_z_case_1_0(int sentence_length, int t, double** pc_s){
+	double Lattice::_compute_p_z_case_1_0(int sentence_length, int t, mat::dual<double> &pc_s){
 		if(t == sentence_length){
 			return 0;
 		}
 		double p_1_0 = 0;
 		// std::cout << "	case 1-0:" << std::endl;
 		for(int j = 2;j <= std::min(sentence_length - t + 1, _max_word_length);j++){
-			// std::cout << "		pc_s[" << (t + j - 1) << "][" << j << "] = " << pc_s[t + j - 1][j] << std::endl;
-			assert(0 < pc_s[t + j - 1][j] && pc_s[t + j - 1][j] <= 1);
-			p_1_0 += pc_s[t + j - 1][j];
+			// std::cout << "		pc_s[" << (t + j - 1) << "][" << j << "] = " << pc_s(t + j - 1, j) << std::endl;
+			assert(0 < pc_s(t + j - 1, j) && pc_s(t + j - 1, j) <= 1);
+			p_1_0 += pc_s(t + j - 1, j);
 		}
 		return p_1_0;
 	}
-	double Lattice::_compute_p_z_case_0_1(int sentence_length, int t, double** pc_s){
+	double Lattice::_compute_p_z_case_0_1(int sentence_length, int t, mat::dual<double> &pc_s){
 		double p_0_1 = 0;
 		// std::cout << "	case 0-1:" << std::endl;
 		for(int j = 2;j <= std::min(t, _max_word_length);j++){
-			// std::cout << "		pc_s[" << t << "][" << j << "] = " << pc_s[t][j] << std::endl;
-			assert(0 < pc_s[t][j] && pc_s[t][j] <= 1);
-			p_0_1 += pc_s[t][j];
+			// std::cout << "		pc_s[" << t << "][" << j << "] = " << pc_s(t, j) << std::endl;
+			assert(0 < pc_s(t, j) && pc_s(t, j) <= 1);
+			p_0_1 += pc_s(t, j);
 		}
 		return p_0_1;
 	}
-	double Lattice::_compute_p_z_case_0_0(int sentence_length, int t, double** pc_s){
+	double Lattice::_compute_p_z_case_0_0(int sentence_length, int t, mat::dual<double> &pc_s){
 		if(t == 1){
 			return 0;
 		}
@@ -1210,33 +1038,19 @@ namespace npycrf {
 		// std::cout << "	case 0-0:" << std::endl;
 		for(int k = 1;k <= std::min(sentence_length - t, _max_word_length - 2);k++){
 			for(int j = k + 2;j <= std::min(t + k, _max_word_length);j++){
-				// std::cout << "		pc_s[" << (t + k) << "][" << j << "] = " << pc_s[t + k][j] << std::endl;
-				assert(0 < pc_s[t + k][j] && pc_s[t + k][j] <= 1);
-				p_0_0 += pc_s[t + k][j];
+				// std::cout << "		pc_s[" << (t + k) << "][" << j << "] = " << pc_s(t + k, j) << std::endl;
+				assert(0 < pc_s(t + k, j) && pc_s(t + k, j) <= 1);
+				p_0_0 += pc_s(t + k, j);
 			}
 		}
 		return p_0_0;
 	}
 	void Lattice::_clear_p_tkji(){
-		int size = _max_sentence_length + 1;
-		for(int t = 0;t < size;t++){
-			assert(_p_transition_tkji[t] != NULL);
-			for(int k = 0;k < _max_word_length + 1;k++){
-				for(int j = 0;j < _max_word_length + 1;j++){
-					for(int i = 0;i < _max_word_length + 1;i++){
-						_p_transition_tkji[t][k][j][i] = -1;
-						_pw_h_tkji[t][k][j][i] = -1;
-					}
-				}
-			}
-		}
+		_p_transition_tkji.fill(-1);
+		_pw_h_tkji.fill(-1);
 	}
 	void Lattice::_clear_word_id_cache(){
-		for(int t = 0;t <= _max_sentence_length;t++){
-			for(int k = 0;k <= _max_word_length;k++){
-				_substring_word_id_cache[t][k] = 0;
-			}
-		}
+		_substring_word_id_cache.fill(0);
 	}
 	
 } // namespace npylm

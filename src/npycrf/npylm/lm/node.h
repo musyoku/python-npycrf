@@ -13,6 +13,7 @@
 #include <fstream>
 #include "../../common.h"
 #include "../../sampler.h"
+#include "../../array.h"
 
 namespace npycrf {
 	namespace npylm {
@@ -96,7 +97,7 @@ namespace npycrf {
 					_num_customers++;
 					return true;
 				}
-				bool add_customer_to_table(T token_id, int table_k, double* parent_pw_at_depth, std::vector<double> &d_m, std::vector<double> &theta_m, int &added_to_table_k_of_root){
+				bool add_customer_to_table(T token_id, int table_k, npycrf::array<double> &parent_pw_at_depth, std::vector<double> &d_m, std::vector<double> &theta_m, int &added_to_table_k_of_root){
 					auto itr = _arrangement.find(token_id);
 					if(itr == _arrangement.end()){
 						return add_customer_to_new_table(token_id, parent_pw_at_depth, d_m, theta_m, added_to_table_k_of_root);
@@ -115,7 +116,7 @@ namespace npycrf {
 					}
 					return true;
 				}
-				bool add_customer_to_new_table(T token_id, double* parent_pw_at_depth, std::vector<double> &d_m, std::vector<double> &theta_m, int &added_to_table_k_of_root){
+				bool add_customer_to_new_table(T token_id, npycrf::array<double> &parent_pw_at_depth, std::vector<double> &d_m, std::vector<double> &theta_m, int &added_to_table_k_of_root){
 					_add_customer_to_new_table(token_id);
 					if(_parent != NULL){
 						bool success = _parent->add_customer(token_id, parent_pw_at_depth, d_m, theta_m, false, added_to_table_k_of_root);
@@ -213,7 +214,7 @@ namespace npycrf {
 				}
 				// NPYLMではルートノードのどのテーブルに代理客が追加されたかを知る必要がある
 				// 再帰計算を防ぐため親の確率のキャッシュを使う
-				bool add_customer(T token_id, double* parent_pw_at_depth, std::vector<double> &d_m, std::vector<double> &theta_m, bool update_beta_count, int &added_to_table_k_of_root){
+				bool add_customer(T token_id, npycrf::array<double> &parent_pw_at_depth, std::vector<double> &d_m, std::vector<double> &theta_m, bool update_beta_count, int &added_to_table_k_of_root){
 					init_hyperparameters_at_depth_if_needed(_depth, d_m, theta_m);
 					double d_u = d_m[_depth];
 					double theta_u = theta_m[_depth];

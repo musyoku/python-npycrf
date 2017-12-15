@@ -21,7 +21,6 @@ namespace npycrf {
 		}
 		void SGD::update(double learning_rate){
 			crf::Parameter* params = _crf->_parameter;
-			assert(params->_all_weights != NULL);
 			for(int i = 0;i < params->_weight_size;i++){
 				params->_all_weights[i] += learning_rate * _grad_weight[i] - _regularization_constant * learning_rate * params->_all_weights[i];
 				if(_grad_weight[i] != 0){
@@ -31,7 +30,7 @@ namespace npycrf {
 		}
 		// CRFの勾配計算について
 		// http://www.ism.ac.jp/editsec/toukei/pdf/64-2-179.pdf
-		void SGD::backward_crf(Sentence* sentence, double*** pz_s){
+		void SGD::backward_crf(Sentence* sentence, mat::tri<double> &pz_s){
 			_backward_unigram(sentence, pz_s);
 			_backward_bigram(sentence, pz_s);
 			_backward_identical_1(sentence, pz_s);
@@ -39,7 +38,7 @@ namespace npycrf {
 			_backward_bigram_type(sentence, pz_s);
 			_backward_label(sentence, pz_s);
 		}
-		void SGD::_backward_unigram(Sentence* sentence, double*** pz_s){
+		void SGD::_backward_unigram(Sentence* sentence, mat::tri<double> &pz_s){
 			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
@@ -63,23 +62,23 @@ namespace npycrf {
 					// 発火の期待値
 					int k_0 = _crf->_index_w_unigram_u(0, pos, x_i);
 					int k_1 = _crf->_index_w_unigram_u(1, pos, x_i);
-					_grad_weight[k_0] -= pz_s[i - 1][0][0];
-					_grad_weight[k_0] -= pz_s[i - 1][1][0];
-					_grad_weight[k_1] -= pz_s[i - 1][0][1];
-					_grad_weight[k_1] -= pz_s[i - 1][1][1];
+					_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
+					_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
+					_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
+					_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
 					int k_0_0 = _crf->_index_w_unigram_b(0, 0, pos, x_i);
 					int k_0_1 = _crf->_index_w_unigram_b(0, 1, pos, x_i);
 					int k_1_0 = _crf->_index_w_unigram_b(1, 0, pos, x_i);
 					int k_1_1 = _crf->_index_w_unigram_b(1, 1, pos, x_i);
-					_grad_weight[k_0_0] -= pz_s[i - 1][0][0];
-					_grad_weight[k_0_1] -= pz_s[i - 1][0][1];
-					_grad_weight[k_1_0] -= pz_s[i - 1][1][0];
-					_grad_weight[k_1_1] -= pz_s[i - 1][1][1];
+					_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
+					_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
+					_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
+					_grad_weight[k_1_1] -= pz_s(i - 1, 1, 1);
 				}
 			}
 		}
-		void SGD::_backward_bigram(Sentence* sentence, double*** pz_s){
+		void SGD::_backward_bigram(Sentence* sentence, mat::tri<double> &pz_s){
 			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
@@ -104,23 +103,23 @@ namespace npycrf {
 					// 発火の期待値
 					int k_0 = _crf->_index_w_bigram_u(0, pos, x_i_1, x_i);
 					int k_1 = _crf->_index_w_bigram_u(1, pos, x_i_1, x_i);
-					_grad_weight[k_0] -= pz_s[i - 1][0][0];
-					_grad_weight[k_0] -= pz_s[i - 1][1][0];
-					_grad_weight[k_1] -= pz_s[i - 1][0][1];
-					_grad_weight[k_1] -= pz_s[i - 1][1][1];
+					_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
+					_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
+					_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
+					_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
 					int k_0_0 = _crf->_index_w_bigram_b(0, 0, pos, x_i_1, x_i);
 					int k_0_1 = _crf->_index_w_bigram_b(0, 1, pos, x_i_1, x_i);
 					int k_1_0 = _crf->_index_w_bigram_b(1, 0, pos, x_i_1, x_i);
 					int k_1_1 = _crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i);
-					_grad_weight[k_0_0] -= pz_s[i - 1][0][0];
-					_grad_weight[k_0_1] -= pz_s[i - 1][0][1];
-					_grad_weight[k_1_0] -= pz_s[i - 1][1][0];
-					_grad_weight[k_1_1] -= pz_s[i - 1][1][1];
+					_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
+					_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
+					_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
+					_grad_weight[k_1_1] -= pz_s(i - 1, 1, 1);
 				}
 			}
 		}
-		void SGD::_backward_identical_1(Sentence* sentence, double*** pz_s){
+		void SGD::_backward_identical_1(Sentence* sentence, mat::tri<double> &pz_s){
 			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
@@ -145,24 +144,24 @@ namespace npycrf {
 						// 発火の期待値
 						int k_0 = _crf->_index_w_identical_1_u(0, pos);
 						int k_1 = _crf->_index_w_identical_1_u(1, pos);
-						_grad_weight[k_0] -= pz_s[i - 1][0][0];
-						_grad_weight[k_0] -= pz_s[i - 1][1][0];
-						_grad_weight[k_1] -= pz_s[i - 1][0][1];
-						_grad_weight[k_1] -= pz_s[i - 1][1][1];
+						_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
+						_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
+						_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
+						_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
 						int k_0_0 = _crf->_index_w_identical_1_b(0, 0, pos);
 						int k_0_1 = _crf->_index_w_identical_1_b(0, 1, pos);
 						int k_1_0 = _crf->_index_w_identical_1_b(1, 0, pos);
 						int k_1_1 = _crf->_index_w_identical_1_b(1, 1, pos);
-						_grad_weight[k_0_0] -= pz_s[i - 1][0][0];
-						_grad_weight[k_0_1] -= pz_s[i - 1][0][1];
-						_grad_weight[k_1_0] -= pz_s[i - 1][1][0];
-						_grad_weight[k_1_1] -= pz_s[i - 1][1][1];
+						_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
+						_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
+						_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
+						_grad_weight[k_1_1] -= pz_s(i - 1, 1, 1);
 					}
 				}
 			}
 		}
-		void SGD::_backward_identical_2(Sentence* sentence, double*** pz_s){
+		void SGD::_backward_identical_2(Sentence* sentence, mat::tri<double> &pz_s){
 			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
@@ -187,24 +186,24 @@ namespace npycrf {
 						// 発火の期待値
 						int k_0 = _crf->_index_w_identical_2_u(0, pos);
 						int k_1 = _crf->_index_w_identical_2_u(1, pos);
-						_grad_weight[k_0] -= pz_s[i - 1][0][0];
-						_grad_weight[k_0] -= pz_s[i - 1][1][0];
-						_grad_weight[k_1] -= pz_s[i - 1][0][1];
-						_grad_weight[k_1] -= pz_s[i - 1][1][1];
+						_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
+						_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
+						_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
+						_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
 						int k_0_0 = _crf->_index_w_identical_2_b(0, 0, pos);
 						int k_0_1 = _crf->_index_w_identical_2_b(0, 1, pos);
 						int k_1_0 = _crf->_index_w_identical_2_b(1, 0, pos);
 						int k_1_1 = _crf->_index_w_identical_2_b(1, 1, pos);
-						_grad_weight[k_0_0] -= pz_s[i - 1][0][0];
-						_grad_weight[k_0_1] -= pz_s[i - 1][0][1];
-						_grad_weight[k_1_0] -= pz_s[i - 1][1][0];
-						_grad_weight[k_1_1] -= pz_s[i - 1][1][1];
+						_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
+						_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
+						_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
+						_grad_weight[k_1_1] -= pz_s(i - 1, 1, 1);
 					}
 				}
 			}
 		}
-		void SGD::_backward_unigram_type(Sentence* sentence, double*** pz_s){
+		void SGD::_backward_unigram_type(Sentence* sentence, mat::tri<double> &pz_s){
 			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
@@ -223,22 +222,22 @@ namespace npycrf {
 				// 発火の期待値
 				int k_0 = _crf->_index_w_unigram_type_u(0, type_i);
 				int k_1 = _crf->_index_w_unigram_type_u(1, type_i);
-				_grad_weight[k_0] -= pz_s[i - 1][0][0];
-				_grad_weight[k_0] -= pz_s[i - 1][1][0];
-				_grad_weight[k_1] -= pz_s[i - 1][0][1];
-				_grad_weight[k_1] -= pz_s[i - 1][1][1];
+				_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
+				_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
+				_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
+				_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
 				int k_0_0 = _crf->_index_w_unigram_type_b(0, 0, type_i);
 				int k_0_1 = _crf->_index_w_unigram_type_b(0, 1, type_i);
 				int k_1_0 = _crf->_index_w_unigram_type_b(1, 0, type_i);
 				int k_1_1 = _crf->_index_w_unigram_type_b(1, 1, type_i);
-				_grad_weight[k_0_0] -= pz_s[i - 1][0][0];
-				_grad_weight[k_0_1] -= pz_s[i - 1][0][1];
-				_grad_weight[k_1_0] -= pz_s[i - 1][1][0];
-				_grad_weight[k_1_1] -= pz_s[i - 1][1][1];
+				_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
+				_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
+				_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
+				_grad_weight[k_1_1] -= pz_s(i - 1, 1, 1);
 			}
 		}
-		void SGD::_backward_bigram_type(Sentence* sentence, double*** pz_s){
+		void SGD::_backward_bigram_type(Sentence* sentence, mat::tri<double> &pz_s){
 			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
@@ -258,22 +257,22 @@ namespace npycrf {
 				// 発火の期待値
 				int k_0 = _crf->_index_w_bigram_type_u(0, type_i_1, type_i);
 				int k_1 = _crf->_index_w_bigram_type_u(1, type_i_1, type_i);
-				_grad_weight[k_0] -= pz_s[i - 1][0][0];
-				_grad_weight[k_0] -= pz_s[i - 1][1][0];
-				_grad_weight[k_1] -= pz_s[i - 1][0][1];
-				_grad_weight[k_1] -= pz_s[i - 1][1][1];
+				_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
+				_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
+				_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
+				_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
 				int k_0_0 = _crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i);
 				int k_0_1 = _crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i);
 				int k_1_0 = _crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i);
 				int k_1_1 = _crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i);
-				_grad_weight[k_0_0] -= pz_s[i - 1][0][0];
-				_grad_weight[k_0_1] -= pz_s[i - 1][0][1];
-				_grad_weight[k_1_0] -= pz_s[i - 1][1][0];
-				_grad_weight[k_1_1] -= pz_s[i - 1][1][1];
+				_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
+				_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
+				_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
+				_grad_weight[k_1_1] -= pz_s(i - 1, 1, 1);
 			}
 		}
-		void SGD::_backward_label(Sentence* sentence, double*** pz_s){
+		void SGD::_backward_label(Sentence* sentence, mat::tri<double> &pz_s){
 			array<int> &character_ids = sentence->_character_ids;
 			wchar_t const* characters = sentence->_characters;
 			int character_ids_length = sentence->size();
@@ -291,22 +290,22 @@ namespace npycrf {
 				// 発火の期待値
 				int k_0 = _crf->_index_w_label_u(0);
 				int k_1 = _crf->_index_w_label_u(1);
-				_grad_weight[k_0] -= pz_s[i - 1][0][0];
-				_grad_weight[k_0] -= pz_s[i - 1][1][0];
-				_grad_weight[k_1] -= pz_s[i - 1][0][1];
-				_grad_weight[k_1] -= pz_s[i - 1][1][1];
+				_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
+				_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
+				_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
+				_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
 				int k_0_0 = _crf->_index_w_label_b(0, 0);
 				int k_0_1 = _crf->_index_w_label_b(0, 1);
 				int k_1_0 = _crf->_index_w_label_b(1, 0);
 				int k_1_1 = _crf->_index_w_label_b(1, 1);
-				_grad_weight[k_0_0] -= pz_s[i - 1][0][0];
-				_grad_weight[k_0_1] -= pz_s[i - 1][0][1];
-				_grad_weight[k_1_0] -= pz_s[i - 1][1][0];
-				_grad_weight[k_1_1] -= pz_s[i - 1][1][1];
+				_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
+				_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
+				_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
+				_grad_weight[k_1_1] -= pz_s(i - 1, 1, 1);
 			}
 		}
-		void SGD::backward_lambda_0(Sentence* sentence, double**** p_conc_tkji, double**** pw_h_tkji, int max_word_length){
+		void SGD::backward_lambda_0(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, int max_word_length){
 			// 素性の発火
 			int t, k, j, i;
 			for(int n = 2;n < sentence->get_num_segments() - 1;n++){	// <eos>を除く
@@ -314,24 +313,24 @@ namespace npycrf {
 				t = sentence->_start[n] + k;
 				j = (t - k == 0) ? 0 : sentence->_segments[n - 1];
 				i = (t - k - j == 0) ? 0 : sentence->_segments[n - 2];
-				_grad_lambda_0 += log(pw_h_tkji[t][k][j][i]);
+				_grad_lambda_0 += log(pw_h_tkji(t, k, j, i));
 			}
 			// <eos>
 			t += 1;
 			i = j;
 			j = k;
 			k = 1;
-			_grad_lambda_0 +=log(pw_h_tkji[t][k][j][i]);
+			_grad_lambda_0 +=log(pw_h_tkji(t, k, j, i));
 
 			// 発火の期待値を引く
 			for(int t = 1;t <= sentence->size();t++){
 				for(int k = 1;k <= std::min(t, max_word_length);k++){
 					for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, max_word_length);j++){
 						for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, max_word_length);i++){
-							double p_conc = p_conc_tkji[t][k][j][i];
-							assert(pw_h_tkji[t][k][j][i] > 0);
+							double p_conc = p_conc_tkji(t, k, j, i);
+							assert(pw_h_tkji(t, k, j, i) > 0);
 							assert(p_conc > 0);
-							_grad_lambda_0 -= p_conc * log(pw_h_tkji[t][k][j][i]);
+							_grad_lambda_0 -= p_conc * log(pw_h_tkji(t, k, j, i));
 						}
 					}
 				}
@@ -340,10 +339,10 @@ namespace npycrf {
 			k = 1;
 			for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, max_word_length);j++){
 				for(int i = (t - k - j == 0) ? 0 : 1;i <= std::min(t - k - j, max_word_length);i++){
-					double p_conc = p_conc_tkji[t][k][j][i];
-					assert(pw_h_tkji[t][k][j][i] > 0);
+					double p_conc = p_conc_tkji(t, k, j, i);
+					assert(pw_h_tkji(t, k, j, i) > 0);
 					assert(p_conc > 0);
-					_grad_lambda_0 -= p_conc * log(pw_h_tkji[t][k][j][i]);
+					_grad_lambda_0 -= p_conc * log(pw_h_tkji(t, k, j, i));
 				}
 			}
 		}

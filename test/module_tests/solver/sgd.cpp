@@ -179,14 +179,14 @@ void test_backward_unigram(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_unigram_u(0, pos, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_unigram_u(1, pos, x_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -260,14 +260,14 @@ void test_backward_unigram(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_unigram_b(1, 1, pos, x_i) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_unigram_b(0, 0, pos, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_unigram_b(0, 1, pos, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_unigram_b(1, 0, pos, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_unigram_b(1, 1, pos, x_i) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_unigram_b(0, 0, pos, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_unigram_b(0, 1, pos, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_unigram_b(1, 0, pos, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_unigram_b(1, 1, pos, x_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -364,14 +364,14 @@ void test_backward_bigram(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_bigram_u(1, pos, x_i_1, x_i) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_u(0, pos, x_i_1, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_u(1, pos, x_i_1, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_u(0, pos, x_i_1, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_u(1, pos, x_i_1, x_i) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_bigram_u(0, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_bigram_u(1, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_bigram_u(0, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_bigram_u(1, pos, x_i_1, x_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -438,14 +438,14 @@ void test_backward_bigram(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_b(0, 0, pos, x_i_1, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_b(0, 1, pos, x_i_1, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_b(1, 0, pos, x_i_1, x_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_bigram_b(0, 0, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_bigram_b(0, 1, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_bigram_b(1, 0, pos, x_i_1, x_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -537,14 +537,14 @@ void test_backward_identical_1(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_identical_1_u(1, pos) == k && x_i_1 == x_i) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_identical_1_u(0, pos) == k && x_i_1 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_identical_1_u(1, pos) == k && x_i_1 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_identical_1_u(0, pos) == k && x_i_1 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_identical_1_u(1, pos) == k && x_i_1 == x_i) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_identical_1_u(0, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_identical_1_u(1, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_identical_1_u(0, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_identical_1_u(1, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -609,14 +609,14 @@ void test_backward_identical_1(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_identical_1_b(1, 1, pos) == k && x_i_1 == x_i) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_identical_1_b(0, 0, pos) == k && x_i_1 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_identical_1_b(0, 1, pos) == k && x_i_1 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_identical_1_b(1, 0, pos) == k && x_i_1 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_identical_1_b(1, 1, pos) == k && x_i_1 == x_i) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_identical_1_b(0, 0, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_identical_1_b(0, 1, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_identical_1_b(1, 0, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_identical_1_b(1, 1, pos) == k && x_i_1 == x_i) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -710,14 +710,14 @@ void test_backward_identical_2(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_identical_2_u(1, pos) == k && x_i_2 == x_i) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_identical_2_u(0, pos) == k && x_i_2 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_identical_2_u(1, pos) == k && x_i_2 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_identical_2_u(0, pos) == k && x_i_2 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_identical_2_u(1, pos) == k && x_i_2 == x_i) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_identical_2_u(0, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_identical_2_u(1, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_identical_2_u(0, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_identical_2_u(1, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -782,14 +782,14 @@ void test_backward_identical_2(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_identical_2_b(1, 1, pos) == k && x_i_2 == x_i) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_identical_2_b(0, 0, pos) == k && x_i_2 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_identical_2_b(0, 1, pos) == k && x_i_2 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_identical_2_b(1, 0, pos) == k && x_i_2 == x_i) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_identical_2_b(1, 1, pos) == k && x_i_2 == x_i) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_identical_2_b(0, 0, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_identical_2_b(0, 1, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_identical_2_b(1, 0, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_identical_2_b(1, 1, pos) == k && x_i_2 == x_i) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -872,14 +872,14 @@ void test_backward_character_type_unigram(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_unigram_type_u(1, type_i) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_unigram_type_u(0, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_unigram_type_u(1, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_unigram_type_u(0, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_unigram_type_u(1, type_i) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_unigram_type_u(0, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_unigram_type_u(1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_unigram_type_u(0, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_unigram_type_u(1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", type_i = " << type_i << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -929,14 +929,14 @@ void test_backward_character_type_unigram(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_unigram_type_b(1, 1, type_i) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_unigram_type_b(0, 0, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_unigram_type_b(0, 1, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_unigram_type_b(1, 0, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_unigram_type_b(1, 1, type_i) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_unigram_type_b(0, 0, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_unigram_type_b(0, 1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_unigram_type_b(1, 0, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_unigram_type_b(1, 1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -1035,14 +1035,14 @@ void test_backward_character_type_bigram(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_type_u(0, type_i_1, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_type_u(0, type_i_1, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_bigram_type_u(0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_bigram_type_u(0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_bigram_type_u(1, type_i_1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", type_i_1 = " << type_i_1 << ", type_i = " << type_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -1120,14 +1120,14 @@ void test_backward_character_type_bigram(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -1207,14 +1207,14 @@ void test_backward_label(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_label_u(1) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_label_u(0) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_label_u(1) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_label_u(0) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_label_u(1) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_label_u(0) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_label_u(1) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_label_u(0) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_label_u(1) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -1271,14 +1271,14 @@ void test_backward_label(bool pure_crf_mode){
 			if(t == sentence->size() + 2){
 				sum_expectation += (crf->_index_w_label_b(1, 1) == k) ? 1 : 0;
 			}else{
-				sum_expectation += lattice->_pz_s[t - 1][0][0] * ((crf->_index_w_label_b(0, 0) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][0][1] * ((crf->_index_w_label_b(0, 1) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][0] * ((crf->_index_w_label_b(1, 0) == k) ? 1 : 0);
-				sum_expectation += lattice->_pz_s[t - 1][1][1] * ((crf->_index_w_label_b(1, 1) == k) ? 1 : 0);
-				// cout << "0-0: " << lattice->_pz_s[t - 1][0][0] << endl;
-				// cout << "0-1: " << lattice->_pz_s[t - 1][0][1] << endl;
-				// cout << "1-0: " << lattice->_pz_s[t - 1][1][0] << endl;
-				// cout << "1-1: " << lattice->_pz_s[t - 1][1][1] << endl;
+				sum_expectation += lattice->_pz_s(t - 1, 0, 0) * ((crf->_index_w_label_b(0, 0) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 0, 1) * ((crf->_index_w_label_b(0, 1) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 0) * ((crf->_index_w_label_b(1, 0) == k) ? 1 : 0);
+				sum_expectation += lattice->_pz_s(t - 1, 1, 1) * ((crf->_index_w_label_b(1, 1) == k) ? 1 : 0);
+				// cout << "0-0: " << lattice->_pz_s(t - 1, 0, 0) << endl;
+				// cout << "0-1: " << lattice->_pz_s(t - 1, 0, 1) << endl;
+				// cout << "1-0: " << lattice->_pz_s(t - 1, 1, 0) << endl;
+				// cout << "1-1: " << lattice->_pz_s(t - 1, 1, 1) << endl;
 			}
 			grad += pi_k - sum_expectation;
 			// cout << "t = " << t << ", r = " << r << ", index = " << index << ", x_i = " << x_i << ", yt_1 = " << yt_1 << ", yt = " << yt << ", pi_k = " << pi_k << ", sum_expectation = " << sum_expectation << endl;
@@ -1324,9 +1324,8 @@ void test_backward_lambda_0(){
 	Sentence* sentence = generate_sentence_4();
 	int seq_capacity = lattice->_max_sentence_length + 1;
 	int word_capacity = lattice->_max_word_length + 1;
-	double**** p_conc_tkji = NULL;
-	double**** pw_h_tkji = lattice->_pw_h_tkji;
-	lattice::_init_array(p_conc_tkji, seq_capacity, word_capacity, word_capacity, word_capacity);
+	mat::quad<double> p_conc_tkji(seq_capacity, word_capacity, word_capacity, word_capacity);
+	mat::quad<double> &pw_h_tkji = lattice->_pw_h_tkji;
 	lattice->enumerate_marginal_p_trigram_given_sentence(sentence, p_conc_tkji, pw_h_tkji, true);
 
 	crf::CRF* crf = var->py_crf->_crf;
@@ -1360,7 +1359,6 @@ void test_backward_lambda_0(){
 	}
 	assert(std::abs(true_grad - sgd->_grad_lambda_0) < 1e-4);
 
-	lattice::_delete_array(p_conc_tkji, seq_capacity, word_capacity, word_capacity, word_capacity);
 	delete sentence;
 	delete var;
 }
@@ -1377,12 +1375,6 @@ int main(int argc, char *argv[]){
 	token_ids[SPECIAL_CHARACTER_BEGIN] = token_ids.size();
 	token_ids[SPECIAL_CHARACTER_END] = token_ids.size();
 	sampler::set_seed(0);
-
-	lattice::array::dual<double> test(10, 100);
-	lattice::array::dual<double> test2 = test;
-	lattice::array::dual<double> &test3 = test;
-	cout << test(0, 10) << endl;
-	cout << test(100, 10) << endl;
 
 	test_backward_lambda_0();
 	cout << "OK" << endl;

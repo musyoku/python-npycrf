@@ -18,12 +18,13 @@ namespace npycrf {
 			void serialize(Archive &ar, unsigned int version);
 		public:
 			double _bias;
-			double* _all_weights;		// 全ての重み
+			array<double> _all_weights;		// 全ての重み
 			hashmap<int, double> _effective_weights;	// 枝刈りされた重み
-			int* _num_updates;
+			array<int> _num_updates;
 			int _weight_size;
 			double _lambda_0;	// モデル補完重み
 			double weight_at_index(int index);
+			bool _pruned;
 			void set_weight_at_index(int index, double value);
 			Parameter();
 			~Parameter();
