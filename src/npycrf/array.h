@@ -1,8 +1,25 @@
 #pragma once
+#include <iostream>
+#include <cassert>
+#include <execinfo.h>
+#include <stdio.h>
 
 namespace npycrf {
 	namespace index {
-		void check(int i, int size);
+		inline void check(int i, int size){
+			if(0 <= i && i < size){
+				return;
+			}
+			std::cout << i << " < " << size << std::endl;
+			void* callstack[128];
+			int frames = backtrace(callstack, 128);
+			char** strs = backtrace_symbols(callstack, frames);
+			for (int l = 0; l < frames; ++l) {
+				printf("%s\n", strs[l]);
+			}
+			free(strs);
+			assert(0 <= i && i < size);
+		}
 	}
 	namespace mat {
 		template<typename T>
@@ -83,13 +100,13 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k) {
-				index::check(t, _t_size);
-				index::check(k, _k_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
 				return _array[t][k];
 			}
 			const T &operator()(int t, int k) const {
-				index::check(t, _t_size);
-				index::check(k, _k_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
 				return _array[t][k];
 			}
 		};
@@ -191,15 +208,15 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j) {
-				index::check(t, _t_size);
-				index::check(k, _k_size);
-				index::check(j, _j_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
+				assert(j < _j_size);
 				return _array[t][k][j];
 			}
 			const T &operator()(int t, int k, int j) const {
-				index::check(t, _t_size);
-				index::check(k, _k_size);
-				index::check(j, _j_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
+				assert(j < _j_size);
 				return _array[t][k][j];
 			}
 		};
@@ -321,17 +338,17 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j, int i) {
-				index::check(t, _t_size);
-				index::check(k, _k_size);
-				index::check(j, _j_size);
-				index::check(i, _i_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
+				assert(j < _j_size);
+				assert(i < _i_size);
 				return _array[t][k][j][i];
 			}
 			const T &operator()(int t, int k, int j, int i) const {
-				index::check(t, _t_size);
-				index::check(k, _k_size);
-				index::check(j, _j_size);
-				index::check(i, _i_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
+				assert(j < _j_size);
+				assert(i < _i_size);
 				return _array[t][k][j][i];
 			}
 		};
@@ -377,11 +394,11 @@ namespace npycrf {
 			return *this;
 		}
 		T &operator[](int i){    // [] 演算子の多重定義
-			index::check(i, _size);
+			assert(i < _size);
 			return _array[i];
 		}
 		const T &operator[](int i) const {    // [] 演算子の多重定義
-			index::check(i, _size);
+			assert(i < _size);
 			return _array[i];
 		}
 		int size(){

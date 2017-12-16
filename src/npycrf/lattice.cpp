@@ -10,18 +10,17 @@
 
 namespace npycrf {
 	using namespace npylm;
-	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf): Lattice(npylm, crf, 1){
-		
-	}
-	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf, int max_sentence_length){
+	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf){
 		_npylm = npylm;
 		_crf = crf;
-		_word_ids = new id[3];	// 3-gram
 		_pure_crf_mode = false;
-		reserve(npylm->_max_word_length, max_sentence_length);
+		_max_sentence_length = 0;
+		_max_word_length = 0;
+		_word_ids = array<id>(3);
+		reserve(npylm->_max_word_length, 1);
 	}
 	Lattice::~Lattice(){
-		delete[] _word_ids;
+
 	}
 	// 必要ならキャッシュの再確保
 	void Lattice::reserve(int max_word_length, int max_sentence_length){
@@ -29,7 +28,6 @@ namespace npycrf {
 			return;
 		}
 		_allocate_capacity(max_word_length, max_sentence_length);
-		std::cout << "reserve: " << max_word_length << ", " << max_sentence_length << std::endl;
 		_max_word_length = max_word_length;
 		_max_sentence_length = max_sentence_length;
 	}
@@ -57,6 +55,8 @@ namespace npycrf {
 		_pw_h_tkji = mat::quad<double>(seq_capacity + 1, word_capacity, word_capacity, word_capacity);
 		// 遷移確率のキャッシュ
 		_p_transition_tkji = mat::quad<double>(seq_capacity + 1, word_capacity, word_capacity, word_capacity);
+		// 部分単語3-gramの周辺確率テーブル
+		_p_conc_tkji = mat::quad<double>(seq_capacity + 1, word_capacity, word_capacity, word_capacity);
 		// 部分文字列のIDのキャッシュ
 		_substring_word_id_cache = mat::bi<id>(seq_capacity, word_capacity);
 	}

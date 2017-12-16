@@ -354,11 +354,8 @@ namespace npycrf {
 			int total_batches = (double)_rand_indices_train_l.size() / (double)batchsize + ((_rand_indices_train_l.size() % batchsize) ? 1 : 0);
 			Lattice* lattice = _npycrf->_lattice;
 			bool original_mode = lattice->get_pure_crf_mode();
-			int seq_capacity = lattice->_max_sentence_length + 1;
-			int word_capacity = lattice->_max_word_length + 1;
-			std::cout << "sgd: " << lattice->_max_word_length << ", " << lattice->_max_sentence_length << std::endl;
-			mat::quad<double> p_conc_tkji(seq_capacity, word_capacity, word_capacity, word_capacity);
-			mat::tri<double> pz_s(seq_capacity, word_capacity, word_capacity);
+			mat::quad<double> &p_conc_tkji = lattice->_p_conc_tkji;
+			mat::tri<double> &pz_s = lattice->_pz_s;
 			lattice->set_pure_crf_mode(pure_crf);
 			for(int b = 0;b < total_batches;b++){
 				_sgd->clear_grads();
@@ -483,8 +480,8 @@ namespace npycrf {
 				}
 				Sentence* sentence_estimated = sentence_true->copy();
 				_npycrf->parse(sentence_estimated);
-				int* labels_true = sentence_true->_labels;
-				int* labels_estimated = sentence_estimated->_labels;
+				array<int> &labels_true = sentence_true->_labels;
+				array<int> &labels_estimated = sentence_estimated->_labels;
 				int sentence_size = sentence_true->size();
 
 				// 一致する個数を調べる

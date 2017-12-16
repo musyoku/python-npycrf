@@ -12,10 +12,10 @@ namespace npycrf {
 		for(int i = 0;i < size();i++){
 			_character_ids[i] = character_ids[i];
 		}
-		_word_ids = new id[size() + 3];
-		_segments = new int[size() + 3];
-		_start = new int[size() + 3];
-		_labels = new int[size() + 3];
+		_word_ids = array<id>(size() + 3);
+		_segments = array<int>(size() + 3);
+		_start = array<int>(size() + 3);
+		_labels = array<int>(size() + 3);
 		_features = NULL;
 		for(int i = 0;i < size() + 3;i++){
 			_word_ids[i] = 0;
@@ -37,9 +37,6 @@ namespace npycrf {
 		_num_segments = 4;	// <bos>2つと<eos>1つを含む単語数. 4以上の値になる.
 	}
 	Sentence::~Sentence(){
-		delete[] _segments;
-		delete[] _start;
-		delete[] _word_ids;
 		if(_features != NULL){
 			delete _features;
 		}

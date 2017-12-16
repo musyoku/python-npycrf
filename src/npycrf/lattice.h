@@ -19,21 +19,21 @@ namespace npycrf {
 	public:
 		npylm::NPYLM* _npylm;
 		crf::CRF* _crf;
-		id* _word_ids;
+		array<id> _word_ids;			// 3-gram
 		mat::bi<id> _substring_word_id_cache;
-		mat::bi<double> _pc_s;		// 文の部分文字列が単語になる条件付き確率
+		mat::bi<double> _pc_s;			// 文の部分文字列が単語になる条件付き確率
 		mat::tri<double> _alpha;		// 前向き確率
 		mat::tri<double> _beta;			// 後向き確率
 		mat::tri<double> _pz_s;			// Markov-CRFの周辺確率
 		mat::tri<int> _viterbi_backward;
 		mat::quad<double> _pw_h_tkji;	// n-gram確率のキャッシュ
 		mat::quad<double> _p_transition_tkji;	// exp(lamda_0 * p(・) + potential)のキャッシュ
+		mat::quad<double> _p_conc_tkji;
 		array<double> _scaling;			// スケーリング係数
 		array<double> _backward_sampling_table;
 		int _max_word_length;
 		int _max_sentence_length;
 		Lattice(npylm::NPYLM* npylm, crf::CRF* crf);
-		Lattice(npylm::NPYLM* npylm, crf::CRF* crf, int max_sentence_length);
 		~Lattice();
 		void set_pure_crf_mode(bool enabled);
 		bool get_pure_crf_mode();

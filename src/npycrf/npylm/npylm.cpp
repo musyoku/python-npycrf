@@ -171,7 +171,7 @@ namespace npycrf {
 			}
 		}
 		Node<id>* NPYLM::find_node_by_tracing_back_context_from_time_t(
-				id const* word_ids, int word_ids_length, int word_t_index, 
+				array<id> &word_ids, int word_ids_length, int word_t_index, 
 				bool generate_node_if_needed, bool return_middle_node)
 		{
 			assert(word_t_index >= 2);
@@ -213,7 +213,7 @@ namespace npycrf {
 		// 効率のためノードを探しながら確率も計算する
 		Node<id>* NPYLM::find_node_by_tracing_back_context_from_time_t(
 				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
-				id const* word_ids, int word_ids_length, 
+				array<id> &word_ids, int word_ids_length, 
 				int word_t_index, int substr_t_start_index, int substr_t_end_index, 
 				array<double> &parent_pw_cache, bool generate_node_if_needed, bool return_middle_node)
 		{
@@ -361,13 +361,13 @@ namespace npycrf {
 		// word_t_index, substr_t_start_index, substr_char_t_endはインデックス
 		double NPYLM::compute_p_w_given_h(
 				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
-				id const* word_ids, int word_ids_length, int word_t_index)
+				array<id> &word_ids, int word_ids_length, int word_t_index)
 		{
 			return compute_p_w_given_h(character_ids, characters, character_ids_length, word_ids, word_ids_length, word_t_index, -1, -1);
 		}
 		double NPYLM::compute_p_w_given_h(
 				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
-				id const* word_ids, int word_ids_length, 
+				array<id> &word_ids, int word_ids_length, 
 				int word_t_index, int substr_t_start_index, int substr_t_end_index)
 		{
 			assert(0 <= word_t_index && word_t_index < word_ids_length);
@@ -430,7 +430,7 @@ namespace npycrf {
 			archive & _lambda_a;
 			archive & _lambda_b;
 
-			_pk_vpylm = npycrf::array<double>(_max_word_length + 2);
+			_pk_vpylm = array<double>(_max_word_length + 2);
 			_lambda_for_type = array<double>(WORDTYPE_NUM_TYPES + 1);
 
 			_hpylm_parent_pw_cache = array<double>(3);

@@ -12,12 +12,12 @@ namespace npycrf {
 	class Sentence {
 	public:
 		int _num_segments;	// <bos>2つと<eos>1つを含める
-		int* _segments;		// 各単語の長さが入る. <bos>2つが先頭に来る
-		int* _start;		// <bos>2つが先頭に来る
+		npycrf::array<int> _segments;		// 各単語の長さが入る. <bos>2つが先頭に来る
+		npycrf::array<int> _start;		// <bos>2つが先頭に来る
 		wchar_t const* _characters; // _sentence_strの各文字. 実際には使わない
 		npycrf::array<int> _character_ids;// _sentence_strの各文字のid. 実際に使われるのはこっち
-		id* _word_ids;		// <bos>2つと<eos>1つを含める
-		int* _labels;		// CRFのラベル. <bos>が1つ先頭に入り、<eos>が末尾に2つ入る. CRFに合わせて1スタート、[0]は<bos>
+		npycrf::array<id> _word_ids;		// <bos>2つと<eos>1つを含める
+		npycrf::array<int> _labels;		// CRFのラベル. <bos>が1つ先頭に入り、<eos>が末尾に2つ入る. CRFに合わせて1スタート、[0]は<bos>
 		crf::FeatureIndices* _features;	// CRFの素性ID. 不変なのであらかじめ計算しておく.
 		std::wstring _sentence_str;	// 生の文データ
 		Sentence(std::wstring sentence, npycrf::array<int> &character_ids);

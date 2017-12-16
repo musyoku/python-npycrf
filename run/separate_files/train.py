@@ -151,7 +151,7 @@ def main():
 	trainer.add_labeled_data_to_npylm()					# 教師データをNPYLMに追加
 	trainer.sgd(learning_rate, batchsize, pure_crf=True)	# NPYLMを除いてCRF単体を最適化
 
-	print("Iteration {} / {} - {:.3f} sec".format(0, args.epochs, elapsed_time))
+	print("Iteration {} / {} - {:.3f} sec".format(0, args.epochs, time.time() - start))
 
 	for epoch in range(1, args.epochs + 1):
 		start = time.time()
@@ -169,8 +169,7 @@ def main():
 			trainer.update_p_k_given_vpylm()	# VPYLMから長さkの単語が生成される確率P(k|VPYLM)を推定
 			
 		# ログ
-		elapsed_time = time.time() - start
-		print("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, elapsed_time))
+		print("Iteration {} / {} - {:.3f} sec".format(epoch, args.epochs, time.time() - start))
 
 		# log_likelihood_l = trainer.compute_log_likelihood_labeled_dev()
 		# log_likelihood_u = trainer.compute_log_likelihood_unlabeled_dev()

@@ -62,10 +62,10 @@ namespace npycrf {
 			bool remove_customer_at_time_t(Sentence* sentence, int t);
 			void vpylm_remove_customers(array<int> &character_ids, int token_ids_length, std::vector<int> &prev_depths);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(Sentence* sentence, int word_t_index, npycrf::array<double> &parent_pw_cache, bool generate_node_if_needed, bool return_middle_node);
-			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(id const* word_ids, int word_ids_length, int word_t_index, bool generate_node_if_needed, bool return_middle_node);
+			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(npycrf::array<id> &word_ids, int word_ids_length, int word_t_index, bool generate_node_if_needed, bool return_middle_node);
 			lm::Node<id>* find_node_by_tracing_back_context_from_time_t(
 				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
-				id const* word_ids, int word_ids_length, 
+				npycrf::array<id> &word_ids, int word_ids_length, 
 				int word_t_index, int substr_char_t_start, int substr_char_t_end, 
 				npycrf::array<double> &parent_pw_cache, bool generate_node_if_needed, bool return_middle_node);
 			// word_idは既知なので再計算を防ぐ
@@ -78,10 +78,10 @@ namespace npycrf {
 			double compute_p_w_given_h(Sentence* sentence, int word_t_index);
 			double compute_p_w_given_h(
 				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
-				id const* word_ids, int word_ids_length, int word_t_index);
+				npycrf::array<id> &word_ids, int word_ids_length, int word_t_index);
 			double compute_p_w_given_h(
 				array<int> &character_ids, wchar_t const* characters, int character_ids_length, 
-				id const* word_ids, int word_ids_length, 
+				npycrf::array<id> &word_ids, int word_ids_length, 
 				int word_t_index, int substr_char_t_start, int substr_char_t_end);
 		};
 	}
