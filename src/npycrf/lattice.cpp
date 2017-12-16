@@ -29,6 +29,7 @@ namespace npycrf {
 			return;
 		}
 		_allocate_capacity(max_word_length, max_sentence_length);
+		std::cout << "reserve: " << max_word_length << ", " << max_sentence_length << std::endl;
 		_max_word_length = max_word_length;
 		_max_sentence_length = max_sentence_length;
 	}

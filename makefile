@@ -13,14 +13,14 @@ SOURCES = 	src/python/*.cpp \
 
 install: ## npycrf.soを生成
 	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npycrf.so -O3
-	cp run/npycrf.so run/split_data/npycrf.so
-	cp run/npycrf.so run/separate_data/npycrf.so
+	cp run/npycrf.so run/split_file/npycrf.so
+	cp run/npycrf.so run/separate_files/npycrf.so
 	rm -rf run/npycrf.so
 
 install_ubuntu: ## npycrf.soを生成
 	$(CC) -Wl,--no-as-needed -Wno-deprecated $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npycrf.so -O3
-	cp run/npycrf.so run/split_data/npycrf.so
-	cp run/npycrf.so run/separate_data/npycrf.so
+	cp run/npycrf.so run/split_file/npycrf.so
+	cp run/npycrf.so run/separate_files/npycrf.so
 	rm -rf run/npycrf.so
 	
 check_includes:	## Python.hの場所を確認

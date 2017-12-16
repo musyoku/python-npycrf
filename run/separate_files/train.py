@@ -136,10 +136,13 @@ def main():
 
 	learning_rate = args.crf_learning_rate
 	batchsize = 32
+	start = time.time()
 
 	# 初期化
 	trainer.add_labeled_data_to_npylm()					# 教師データをNPYLMに追加
 	trainer.sgd(learning_rate, batchsize, pure_crf=True)	# NPYLMを除いてCRF単体を最適化
+
+	print("Iteration {} / {} - {:.3f} sec".format(0, args.epochs, elapsed_time))
 
 	for epoch in range(1, args.epochs + 1):
 		start = time.time()

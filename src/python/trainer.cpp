@@ -356,7 +356,9 @@ namespace npycrf {
 			bool original_mode = lattice->get_pure_crf_mode();
 			int seq_capacity = lattice->_max_sentence_length + 1;
 			int word_capacity = lattice->_max_word_length + 1;
+			std::cout << "sgd: " << lattice->_max_word_length << ", " << lattice->_max_sentence_length << std::endl;
 			mat::quad<double> p_conc_tkji(seq_capacity, word_capacity, word_capacity, word_capacity);
+			mat::tri<double> pz_s(seq_capacity, word_capacity, word_capacity);
 			lattice->set_pure_crf_mode(pure_crf);
 			for(int b = 0;b < total_batches;b++){
 				_sgd->clear_grads();
@@ -371,7 +373,6 @@ namespace npycrf {
 					Sentence* sentence = _dataset_l->_sentences_train[data_index];
 					assert(sentence->_features != NULL);
 					// 周辺確率を求める
-					mat::tri<double> &pz_s = lattice->_pz_s;
 					lattice->enumerate_marginal_p_path_given_sentence(sentence, pz_s);
 					// 更新
 					_sgd->backward_crf(sentence, pz_s);
