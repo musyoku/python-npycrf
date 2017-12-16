@@ -16,7 +16,7 @@ def printr(string):
 	sys.stdout.write(string)
 	sys.stdout.flush()
 
-def build_corpus(filepath, directory, max_word_length, supervised=False):
+def build_corpus(filepath, directory, supervised=False):
 	assert filepath is not None or directory is not None
 	corpus = nlp.corpus()	# 教師あり
 	sentence_list = []
@@ -26,10 +26,17 @@ def build_corpus(filepath, directory, max_word_length, supervised=False):
 		sentence = sentence.strip()
 		return sentence
 
+	def should_remove(sentence):
+		if len(sentence) > args.max_sentence_length:
+			return True
+		return False
+
 	if filepath is not None:
 		with codecs.open(filepath, "r", "utf-8") as f:
 			for sentence_str in f:
 				sentence_str = preprocess(sentence_str)
+				if should_remove(sentence_str):
+					continue
 				sentence_list.append(sentence_str)
 
 	if directory is not None:
@@ -37,6 +44,8 @@ def build_corpus(filepath, directory, max_word_length, supervised=False):
 			with codecs.open(os.path.join(directory, filename), "r", "utf-8") as f:
 				for sentence_str in f:
 					sentence_str = preprocess(sentence_str)
+					if should_remove(sentence_str):
+						continue
 					sentence_list.append(sentence_str)
 
 	if supervised:
@@ -48,7 +57,7 @@ def build_corpus(filepath, directory, max_word_length, supervised=False):
 			words = []
 			while m:
 				word = m.surface
-				if len(word) > max_word_length:
+				if len(word) > args.max_word_length:
 					words = []
 					break
 				if len(word) > 0:
@@ -70,8 +79,8 @@ def main():
 		pass
 
 	# 学習に用いるテキストデータを準備
-	corpus_l = build_corpus(args.train_filename_l, args.train_directory_l, max_word_length=args.max_word_length, supervised=True)
-	corpus_u = build_corpus(args.train_filename_u, args.train_directory_u, max_word_length=args.max_word_length, supervised=False)
+	corpus_l = build_corpus(args.train_filename_l, args.train_directory_l, supervised=True)
+	corpus_u = build_corpus(args.train_filename_u, args.train_directory_u, supervised=False)
 
 	# 辞書
 	dictionary = nlp.dictionary()
@@ -206,6 +215,7 @@ if __name__ == "__main__":
 	parser.add_argument("--vpylm-beta-stop", "-beta-stop", type=float, default=4)
 	parser.add_argument("--vpylm-beta-pass", "-beta-pass", type=float, default=1)
 	parser.add_argument("--max-word-length", "-l", type=int, default=12, help="可能な単語の最大長.")
+	parser.add_argument("--max-sentence-length", type=int, default=300, help="長すぎる文を除外する.")
 
 	# CRF
 	# Input characters/numbers/letters locating at positions i−2, i−1, i, i+1, i+2

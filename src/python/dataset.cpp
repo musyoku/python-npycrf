@@ -50,18 +50,8 @@ namespace npycrf {
 					_sentences_dev.push_back(sentence);
 				}
 				// 統計
-
-				setlocale(LC_CTYPE, "ja_JP.UTF-8");
-				std::ios_base::sync_with_stdio(false);
-				std::locale default_loc("ja_JP.UTF-8");
-				std::locale::global(default_loc);
-				std::locale ctype_default(std::locale::classic(), default_loc, std::locale::ctype); //※
-				std::wcout.imbue(ctype_default);
-				std::wcin.imbue(ctype_default);
-				
 				if(_max_sentence_length == 0 || sentence_str.size() > _max_sentence_length){
 					_max_sentence_length = sentence_str.size();
-					std::wcout << sentence_str << std::endl;
 				}
 				sum_sentence_length += sentence_str.size();
 			}
