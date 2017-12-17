@@ -4,7 +4,7 @@ import MeCab
 import npycrf as nlp
 from train import printb
 
-def viterbi(npycrf, dictionary, filepath, directory, neologd_path=None):
+def viterbi(npylm, npycrf, dictionary, filepath, directory, neologd_path=None):
 	assert filepath is not None or directory is not None
 	sentence_list = []
 
@@ -39,11 +39,14 @@ def viterbi(npycrf, dictionary, filepath, directory, neologd_path=None):
 				words_true.append(word)
 			m = m.next
 		if len(words_true) > 0:
-			words_viterbi = npycrf.parse(sentence_str, dictionary)
+			words_npycrf = npycrf.parse(sentence_str, dictionary)
+			words_npylm = npylm.parse(sentence_str, dictionary)
 			print("MeCab+NEologd")
 			printb(" / ".join(words_true))
-			print("NPYCRF Viterbi")
-			printb(" / ".join(words_viterbi))
+			print("NPYCRF")
+			printb(" / ".join(words_npycrf))
+			print("NPYLM")
+			printb(" / ".join(words_npylm))
 			print()
 
 def main():
@@ -66,7 +69,7 @@ def main():
 	print(tabulate([["#characters", num_character_ids], ["#features", num_features]]))
 
 	# ビタビアルゴリズムによる最尤分解を求める
-	viterbi(npycrf, dictionary, args.test_filename, args.test_directory, args.neologd_path)
+	viterbi(npylm, npycrf, dictionary, args.test_filename, args.test_directory, args.neologd_path)
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

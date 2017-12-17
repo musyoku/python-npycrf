@@ -353,7 +353,6 @@ namespace npycrf {
 			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
 			int total_batches = (double)_rand_indices_train_l.size() / (double)batchsize + ((_rand_indices_train_l.size() % batchsize) ? 1 : 0);
 			Lattice* lattice = _npycrf->_lattice;
-			bool original_mode = lattice->get_pure_crf_mode();
 			mat::quad<double> &p_conc_tkji = lattice->_p_conc_tkji;
 			mat::tri<double> &pz_s = lattice->_pz_s;
 			lattice->set_pure_crf_mode(pure_crf);
@@ -381,7 +380,7 @@ namespace npycrf {
 				}
 				_sgd->update(learning_rate / (double)size);	// 勾配の平均をとるため学習率を調整
 			}
-			lattice->set_pure_crf_mode(original_mode);
+			lattice->set_npycrf_mode();
 		}
 		double Trainer::compute_perplexity_train(){
 			return _compute_perplexity(_dataset_u->_sentences_train);

@@ -70,6 +70,7 @@ BOOST_PYTHON_MODULE(npycrf){
 
 	boost::python::class_<model::NPYLM>("npylm", boost::python::init<int, double, double, double, double, double>((args("max_word_length", "g0", "initial_lambda_a", "initial_lambda_b", "vpylm_beta_stop", "vpylm_beta_pass"))))
 	.def(boost::python::init<std::string>())
+	.def("parse", &model::NPYLM::python_parse)
 	.def("save", &model::NPYLM::save)
 	.def("load", &model::NPYLM::load);
 }

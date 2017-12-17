@@ -137,6 +137,8 @@ void run_training_loop(){
 		}
 		trainer->print_p_k_vpylm();
 		cout << "lambda_0: " << py_crf->get_lambda_0() << endl;
+
+		py_npylm->parse(dataset_l->_sentences_train[0]);
 		// if(epoch % 10 == 0){
 			// trainer->print_segmentation_labeled_dev(10);
 			// cout << "ppl: " << trainer->compute_perplexity_train() << endl;
