@@ -1,6 +1,7 @@
 #pragma once
 #include <boost/python.hpp>
 #include "../../npycrf/crf/crf.h"
+#include "../dictionary.h"
 
 namespace npycrf {
 	namespace python {

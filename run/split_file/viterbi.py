@@ -41,6 +41,7 @@ def viterbi(npylm, npycrf, dictionary, filepath, directory, neologd_path=None):
 		if len(words_true) > 0:
 			words_npycrf = npycrf.parse(sentence_str, dictionary)
 			words_npylm = npylm.parse(sentence_str, dictionary)
+			words_crf = crf.parse(sentence_str, dictionary)
 			print("MeCab+NEologd")
 			printb(" / ".join(words_true))
 			print("NPYCRF")

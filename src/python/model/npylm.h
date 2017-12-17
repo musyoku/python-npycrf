@@ -10,7 +10,7 @@ namespace npycrf {
 			class NPYLM{
 			public:
 				npylm::NPYLM* _npylm;
-				Lattice* _lattice;			// forward filtering-backward sampling
+				Lattice* _lattice;
 				NPYLM(int max_word_length, 
 					  double g0, 
 					  double initial_lambda_a, 
