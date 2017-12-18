@@ -8,9 +8,6 @@ class stdout:
 	END = "\033[0m"
 	CLEAR = "\033[2K"
 
-def printb(string):
-	print(stdout.BOLD + string + stdout.END)
-
 def printr(string):
 	sys.stdout.write("\r" + stdout.CLEAR)
 	sys.stdout.write(string)

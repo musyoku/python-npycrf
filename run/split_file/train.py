@@ -8,9 +8,6 @@ class stdout:
 	END = "\033[0m"
 	CLEAR = "\033[2K"
 
-def printb(string):
-	print(stdout.BOLD + string + stdout.END)
-
 def printr(string):
 	sys.stdout.write("\r" + stdout.CLEAR)
 	sys.stdout.write(string)
@@ -143,7 +140,7 @@ def main():
 	batchsize = 32
 
 	# 初期化
-	trainer.add_labeled_data_to_npylm()					# 教師データをNPYLMに追加
+	trainer.add_labeled_data_to_npylm()						# 教師データをNPYLMに追加
 	trainer.sgd(learning_rate, batchsize, pure_crf=True)	# NPYLMを除いてCRF単体を最適化
 
 	for epoch in range(1, args.epochs + 1):

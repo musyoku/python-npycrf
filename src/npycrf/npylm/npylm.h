@@ -44,7 +44,9 @@ namespace npycrf {
 			// 計算高速化用
 			npycrf::array<double> _hpylm_parent_pw_cache;
 			bool _fix_g0_using_poisson; // 単語の事前分布をポアソン分布により補正するかどうか
-			NPYLM(){}
+			NPYLM(){
+				_fix_g0_using_poisson = true;
+			}
 			NPYLM(int max_word_length, 
 				int max_sentence_length, 
 				double g0, 

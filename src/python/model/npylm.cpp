@@ -19,12 +19,12 @@ namespace npycrf {
 			}
 			NPYLM::NPYLM(std::string filename){
 				_npylm = new npylm::NPYLM();
-				_lattice = new Lattice(_npylm, NULL);
-				_lattice->set_pure_npylm_mode(true);
 				if(load(filename) == false){
 					std::cout << filename << " not found." << std::endl;
 					exit(0);
 				}
+				_lattice = new Lattice(_npylm, NULL);
+				_lattice->set_pure_npylm_mode(true);
 			}
 			NPYLM::~NPYLM(){
 				delete _npylm;

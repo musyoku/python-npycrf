@@ -2,53 +2,6 @@ import argparse, sys, os, time, codecs, random, re
 from tabulate import tabulate
 import MeCab
 import npycrf as nlp
-from train import printb
-
-def viterbi(npylm, npycrf, dictionary, filepath, directory, neologd_path=None):
-	assert filepath is not None or directory is not None
-	sentence_list = []
-
-	def preprocess(sentence):
-		sentence = re.sub(r"[0-9.,]+", "#", sentence);
-		sentence = sentence.strip()
-		return sentence
-
-	if filepath is not None:
-		with codecs.open(filepath, "r", "utf-8") as f:
-			for sentence_str in f:
-				sentence_str = preprocess(sentence_str)
-				sentence_list.append(sentence_str)
-
-	if directory is not None:
-		for filename in os.listdir(directory):
-			with codecs.open(os.path.join(directory, filename), "r", "utf-8") as f:
-				for sentence_str in f:
-					sentence_str = preprocess(sentence_str)
-					sentence_list.append(sentence_str)
-
-	# 教師データはMeCabによる分割
-	tagger = MeCab.Tagger() if neologd_path is None else MeCab.Tagger("-d " + neologd_path)
-	tagger.parse("")	# バグ回避のため空データを分割
-	for sentence_str in sentence_list:
-		sentence_str = sentence_str.strip()
-		m = tagger.parseToNode(sentence_str)	# 形態素解析
-		words_true = []
-		while m:
-			word = m.surface
-			if len(word) > 0:
-				words_true.append(word)
-			m = m.next
-		if len(words_true) > 0:
-			words_npycrf = npycrf.parse(sentence_str, dictionary)
-			words_npylm = npylm.parse(sentence_str, dictionary)
-			words_crf = crf.parse(sentence_str, dictionary)
-			print("MeCab+NEologd")
-			printb(" / ".join(words_true))
-			print("NPYCRF")
-			printb(" / ".join(words_npycrf))
-			print("NPYLM")
-			printb(" / ".join(words_npylm))
-			print()
 
 def main():
 	assert args.working_directory is not None
@@ -70,7 +23,49 @@ def main():
 	print(tabulate([["#characters", num_character_ids], ["#features", num_features]]))
 
 	# ビタビアルゴリズムによる最尤分解を求める
-	viterbi(npylm, npycrf, dictionary, args.test_filename, args.test_directory, args.neologd_path)
+	assert args.test_filename is not None or args.test_directory is not None
+	sentence_list = []
+
+	def preprocess(sentence):
+		sentence = re.sub(r"[0-9.,]+", "#", sentence);
+		sentence = sentence.strip()
+		return sentence
+
+	if args.test_filename is not None:
+		with codecs.open(args.test_filename, "r", "utf-8") as f:
+			for sentence_str in f:
+				sentence_str = preprocess(sentence_str)
+				sentence_list.append(sentence_str)
+
+	if args.test_directory is not None:
+		for filename in os.listdir(args.test_directory):
+			with codecs.open(os.path.join(args.test_directory, filename), "r", "utf-8") as f:
+				for sentence_str in f:
+					sentence_str = preprocess(sentence_str)
+					sentence_list.append(sentence_str)
+
+	# 教師データはMeCabによる分割
+	tagger = MeCab.Tagger() if args.neologd_path is None else MeCab.Tagger("-d " + args.neologd_path)
+	tagger.parse("")	# バグ回避のため空データを分割
+	for sentence_str in sentence_list:
+		sentence_str = sentence_str.strip()
+		m = tagger.parseToNode(sentence_str)	# 形態素解析
+		words_true = []
+		while m:
+			word = m.surface
+			if len(word) > 0:
+				words_true.append(word)
+			m = m.next
+		if len(words_true) > 0:
+			words_npycrf = npycrf.parse(sentence_str, dictionary)
+			words_npylm = npylm.parse(sentence_str, dictionary)
+			print("MeCab+NEologd")
+			print(" / ".join(words_true))
+			print("NPYCRF")
+			print(" / ".join(words_npycrf))
+			print("NPYLM")
+			print(" / ".join(words_npylm))
+			print()
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

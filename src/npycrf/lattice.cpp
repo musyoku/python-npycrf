@@ -376,21 +376,21 @@ namespace npycrf {
 			_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
 			_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);
 			_word_ids[2] = word_k_id;
-			double p = 0;
+			double p_transition = 0;
 			double potential = 0;
 			if(_pure_crf_mode){
 				potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-				p = exp(potential);
+				p_transition = exp(potential);
 			}else{
 				if(_pure_npylm_mode == false){
 					potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 				}
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
-				p = (_pure_npylm_mode) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
+				p_transition = (_pure_npylm_mode) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
 			}
 			assert(_alpha(t - k, j, 0) != 0);
-			_alpha(t, k, j) = log(p) + _alpha(t - k, j, 0);
+			_alpha(t, k, j) = log(p_transition) + _alpha(t - k, j, 0);
 			assert(_alpha(t, k, j) != 0);
 			_viterbi_backward(t, k, j) = 0;
 			return;
