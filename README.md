@@ -6,6 +6,10 @@ L-BFGSの実装がまだできていないので代わりにSGDでCRFを最適�
 
 NPYLMは3-gramで固定です。
 
+- [条件付確率場とベイズ階層言語モデルの統合による半教師あり形態素解析](http://chasen.org/~daiti-m/paper/nlp2011semiseg.pdf)
+- [半教師あり形態素解析 NPYCRF の修正](http://www.anlp.jp/proceedings/annual_meeting/2016/pdf_dir/D6-3.pdf)
+- [実装について](http://musyoku.github.io/2017/12/19/npycrf/)
+
 #### Todo
 
 - [x] NPYCRFの学習
@@ -90,7 +94,7 @@ python3 train.py -file-l supervised.txt -file-u unsupervised.txt -td-split 0.9 -
 python3 viterbi.py -file test.txt -neologd /usr/local/lib/mecab/dic/mecab-ipadic-neologd
 ```
 
-## 注意事項
+# 注意事項
 
 研究以外の用途には使用できません。
 
@@ -99,11 +103,6 @@ https://twitter.com/daiti_m/status/851810748263157760
 実装に誤りが含まれる可能性があります。
 
 質問等、何かありましたらissueにてお知らせください。
-
-# 参考文献
-- [条件付確率場とベイズ階層言語モデルの統合による半教師あり形態素解析](http://chasen.org/~daiti-m/paper/nlp2011semiseg.pdf)
-- [半教師あり形態素解析 NPYCRF の修正](http://www.anlp.jp/proceedings/annual_meeting/2016/pdf_dir/D6-3.pdf)
-- [実装について](http://musyoku.github.io/2017/12/19/npycrf/)
 
 # 結果
 
