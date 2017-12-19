@@ -181,8 +181,8 @@ def main():
 		npylm.save(os.path.join(args.working_directory, "npylm.model"))
 		crf.save(os.path.join(args.working_directory, "crf.model"))
 
-		trainer.print_p_k_vpylm()
-		print(crf.get_lambda_0())
+		# trainer.print_p_k_vpylm()
+		print("lambda_0:", crf.get_lambda_0())
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
