@@ -22,16 +22,16 @@ NPYLMは3-gramで固定です。
 - [ ] CRFの学習の並列化
 - [ ] 最大単語帳の予測に基づく枝刈り
 
-# 動作環境
+## 動作環境
 
 - Boost 1.65
 - Python 3
 - C++14
 - python3-config
 
-# 準備
+## 準備
 
-## macOS
+### macOS
 
 macOSの場合、PythonとBoostはともにbrewでインストールする必要があります。
 
@@ -49,7 +49,7 @@ brew install python3
 brew install boost-python --with-python3
 ```
 
-## Ubuntu
+### Ubuntu
 
 #### Boostのインストール
 
@@ -60,7 +60,7 @@ brew install boost-python --with-python3
 
 Pythonのバージョンを自身のものと置き換えてください。
 
-## ビルド
+### ビルド
 
 以下のコマンドで`npycrf.so`が`/run/`に生成されます。
 
@@ -70,7 +70,7 @@ make install
 
 `makefile`内のBoostのパスを環境に合わせて変更してください。
 
-# 学習
+## 学習
 
 読み込んだテキストから教師付きデータをランダムに選択する場合は`/run/split_file/train.py`を使います。
 
@@ -86,7 +86,7 @@ python3 train.py -file-l supervised.txt -file-u unsupervised.txt -td-split 0.9 -
 
 学習の一時停止や再開はできません。
 
-# 分割
+## 分割
 
 ビタビアルゴリズムによる最尤分割を求めます。
 
@@ -94,7 +94,7 @@ python3 train.py -file-l supervised.txt -file-u unsupervised.txt -td-split 0.9 -
 python3 viterbi.py -file test.txt -neologd /usr/local/lib/mecab/dic/mecab-ipadic-neologd
 ```
 
-# 注意事項
+## 注意事項
 
 研究以外の用途には使用できません。
 
@@ -104,7 +104,7 @@ https://twitter.com/daiti_m/status/851810748263157760
 
 質問等、何かありましたらissueにてお知らせください。
 
-# 結果
+## 結果
 
 [日本語版text8コーパス](http://hironsan.hatenablog.com/entry/japanese-text8-corpus)から1万文を教師付きデータとして用い、2chの[けものフレンズ](https://shiba.5ch.net/test/read.cgi/anime/1490363261)などのスレッドから7万文を教師なしデータとして用いました。
 
