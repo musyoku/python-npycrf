@@ -24,6 +24,8 @@ def build_corpus(filepath, directory, supervised=False):
 		return sentence
 
 	def should_remove(sentence):
+		if len(sentence) == 0:
+			return True
 		if len(sentence) > args.max_sentence_length:
 			return True
 		return False
@@ -91,12 +93,16 @@ def main():
 	dictionary.save(os.path.join(args.working_directory, "char.dict"))
 
 	# 確認
+	size_train_l = dataset_l.get_size_train()
+	size_dev_l = dataset_l.get_size_dev()
+	size_train_u = dataset_u.get_size_train()
+	size_dev_u = dataset_u.get_size_dev()
 	table = [
-		["Labeled", dataset_l.get_size_train(), dataset_l.get_size_dev()],
-		["Unlabeled", dataset_u.get_size_train(), dataset_u.get_size_dev()],
-		["Total", dataset_u.get_size_train() + dataset_l.get_size_train(), dataset_u.get_size_dev() + dataset_l.get_size_dev()],
+		["Labeled", size_train_l, size_dev_l, size_train_l + size_dev_l],
+		["Unlabeled", size_train_u, size_dev_u, size_train_u + size_dev_u],
+		["Total", size_train_u + size_train_l, size_dev_u + size_dev_l, size_train_u + size_train_l + size_dev_u + size_dev_l],
 	]
-	print(tabulate(table, headers=["Data", "Train", "Dev"]))
+	print(tabulate(table, headers=["Data", "Train", "Dev", "Total"]))
 
 	num_character_ids = dictionary.get_num_characters()
 

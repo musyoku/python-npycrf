@@ -24,10 +24,19 @@ def build_corpus(filepath, directory, semi_supervised_split_ratio, max_word_leng
 		sentence = sentence.strip()
 		return sentence
 
+	def should_remove(sentence):
+		if len(sentence) == 0:
+			return True
+		if len(sentence) > args.max_sentence_length:
+			return True
+		return False
+
 	if filepath is not None:
 		with codecs.open(filepath, "r", "utf-8") as f:
 			for sentence_str in f:
 				sentence_str = preprocess(sentence_str)
+				if should_remove(sentence_str):
+					continue
 				sentence_list.append(sentence_str)
 
 	if directory is not None:
@@ -35,6 +44,8 @@ def build_corpus(filepath, directory, semi_supervised_split_ratio, max_word_leng
 			with codecs.open(os.path.join(directory, filename), "r", "utf-8") as f:
 				for sentence_str in f:
 					sentence_str = preprocess(sentence_str)
+					if should_remove(sentence_str):
+						continue
 					sentence_list.append(sentence_str)
 
 	random.shuffle(sentence_list)
@@ -87,12 +98,16 @@ def main():
 	dictionary.save(os.path.join(args.working_directory, "char.dict"))
 
 	# 確認
+	size_train_l = dataset_l.get_size_train()
+	size_dev_l = dataset_l.get_size_dev()
+	size_train_u = dataset_u.get_size_train()
+	size_dev_u = dataset_u.get_size_dev()
 	table = [
-		["Labeled", dataset_l.get_size_train(), dataset_l.get_size_dev()],
-		["Unlabeled", dataset_u.get_size_train(), dataset_u.get_size_dev()],
-		["Total", dataset_u.get_size_train() + dataset_l.get_size_train(), dataset_u.get_size_dev() + dataset_l.get_size_dev()],
+		["Labeled", size_train_l, size_dev_l, size_train_l + size_dev_l],
+		["Unlabeled", size_train_u, size_dev_u, size_train_u + size_dev_u],
+		["Total", size_train_u + size_train_l, size_dev_u + size_dev_l, size_train_u + size_train_l + size_dev_u + size_dev_l],
 	]
-	print(tabulate(table, headers=["Data", "Train", "Dev"]))
+	print(tabulate(table, headers=["Data", "Train", "Dev", "Total"]))
 
 	num_character_ids = dictionary.get_num_characters()
 
@@ -203,6 +218,7 @@ if __name__ == "__main__":
 	parser.add_argument("--vpylm-beta-stop", "-beta-stop", type=float, default=4)
 	parser.add_argument("--vpylm-beta-pass", "-beta-pass", type=float, default=1)
 	parser.add_argument("--max-word-length", "-l", type=int, default=12, help="可能な単語の最大長.")
+	parser.add_argument("--max-sentence-length", type=int, default=300, help="長すぎる文を除外する.")
 
 	# CRF
 	# Input characters/numbers/letters locating at positions i−2, i−1, i, i+1, i+2
