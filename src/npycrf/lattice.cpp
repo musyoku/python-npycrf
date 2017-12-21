@@ -366,7 +366,6 @@ namespace npycrf {
 				assert(pw_h > 0);
 				log_p_transition = (_pure_npylm_mode) ? log(pw_h) : _lambda_0() * log(pw_h) + potential;
 			}
-			assert(log_p_transition > 0);
 			_alpha(t, k, 0) = log_p_transition;
 			_viterbi_backward(t, k, 0) = 0;
 			return;
