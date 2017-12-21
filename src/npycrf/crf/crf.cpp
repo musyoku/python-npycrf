@@ -1,3 +1,4 @@
+#include <boost/serialization/split_member.hpp>
 #include <iostream>
 #include "../ctype.h"
 #include "../sampler.h"
@@ -54,13 +55,38 @@ namespace npycrf {
 		}
 		template <class Archive>
 		void Parameter::serialize(Archive &ar, unsigned int version){
-			ar & _effective_weights;
+			boost::serialization::split_member(ar, *this, version);
+		}
+		template void Parameter::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
+		template void Parameter::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
+		void Parameter::save(boost::archive::binary_oarchive &ar, unsigned int version) const {
+			size_t size = _effective_weights.size();
+			ar & size;
+			for(auto elem: _effective_weights){
+				ar & elem.first;
+				ar & elem.second;
+			}
 			ar & _weight_size;
 			ar & _bias;
 			ar & _lambda_0;
 			ar & _pruned;
 		}
-
+		void Parameter::load(boost::archive::binary_iarchive &ar, unsigned int version) {
+			size_t size = 0;
+			ar & size;
+			_effective_weights.clear();
+			for(int i = 0;i < size;i++){
+				int key;
+				double value;
+				ar & key;
+				ar & value;
+				_effective_weights[key] = value;
+			}
+			ar & _weight_size;
+			ar & _bias;
+			ar & _lambda_0;
+			ar & _pruned;
+		}
 		CRF::CRF(){
 			_parameter = new Parameter();
 		}
