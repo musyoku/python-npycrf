@@ -13,8 +13,7 @@ namespace npycrf {
 	Lattice::Lattice(NPYLM* npylm, crf::CRF* crf){
 		_npylm = npylm;
 		_crf = crf;
-		_pure_crf_mode = false;
-		_pure_npylm_mode = false;
+		_pure_crf = false;
 		_max_sentence_length = 0;
 		_max_word_length = 0;
 		_word_ids = array<id>(3);
@@ -65,15 +64,12 @@ namespace npycrf {
 		return _crf->_parameter->_lambda_0;
 	}
 	void Lattice::set_pure_crf_mode(bool enabled){
-		_pure_crf_mode = enabled;
-		_pure_npylm_mode = false;
+		_pure_crf_m = false;
 	}
-	void Lattice::set_pure_npylm_mode(bool enabled){
-		_pure_npylm_mode = enabled;
+	void Lattice::set_pure_npylm_mode( = enabled;
 		_pure_crf_mode = false;
 	}
-	void Lattice::set_npycrf_mode(){
-		_pure_npylm_mode = false;
+	void Lattice::set_ = false;
 		_pure_crf_mode = false;
 	}
 	bool Lattice::get_pure_crf_mode(){
@@ -97,7 +93,7 @@ namespace npycrf {
 	// @args
 	// 	p_transition_tkji;	NPYLMによる確率計算の結果をpw_h_tkjiにキャッシュする
 	// 				このキャッシュは後向き確率の計算時に使う
-	void Lattice::_sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, double prod_scaling){
+	void Lattice::_sum_alpha_t_k_j(Sentence* sentence, int t, int k, int j, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, double prod_scaling, double crf_potential){
 		id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
 		wchar_t const* characters = sentence->_characters;
 		array<int> &character_ids = sentence->_character_ids;
@@ -109,20 +105,15 @@ namespace npycrf {
 		// <bos>から生成されている場合
 		if(j == 0){
 			double p_transition = 0;
-			double potential = 0;
 			if(_pure_crf_mode){
-				potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-				p_transition = exp(potential);
+				p_transition = exp(crf_potential);
 			}else{
-				if(_pure_npylm_mode == false){
-					potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-				}
 				_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
 				_word_ids[1] = SPECIAL_CHARACTER_BEGIN;
 				_word_ids[2] = word_k_id;
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
-				p_transition = (_pure_npylm_mode) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
+			) ? pw_h : exp(_lambda_0() * log(pw_h) + crf_potential);
 				pw_h_tkji(t, k, 0, 0) = pw_h;
 				p_transition_tkji(t, k, 0, 0) = p_transition;
 			}
@@ -133,21 +124,16 @@ namespace npycrf {
 		// i=0に相当
 		if(t - k - j == 0){
 			double p_transition = 0;
-			double potential = 0;
 			if(_pure_crf_mode){
-				potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-				p_transition = exp(potential);
+				p_transition = exp(crf_potential);
 			}else{
-				if(_pure_npylm_mode == false){
-					potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-				}
 				_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
 				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);
 				_word_ids[2] = word_k_id;
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
 				assert(alpha(t - k, j, 0) > 0);
-				p_transition = (_pure_npylm_mode) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
+			) ? pw_h : exp(_lambda_0() * log(pw_h) + crf_potential);
 				pw_h_tkji(t, k, j, 0) = pw_h;
 				p_transition_tkji(t, k, j, 0) = p_transition;
 			}
@@ -160,14 +146,9 @@ namespace npycrf {
 		double sum = 0;
 		for(int i = 1;i <= std::min(t - k - j, _max_word_length);i++){
 			double p_transition = 0;
-			double potential = 0;
 			if(_pure_crf_mode){
-				potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-				p_transition = exp(potential);
+				p_transition = exp(crf_potential);
 			}else{
-				if(_pure_npylm_mode == false){
-					potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
-				}
 				_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k - j, i);
 				_word_ids[1] = get_substring_word_id_at_t_k(sentence, t - k, j);
 				_word_ids[2] = word_k_id;
@@ -175,7 +156,7 @@ namespace npycrf {
 				assert(pw_h > 0);
 				assert(i <= _max_word_length);
 				assert(alpha(t - k, j, i) > 0);
-				p_transition = (_pure_npylm_mode) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
+			) ? pw_h : exp(_lambda_0() * log(pw_h) + crf_potential);
 				pw_h_tkji(t, k, j, i) = pw_h;
 				p_transition_tkji(t, k, j, i) = p_transition;
 			}
@@ -358,13 +339,12 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 				log_p_transition = potential;
-			}else{
-				if(_pure_npylm_mode == false){
+ == false){
 					potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 				}
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
-				log_p_transition = (_pure_npylm_mode) ? log(pw_h) : _lambda_0() * log(pw_h) + potential;
+				log) ? log(pw_h) : _lambda_0() * log(pw_h) + potential;
 			}
 			_alpha(t, k, 0) = log_p_transition;
 			_viterbi_backward(t, k, 0) = 0;
@@ -380,13 +360,12 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 				log_p_transition = potential;
-			}else{
-				if(_pure_npylm_mode == false){
+ == false){
 					potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 				}
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
-				log_p_transition = (_pure_npylm_mode) ? log(pw_h) : _lambda_0() * log(pw_h) + potential;
+				log) ? log(pw_h) : _lambda_0() * log(pw_h) + potential;
 			}
 			assert(_alpha(t - k, j, 0) != 0);
 			_alpha(t, k, j) = log_p_transition + _alpha(t - k, j, 0);
@@ -406,13 +385,12 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 				log_p_transition = potential;
-			}else{
-				if(_pure_npylm_mode == false){
+ == false){
 					potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
 				}
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t - k, t - 1);
 				assert(pw_h > 0);
-				log_p_transition = (_pure_npylm_mode) ? log(pw_h) : _lambda_0() * log(pw_h) + potential;
+				log) ? log(pw_h) : _lambda_0() * log(pw_h) + potential;
 			}
 			assert(i <= _max_word_length);
 			assert(_alpha(t - k, j, i) != 0);
@@ -455,8 +433,7 @@ namespace npycrf {
 				if(_pure_crf_mode){
 					log_p_transition = _crf->compute_gamma(sentence, t + 1, t + 2);;	// expしない
 				}else{
-					double potential = 0;
-					if(_pure_npylm_mode == false){
+					double potent == false){
 						potential = _crf->compute_gamma(sentence, t + 1, t + 2);
 					}
 					_word_ids[0] = get_substring_word_id_at_t_k(sentence, t - k, j);
@@ -464,7 +441,7 @@ namespace npycrf {
 					_word_ids[2] = SPECIAL_CHARACTER_END;
 					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t);
 					assert(pw_h > 0);
-					log_p_transition = (_pure_npylm_mode) ? log(pw_h) : _lambda_0() * log(pw_h) + potential;	// expしない
+					log) ? log(pw_h) : _lambda_0() * log(pw_h) + potential;	// expしない
 				}
 				assert(_alpha(t, k, j) != 0);
 				double value = log_p_transition + _alpha(t, k, j);
@@ -640,8 +617,13 @@ namespace npycrf {
 				if(use_scaling == true && k > 1){
 					prod_scaling *= scaling[t - k + 1];
 				}
+				// CRFのポテンシャルはtとkのみで決まるため先に計算しておく
+				double crf_potential = 0;
+				if(_pure_npylm_mode == false){
+					crf_potential = _crf->compute_gamma(sentence, t - k + 1, t + 1);
+				}
 				for(int j = (t - k == 0) ? 0 : 1;j <= std::min(t - k, _max_word_length);j++){
-					_sum_alpha_t_k_j(sentence, t, k, j, alpha, pw_h_tkji, p_transition_tkji, prod_scaling);
+					_sum_alpha_t_k_j(sentence, t, k, j, alpha, pw_h_tkji, p_transition_tkji, prod_scaling, crf_potential);
 				}
 			}
 			// スケーリング
@@ -669,7 +651,7 @@ namespace npycrf {
 		wchar_t const* characters = sentence->_characters;
 		array<int> &character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
-		double potential = (_pure_npylm_mode == true) ? 0 : _crf->compute_gamma(sentence, t, t + 1);
+		dou == true) ? 0 : _crf->compute_gamma(sentence, t, t + 1);
 		// double potential = 0;
 		for(int j = 1;j <= std::min(t - k, _max_word_length);j++){
 			double sum_prob = 0;
@@ -683,7 +665,7 @@ namespace npycrf {
 					_word_ids[2] = SPECIAL_CHARACTER_END;
 					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2);
 					assert(pw_h > 0);
-					p_transition = (_pure_npylm_mode) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
+				) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
 					pw_h_tkji(t, k, j, i) = pw_h;
 					p_transition_tkji(t, k, j, i) = p_transition;
 				}
@@ -717,7 +699,7 @@ namespace npycrf {
 		wchar_t const* characters = sentence->_characters;
 		array<int> &character_ids = sentence->_character_ids;
 		int character_ids_length = sentence->size();
-		double potential = (_pure_npylm_mode == true) ? 0 : _crf->compute_gamma(sentence, t + 1, t + 2);
+		dou == true) ? 0 : _crf->compute_gamma(sentence, t + 1, t + 2);
 		// double potential = 0;
 		for(int k = 1;k <= std::min(t, _max_word_length);k++){
 			id word_k_id = get_substring_word_id_at_t_k(sentence, t, k);
@@ -743,7 +725,7 @@ namespace npycrf {
 						_word_ids[2] = SPECIAL_CHARACTER_END;
 						double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2);
 						assert(pw_h > 0);
-						p_transition = (_pure_npylm_mode) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
+					) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
 					}
 				}
 				assert(p_transition > 0);
@@ -777,8 +759,7 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				potential = _crf->compute_gamma(sentence, 1, i + 1);
 				p_transition = exp(potential);
-			}else{
-				if(_pure_npylm_mode == false){
+ == false){
 					potential = _crf->compute_gamma(sentence, 1, i + 1);
 				}
 				_word_ids[0] = SPECIAL_CHARACTER_BEGIN;
@@ -786,7 +767,7 @@ namespace npycrf {
 				_word_ids[2] = get_substring_word_id_at_t_k(sentence, i, i);
 				double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, 0, i - 1);
 				assert(pw_h > 0);
-				p_transition = (_pure_npylm_mode) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
+			) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
 			}
 			assert(p_transition > 0);
 			beta_0_1_1 += _beta(i, i, 0) * p_transition * prod_scaling;
@@ -823,8 +804,7 @@ namespace npycrf {
 			if(_pure_crf_mode){
 				potential = _crf->compute_gamma(sentence, t + 1, t + i + 1);
 				p_transition = exp(potential);
-			}else{
-				if(_pure_npylm_mode == false){
+ == false){
 					potential = _crf->compute_gamma(sentence, t + 1, t + i + 1);
 				}
 				if(p_transition_tkji(t + i, i, k, j) > 0){
@@ -832,7 +812,7 @@ namespace npycrf {
 				}else{
 					double pw_h = _npylm->compute_p_w_given_h(character_ids, characters, character_ids_length, _word_ids, 3, 2, t, t + i - 1);
 					assert(pw_h > 0);
-					p_transition = (_pure_npylm_mode) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
+				) ? pw_h : exp(_lambda_0() * log(pw_h) + potential);
 				}
 			}
 			assert(p_transition > 0);
