@@ -53,40 +53,6 @@ namespace npycrf {
 			}
 			return _weight_size;
 		}
-		template <class Archive>
-		void Parameter::serialize(Archive &ar, unsigned int version){
-			boost::serialization::split_member(ar, *this, version);
-		}
-		template void Parameter::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
-		template void Parameter::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
-		void Parameter::save(boost::archive::binary_oarchive &ar, unsigned int version) const {
-			size_t size = _effective_weights.size();
-			ar & size;
-			for(auto elem: _effective_weights){
-				ar & elem.first;
-				ar & elem.second;
-			}
-			ar & _weight_size;
-			ar & _bias;
-			ar & _lambda_0;
-			ar & _pruned;
-		}
-		void Parameter::load(boost::archive::binary_iarchive &ar, unsigned int version) {
-			size_t size = 0;
-			ar & size;
-			_effective_weights.clear();
-			for(int i = 0;i < size;i++){
-				int key;
-				double value;
-				ar & key;
-				ar & value;
-				_effective_weights[key] = value;
-			}
-			ar & _weight_size;
-			ar & _bias;
-			ar & _lambda_0;
-			ar & _pruned;
-		}
 		CRF::CRF(){
 			_parameter = new Parameter();
 		}
@@ -786,15 +752,25 @@ namespace npycrf {
 			ar & _offset_w_bigram_type_u;
 			ar & _offset_w_bigram_type_b;
 
+			size_t num_effective_weights = 0;
 			_parameter->_effective_weights.clear();
-			for(int i = 0;i < _weight_size;i++){
-				if(_parameter->_num_updates[i] == 0){
+			for(int k = 0;k < _parameter->_weight_size;k++){
+				if(_parameter->_num_updates[k] == 0){
 					continue;
 				}
-				_parameter->_effective_weights[i] = _parameter->_all_weights[i];
+				num_effective_weights += 1;
 			}
-			_parameter->_pruned = true;
-			ar & _parameter;
+			ar & num_effective_weights;
+			ar & _parameter->_weight_size;
+			for(int k = 0;k < _parameter->_weight_size;k++){
+				if(_parameter->_num_updates[k] == 0){
+					continue;
+				}
+				ar & k;
+				ar & _parameter->_all_weights[k];
+			}
+			ar & _parameter->_bias;
+			ar & _parameter->_lambda_0;
 		}
 		void CRF::load(boost::archive::binary_iarchive &ar, unsigned int version) {
 			ar & _num_character_ids;
@@ -839,7 +815,21 @@ namespace npycrf {
 			ar & _offset_w_unigram_type_b;
 			ar & _offset_w_bigram_type_u;
 			ar & _offset_w_bigram_type_b;
-			ar & _parameter;
+
+			size_t num_effective_weights = 0;
+			ar & num_effective_weights;
+			ar & _parameter->_weight_size;
+			_parameter->_effective_weights.reserve(num_effective_weights);
+			for(int n = 0;n < num_effective_weights;n++){
+				int k;
+				double value;
+				ar & k;
+				ar & value;
+				_parameter->_effective_weights[k] = value;
+			}
+			ar & _parameter->_bias;
+			ar & _parameter->_lambda_0;
+			_parameter->_pruned = true;
 		}
 		
 	}

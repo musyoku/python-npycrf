@@ -12,12 +12,6 @@
 namespace npycrf {
 	namespace crf {
 		class Parameter {
-		private:
-			friend class boost::serialization::access;
-			template <class Archive>
-			void serialize(Archive &ar, unsigned int version);
-			void save(boost::archive::binary_oarchive &archive, unsigned int version) const;
-			void load(boost::archive::binary_iarchive &archive, unsigned int version);
 		public:
 			double _bias;
 			array<double> _all_weights;		// 全ての重み
