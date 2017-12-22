@@ -293,7 +293,7 @@ namespace npycrf {
 				int*** crf_feature_indices_u = new int**[character_ids_length + 3];
 
 				// ラベルunigram素性
-				for(int i = 2;i <= character_ids_length + 2;i++){	// 末尾に<eos>が2つ入る
+				for(int i = 1;i <= character_ids_length + 2;i++){	// 末尾に<eos>が2つ入る
 					crf_feature_indices_u[i] = new int*[2];
 					for(int y_i = 0;y_i <= 1;y_i++){
 						std::vector<int> indices_u;
@@ -379,7 +379,7 @@ namespace npycrf {
 				int**** crf_feature_indices_b = new int***[character_ids_length + 3];
 
 				// ラベルbigram素性
-				for(int i = 2;i <= character_ids_length + 2;i++){	// 末尾に<eos>が2つ入る
+				for(int i = 1;i <= character_ids_length + 2;i++){	// 末尾に<eos>が2つ入る
 					crf_feature_indices_b[i] = new int**[2];
 					for(int y_i_1 = 0;y_i_1 <= 1;y_i_1++){
 						crf_feature_indices_b[i][y_i_1] = new int*[2];

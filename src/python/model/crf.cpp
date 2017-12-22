@@ -9,7 +9,7 @@ using namespace npycrf::crf::feature;
 namespace npycrf {
 	namespace python {
 		namespace model {
-			CRF::CRF(Dataset* dataset_l,
+			CRF::CRF(Dataset* dataset_labeled,
 					 int num_character_ids,		// 文字IDの総数
 					 int feature_x_unigram_start,
 					 int feature_x_unigram_end,
@@ -33,11 +33,11 @@ namespace npycrf {
 																	feature_x_identical_2_start,
 																	feature_x_identical_2_end);
 
-				for(Sentence* sentence: dataset_l->_sentences_train){
+				for(Sentence* sentence: dataset_labeled->_sentences_train){
 					assert(sentence->_features == NULL);
 					sentence->_features = extractor->extract(sentence, true);
 				}
-				for(Sentence* sentence: dataset_l->_sentences_dev){
+				for(Sentence* sentence: dataset_labeled->_sentences_dev){
 					assert(sentence->_features == NULL);
 					sentence->_features = extractor->extract(sentence, true);
 				}

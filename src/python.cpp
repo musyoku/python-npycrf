@@ -48,8 +48,9 @@ BOOST_PYTHON_MODULE(npycrf){
 	.def("parse", &NPYCRF::python_parse);
 
 	boost::python::class_<model::CRF>("crf", 
-		boost::python::init<int, int, int, int, int, int, int, int, int, double, double>(
-			(args("num_character_ids", 
+		boost::python::init<Dataset*, int, int, int, int, int, int, int, int, int, double, double>(
+			(args("dataset_labeled",
+					"num_character_ids", 
 					"feature_x_unigram_start", 
 					"feature_x_unigram_end", 
 					"feature_x_bigram_start", 

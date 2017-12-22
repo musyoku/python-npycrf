@@ -8,8 +8,8 @@
 namespace npycrf {
 	namespace crf {
 		CRF::CRF(){
-			_parameter = NULL;
-			_extractor = NULL;
+			_parameter = new Parameter();
+			_extractor = new FeatureExtractor();
 		}
 		CRF::CRF(FeatureExtractor* extractor, Parameter* parameter)
 		{
@@ -23,115 +23,115 @@ namespace npycrf {
 			return _extractor->_function_id_to_feature_id.size();
 		}
 		double CRF::w_label_u(int y_i){
-			int index = _extractor->function_id_label_u(y_i);
+			int index = _extractor->feature_id_label_u(y_i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_label_b(int y_i_1, int y_i){
-			int index = _extractor->function_id_label_b(y_i_1, y_i);
+			int index = _extractor->feature_id_label_b(y_i_1, y_i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_unigram_u(int y_i, int i, int x_i){
-			int index = _extractor->function_id_unigram_u(y_i, i, x_i);
+			int index = _extractor->feature_id_unigram_u(y_i, i, x_i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_unigram_b(int y_i_1, int y_i, int i, int x_i){
-			int index = _extractor->function_id_unigram_b(y_i_1, y_i, i, x_i);
+			int index = _extractor->feature_id_unigram_b(y_i_1, y_i, i, x_i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_bigram_u(int y_i, int i, int x_i_1, int x_i){
-			int index = _extractor->function_id_bigram_u(y_i, i, x_i_1, x_i);
+			int index = _extractor->feature_id_bigram_u(y_i, i, x_i_1, x_i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
-			int index = _extractor->function_id_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
+			int index = _extractor->feature_id_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_identical_1_u(int y_i, int i){
-			int index = _extractor->function_id_identical_1_u(y_i, i);
+			int index = _extractor->feature_id_identical_1_u(y_i, i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_identical_1_b(int y_i_1, int y_i, int i){
-			int index = _extractor->function_id_identical_1_b(y_i_1, y_i, i);
+			int index = _extractor->feature_id_identical_1_b(y_i_1, y_i, i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_identical_2_u(int y_i, int i){
-			int index = _extractor->function_id_identical_2_u(y_i, i);
+			int index = _extractor->feature_id_identical_2_u(y_i, i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_identical_2_b(int y_i_1, int y_i, int i){
-			int index = _extractor->function_id_identical_2_b(y_i_1, y_i, i);
+			int index = _extractor->feature_id_identical_2_b(y_i_1, y_i, i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_unigram_type_u(int y_i, int type_i){
-			int index = _extractor->function_id_unigram_type_u(y_i, type_i);
+			int index = _extractor->feature_id_unigram_type_u(y_i, type_i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_unigram_type_b(int y_i_1, int y_i, int type_i){
-			int index = _extractor->function_id_unigram_type_b(y_i_1, y_i, type_i);
+			int index = _extractor->feature_id_unigram_type_b(y_i_1, y_i, type_i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_bigram_type_u(int y_i, int type_i_1, int type_i){
-			int index = _extractor->function_id_bigram_type_u(y_i, type_i_1, type_i);
+			int index = _extractor->feature_id_bigram_type_u(y_i, type_i_1, type_i);
 			return _parameter->weight_at_index(index);
 		}
 		double CRF::w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
-			int index = _extractor->function_id_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
+			int index = _extractor->feature_id_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 			return _parameter->weight_at_index(index);
 		}
 		void CRF::set_w_label_u(int y_i, double value){
-			int index = _extractor->function_id_label_u(y_i);
+			int index = _extractor->feature_id_label_u(y_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_label_b(int y_i_1, int y_i, double value){
-			int index = _extractor->function_id_label_b(y_i_1, y_i);
+			int index = _extractor->feature_id_label_b(y_i_1, y_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_unigram_u(int y_i, int i, int x_i, double value){
-			int index = _extractor->function_id_unigram_u(y_i, i, x_i);
+			int index = _extractor->feature_id_unigram_u(y_i, i, x_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_unigram_b(int y_i_1, int y_i, int i, int x_i, double value){
-			int index = _extractor->function_id_unigram_b(y_i_1, y_i, i, x_i);
+			int index = _extractor->feature_id_unigram_b(y_i_1, y_i, i, x_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_bigram_u(int y_i, int i, int x_i_1, int x_i, double value){
-			int index = _extractor->function_id_bigram_u(y_i, i, x_i_1, x_i);
+			int index = _extractor->feature_id_bigram_u(y_i, i, x_i_1, x_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i, double value){
-			int index = _extractor->function_id_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
+			int index = _extractor->feature_id_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_identical_1_u(int y_i, int i, double value){
-			int index = _extractor->function_id_identical_1_u(y_i, i);
+			int index = _extractor->feature_id_identical_1_u(y_i, i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_identical_1_b(int y_i_1, int y_i, int i, double value){
-			int index = _extractor->function_id_identical_1_b(y_i_1, y_i, i);
+			int index = _extractor->feature_id_identical_1_b(y_i_1, y_i, i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_identical_2_u(int y_i, int i, double value){
-			int index = _extractor->function_id_identical_2_u(y_i, i);
+			int index = _extractor->feature_id_identical_2_u(y_i, i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_identical_2_b(int y_i_1, int y_i, int i, double value){
-			int index = _extractor->function_id_identical_2_b(y_i_1, y_i, i);
+			int index = _extractor->feature_id_identical_2_b(y_i_1, y_i, i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_unigram_type_u(int y_i, int type_i, double value){
-			int index = _extractor->function_id_unigram_type_u(y_i, type_i);
+			int index = _extractor->feature_id_unigram_type_u(y_i, type_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_unigram_type_b(int y_i_1, int y_i, int type_i, double value){
-			int index = _extractor->function_id_unigram_type_b(y_i_1, y_i, type_i);
+			int index = _extractor->feature_id_unigram_type_b(y_i_1, y_i, type_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_bigram_type_u(int y_i, int type_i_1, int type_i, double value){
-			int index = _extractor->function_id_bigram_type_u(y_i, type_i_1, type_i);
+			int index = _extractor->feature_id_bigram_type_u(y_i, type_i_1, type_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		void CRF::set_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i, double value){
-			int index = _extractor->function_id_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
+			int index = _extractor->feature_id_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 			_parameter->set_weight_at_index(index, value);
 		}
 		// γ(s, t) ∝ log{P(c_s^{t - 1}|・)}
@@ -301,17 +301,17 @@ namespace npycrf {
 		void CRF::save(boost::archive::binary_oarchive &ar, unsigned int version) const {
 			ar & _extractor;
 
-			size_t num_effective_weights = 0;
+			int num_effective_weights = 0;
+			int weight_size = _parameter->get_num_features();
 			_parameter->_effective_weights.clear();
-			for(int k = 0;k < _parameter->_weight_size;k++){
+			for(int k = 0;k < weight_size;k++){
 				if(_parameter->_num_updates[k] == 0){
 					continue;
 				}
 				num_effective_weights += 1;
 			}
 			ar & num_effective_weights;
-			ar & _parameter->_weight_size;
-			for(int k = 0;k < _parameter->_weight_size;k++){
+			for(int k = 0;k < weight_size;k++){
 				if(_parameter->_num_updates[k] == 0){
 					continue;
 				}
@@ -324,9 +324,8 @@ namespace npycrf {
 		void CRF::load(boost::archive::binary_iarchive &ar, unsigned int version) {
 			ar & _extractor;
 
-			size_t num_effective_weights = 0;
+			int num_effective_weights = 0;
 			ar & num_effective_weights;
-			ar & _parameter->_weight_size;
 			_parameter->_effective_weights.reserve(num_effective_weights);
 			for(int n = 0;n < num_effective_weights;n++){
 				int k;

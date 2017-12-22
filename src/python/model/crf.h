@@ -10,7 +10,7 @@ namespace npycrf {
 			class CRF{
 			public:
 				crf::CRF* _crf;
-				CRF(Dataset* dataset_l,			// CRF素性の展開に用いる
+				CRF(Dataset* dataset_labeled,			// CRF素性の展開に用いる
 					int num_character_ids,		// 文字IDの総数
 					int feature_x_unigram_start,
 					int feature_x_unigram_end,

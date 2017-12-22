@@ -3,11 +3,13 @@
 
 namespace npycrf {
 	namespace crf {
+		Parameter::Parameter(){
+
+		}
 		Parameter::~Parameter(){
 
 		}
 		Parameter::Parameter(double weight_size, double lambda_0, double sigma){
-			_weight_size = weight_size;
 			_bias = 0;
 			_pruned = false;
 			_all_weights = array<double>(weight_size);
@@ -44,7 +46,7 @@ namespace npycrf {
 			if(_pruned){
 				return _effective_weights.size();
 			}
-			return _weight_size;
+			return _all_weights.size();
 		}
 	}
 }

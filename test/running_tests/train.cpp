@@ -39,7 +39,7 @@ void run_training_loop(){
 	std::wcin.imbue(ctype_default);
 	
 	Corpus* corpus_u = new Corpus();
-	std::string filename_u = "../../dataset/aozora/kokoro.txt";
+	std::string filename_u = "../../dataset/aozora/neko.txt";
 	std::wifstream ifs_u(filename_u.c_str());
 	std::wstring sentence_str;
 	assert(ifs_u.fail() == false);
@@ -47,7 +47,7 @@ void run_training_loop(){
 		if (sentence_str.empty()){
 			continue;
 		}
-		std::wcout << sentence_str << std::endl;
+		// std::wcout << sentence_str << std::endl;
 		std::vector<std::wstring> words = {sentence_str};
 		corpus_u->add_words(words);
 	}
@@ -55,7 +55,7 @@ void run_training_loop(){
 	
 	Corpus* corpus_l = new Corpus();
 	std::string filename_l = "../../dataset/mecab.txt";
-	int num_labelded_data = 100;
+	int num_labelded_data = 1479;
 	std::wifstream ifs_l(filename_l.c_str());
 	assert(ifs_l.fail() == false);
 	int i = 0;
@@ -81,7 +81,7 @@ void run_training_loop(){
 	Dataset* dataset_l = new Dataset(corpus_l, dict, 1, seed);
 	Dataset* dataset_u = new Dataset(corpus_u, dict, 1, seed);
 
-	int max_word_length = 12;
+	int max_word_length = 8;
 	double g0 = 1.0 / (double)dict->get_num_characters();
 	double initial_lambda_a = 4;
 	double initial_lambda_b = 1;

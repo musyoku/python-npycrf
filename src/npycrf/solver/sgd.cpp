@@ -7,7 +7,7 @@ namespace npycrf {
 		SGD::SGD(crf::CRF* crf, double regularization_constant){
 			_crf = crf;
 			_regularization_constant = regularization_constant;
-			_grad_weight = array<double>(crf->_parameter->_weight_size);
+			_grad_weight = array<double>(crf->_parameter->get_num_features());
 			clear_grads();
 		}
 		SGD::~SGD(){
@@ -15,13 +15,13 @@ namespace npycrf {
 		}
 		void SGD::clear_grads(){
 			_grad_lambda_0 = 0;
-			for(int i = 0;i < _crf->_parameter->_weight_size;i++){
+			for(int i = 0;i < _crf->_parameter->get_num_features();i++){
 				_grad_weight[i] = 0;
 			}
 		}
 		void SGD::update(double learning_rate){
 			crf::Parameter* params = _crf->_parameter;
-			for(int i = 0;i < params->_weight_size;i++){
+			for(int i = 0;i < params->get_num_features();i++){
 				params->_all_weights[i] += learning_rate * _grad_weight[i] - _regularization_constant * learning_rate * params->_all_weights[i];
 				if(_grad_weight[i] != 0){
 					params->_num_updates[i] += 1;

@@ -113,7 +113,8 @@ def main():
 	num_character_ids = dictionary.get_num_characters()
 
 	# モデル
-	crf = nlp.crf(num_character_ids=num_character_ids,
+	crf = nlp.crf(dataset_labeled=dataset_l,
+				num_character_ids=num_character_ids,
 				feature_x_unigram_start=args.crf_feature_x_unigram_start,
 				feature_x_unigram_end=args.crf_feature_x_unigram_end,
 				feature_x_bigram_start=args.crf_feature_x_bigram_start,
