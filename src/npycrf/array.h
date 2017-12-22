@@ -18,7 +18,7 @@ namespace npycrf {
 				printf("%s\n", strs[l]);
 			}
 			free(strs);
-			// assert(0 <= i && i < size);
+			assert(0 <= i && i < size);
 		}
 	}
 	namespace mat {
@@ -100,13 +100,13 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k) {
-				// assert(t < _t_size);
-				// assert(k < _k_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
 				return _array[t][k];
 			}
 			const T &operator()(int t, int k) const {
-				// assert(t < _t_size);
-				// assert(k < _k_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
 				return _array[t][k];
 			}
 		};
@@ -208,15 +208,15 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j) {
-				// assert(t < _t_size);
-				// assert(k < _k_size);
-				// assert(j < _j_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
+				assert(j < _j_size);
 				return _array[t][k][j];
 			}
 			const T &operator()(int t, int k, int j) const {
-				// assert(t < _t_size);
-				// assert(k < _k_size);
-				// assert(j < _j_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
+				assert(j < _j_size);
 				return _array[t][k][j];
 			}
 		};
@@ -338,17 +338,17 @@ namespace npycrf {
 				}
 			}
 			T &operator()(int t, int k, int j, int i) {
-				// assert(t < _t_size);
-				// assert(k < _k_size);
-				// assert(j < _j_size);
-				// assert(i < _i_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
+				assert(j < _j_size);
+				assert(i < _i_size);
 				return _array[t][k][j][i];
 			}
 			const T &operator()(int t, int k, int j, int i) const {
-				// assert(t < _t_size);
-				// assert(k < _k_size);
-				// assert(j < _j_size);
-				// assert(i < _i_size);
+				assert(t < _t_size);
+				assert(k < _k_size);
+				assert(j < _j_size);
+				assert(i < _i_size);
 				return _array[t][k][j][i];
 			}
 		};
@@ -394,11 +394,11 @@ namespace npycrf {
 			return *this;
 		}
 		T &operator[](int i){    // [] 演算子の多重定義
-			// assert(i < _size);
+			assert(i < _size);
 			return _array[i];
 		}
 		const T &operator[](int i) const {    // [] 演算子の多重定義
-			// assert(i < _size);
+			assert(i < _size);
 			return _array[i];
 		}
 		int size(){

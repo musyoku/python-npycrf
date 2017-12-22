@@ -291,16 +291,18 @@ namespace npycrf {
 					#ifdef __DEBUG__
 						// 正規化しない場合の結果と比較
 						// std::cout << sentence->size() << std::endl;
-						std::vector<int> a = segments;
-						sampler::mt.seed(seed);
-						_npycrf->_lattice->blocked_gibbs(sentence, segments, false);
-						std::vector<int> b = segments;
-						if(a.size() != b.size()){
-							sentence->dump_words();
-						}
-						assert(a.size() == b.size());
-						for(int i = 0;i < a.size();i++){
-							assert(a[i] == b[i]);
+						if(sentence->size() < 150){
+							std::vector<int> a = segments;
+							sampler::mt.seed(seed);
+							_npycrf->_lattice->blocked_gibbs(sentence, segments, false);
+							std::vector<int> b = segments;
+							if(a.size() != b.size()){
+								sentence->dump_words();
+							}
+							assert(a.size() == b.size());
+							for(int i = 0;i < a.size();i++){
+								assert(a[i] == b[i]);
+							}
 						}
 					#endif
 				}

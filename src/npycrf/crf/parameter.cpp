@@ -1,3 +1,4 @@
+#include <boost/serialization/split_member.hpp>
 #include "parameter.h"
 #include "../sampler.h"
 
@@ -12,41 +13,52 @@ namespace npycrf {
 		Parameter::Parameter(double weight_size, double lambda_0, double sigma){
 			_bias = 0;
 			_pruned = false;
-			_all_weights = array<double>(weight_size);
+			_weights = array<double>(weight_size);
 			for(int i = 0;i < weight_size;i++){
-				_all_weights[i] = sampler::uniform(-0.0001, 0.0001);
+				_weights[i] = sampler::uniform(-0.0001, 0.0001);
 			}
-
-			_num_updates = array<int>(weight_size);
-			for(int i = 0;i < weight_size;i++){
-				_num_updates[i] = 0;
-			}
-
 			_lambda_0 = lambda_0;
 			_sigma = sigma;
 		}
 		double Parameter::weight_at_index(int index){
-			if(_pruned){
-				auto itr = _effective_weights.find(index);
-				if(itr == _effective_weights.end()){
-					return 0;
-				}
-				return itr->second;
-			}
-			return _all_weights[index];
+			return _weights[index];
 		}
-		void Parameter::set_weight_at_index(int index, double value){
-			if(_pruned){
-				_effective_weights[index] = value;
-			}else{
-				_all_weights[index] = value;
-			}
+		const double &Parameter::operator[](int i) const {    // [] 演算子の多重定義
+			return _weights[i];
 		}
 		int Parameter::get_num_features(){
-			if(_pruned){
-				return _effective_weights.size();
+			return _weights.size();
+		}
+		template <class Archive>
+		void Parameter::serialize(Archive &ar, unsigned int version)
+		{
+			boost::serialization::split_member(ar, *this, version);
+		}
+		template void Parameter::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
+		template void Parameter::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
+		void Parameter::save(boost::archive::binary_oarchive &ar, unsigned int version) const {
+			int size = _weights.size();
+			ar & size;
+			for(int k = 0;k < size;k++){
+				ar & k;
+				ar & _weights[k];
 			}
-			return _all_weights.size();
+			ar & _bias;
+			ar & _lambda_0;
+		}
+		void Parameter::load(boost::archive::binary_iarchive &ar, unsigned int version) {
+			int size = 0;
+			ar & size;
+			_weights = array<double>(size);
+			for(int n = 0;n < size;n++){
+				int k;
+				double value;
+				ar & k;
+				ar & value;
+				_weights[k] = value;
+			}
+			ar & _bias;
+			ar & _lambda_0;
 		}
 	}
 }

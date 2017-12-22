@@ -294,50 +294,10 @@ namespace npycrf {
 		template <class Archive>
 		void CRF::serialize(Archive &archive, unsigned int version)
 		{
-			boost::serialization::split_member(archive, *this, version);
+			ar & _extractor;
+			ar & _parameter;
 		}
 		template void CRF::serialize(boost::archive::binary_iarchive &ar, unsigned int version);
 		template void CRF::serialize(boost::archive::binary_oarchive &ar, unsigned int version);
-		void CRF::save(boost::archive::binary_oarchive &ar, unsigned int version) const {
-			ar & _extractor;
-
-			int num_effective_weights = 0;
-			int weight_size = _parameter->get_num_features();
-			_parameter->_effective_weights.clear();
-			for(int k = 0;k < weight_size;k++){
-				if(_parameter->_num_updates[k] == 0){
-					continue;
-				}
-				num_effective_weights += 1;
-			}
-			ar & num_effective_weights;
-			for(int k = 0;k < weight_size;k++){
-				if(_parameter->_num_updates[k] == 0){
-					continue;
-				}
-				ar & k;
-				ar & _parameter->_all_weights[k];
-			}
-			ar & _parameter->_bias;
-			ar & _parameter->_lambda_0;
-		}
-		void CRF::load(boost::archive::binary_iarchive &ar, unsigned int version) {
-			ar & _extractor;
-
-			int num_effective_weights = 0;
-			ar & num_effective_weights;
-			_parameter->_effective_weights.reserve(num_effective_weights);
-			for(int n = 0;n < num_effective_weights;n++){
-				int k;
-				double value;
-				ar & k;
-				ar & value;
-				_parameter->_effective_weights[k] = value;
-			}
-			ar & _parameter->_bias;
-			ar & _parameter->_lambda_0;
-			_parameter->_pruned = true;
-		}
-		
 	}
 }

@@ -366,10 +366,13 @@ namespace npycrf {
 							indices_u.push_back(feature_id);
 						}
 
-						num_crf_features_u(i, y_i) = indices_u.size();
-						crf_feature_indices_u[i][y_i] = new int[indices_u.size()];
-						for(int n = 0;n < indices_u.size();n++){
-							crf_feature_indices_u[i][y_i][n] = indices_u[n];
+						int num_features = indices_u.size();
+						num_crf_features_u(i, y_i) = num_features;
+						if(num_features > 0){
+							crf_feature_indices_u[i][y_i] = new int[num_features];
+							for(int n = 0;n < num_features;n++){
+								crf_feature_indices_u[i][y_i][n] = indices_u[n];
+							}
 						}
 					}
 				}
@@ -455,10 +458,13 @@ namespace npycrf {
 							}
 
 							// 更新
-							num_crf_features_b(i, y_i_1, y_i) = indices_b.size();
-							crf_feature_indices_b[i][y_i_1][y_i] = new int[indices_b.size()];
-							for(int n = 0;n < indices_b.size();n++){
-								crf_feature_indices_b[i][y_i_1][y_i][n] = indices_b[n];
+							int num_features = indices_b.size();
+							num_crf_features_b(i, y_i_1, y_i) = num_features;
+							if(num_features > 0){
+								crf_feature_indices_b[i][y_i_1][y_i] = new int[num_features];
+								for(int n = 0;n < num_features;n++){
+									crf_feature_indices_b[i][y_i_1][y_i][n] = indices_b[n];
+								}
 							}
 						}
 					}
