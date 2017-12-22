@@ -63,6 +63,7 @@ def build_corpus(filepath, directory, semi_supervised_split_ratio, max_word_leng
 		while m:
 			word = m.surface
 			if len(word) > max_word_length:
+				print("max_word_length must be greater or equal to {}".format(len(word)))
 				words = []
 				break
 			if len(word) > 0:
