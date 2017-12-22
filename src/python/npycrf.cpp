@@ -5,6 +5,7 @@
 
 using namespace npycrf::npylm;
 using namespace npycrf::crf;
+using namespace npycrf::crf::feature;
 
 namespace npycrf {
 	namespace python {
@@ -112,6 +113,7 @@ namespace npycrf {
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
+			sentence->_features = _crf->extract_features(sentence, false);		// CRFの素性IDを展開
 			std::vector<int> segments;		// 分割の一時保存用
 			_lattice->viterbi_decode(sentence, segments);
 			sentence->split(segments);
@@ -129,6 +131,7 @@ namespace npycrf {
 				character_ids[i] = character_id;
 			}
 			Sentence* sentence = new Sentence(sentence_str, character_ids);
+			sentence->_features = _crf->extract_features(sentence, false);		// CRFの素性IDを展開
 			_lattice->viterbi_decode(sentence, segments);
 			sentence->split(segments);
 			boost::python::list words;

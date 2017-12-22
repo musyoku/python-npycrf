@@ -99,7 +99,8 @@ void run_training_loop(){
 	int feature_x_identical_2_start = -3;
 	int feature_x_identical_2_end = 1;
 	double sigma = 1;
-	model::CRF* py_crf = new model::CRF(num_character_ids,
+	model::CRF* py_crf = new model::CRF(dataset_l,
+										num_character_ids,
 										feature_x_unigram_start,
 										feature_x_unigram_end,
 										feature_x_bigram_start,

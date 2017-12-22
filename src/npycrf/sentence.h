@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "crf/features.h"
+#include "crf/feature/indices.h"
 #include "common.h"
 #include "array.h"
 
@@ -18,7 +18,7 @@ namespace npycrf {
 		npycrf::array<int> _character_ids;// _sentence_strの各文字のid. 実際に使われるのはこっち
 		npycrf::array<id> _word_ids;		// <bos>2つと<eos>1つを含める
 		npycrf::array<int> _labels;		// CRFのラベル. <bos>が1つ先頭に入り、<eos>が末尾に2つ入る. CRFに合わせて1スタート、[0]は<bos>
-		crf::FeatureIndices* _features;	// CRFの素性ID. 不変なのであらかじめ計算しておく.
+		crf::feature::FeatureIndices* _features;	// CRFの素性ID. 不変なのであらかじめ計算しておく.
 		std::wstring _sentence_str;	// 生の文データ
 		Sentence(std::wstring sentence, npycrf::array<int> &character_ids);
 		~Sentence();

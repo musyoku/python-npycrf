@@ -57,22 +57,25 @@ namespace npycrf {
 			check_word_length(dataset_l->_sentences_dev);
 
 			// CRF素性を展開
+			// 教師付きデータはCRFの初期化時に展開されているので本来しなくてもいい
 			for(Sentence* sentence: dataset_l->_sentences_train){
-				assert(sentence->_features == NULL);
-				sentence->_features = npycrf->_crf->extract_features(sentence);
+				if(sentence->_features == NULL){
+					sentence->_features = npycrf->_crf->extract_features(sentence, false);
+				}
 			}
 			for(Sentence* sentence: dataset_l->_sentences_dev){
-				assert(sentence->_features == NULL);
-				sentence->_features = npycrf->_crf->extract_features(sentence);
+				if(sentence->_features == NULL){
+					sentence->_features = npycrf->_crf->extract_features(sentence, false);
+				}
 			}
 			for(Sentence* sentence: dataset_u->_sentences_train){
 				assert(sentence->_features == NULL);
-				sentence->_features = npycrf->_crf->extract_features(sentence);
+				sentence->_features = npycrf->_crf->extract_features(sentence, false);
 				assert(sentence->_num_segments == 4);
 			}
 			for(Sentence* sentence: dataset_u->_sentences_dev){
 				assert(sentence->_features == NULL);
-				sentence->_features = npycrf->_crf->extract_features(sentence);
+				sentence->_features = npycrf->_crf->extract_features(sentence, false);
 				assert(sentence->_num_segments == 4);
 			}
 

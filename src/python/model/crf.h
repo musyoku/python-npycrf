@@ -2,6 +2,7 @@
 #include <boost/python.hpp>
 #include "../../npycrf/crf/crf.h"
 #include "../dictionary.h"
+#include "../dataset.h"
 
 namespace npycrf {
 	namespace python {
@@ -9,7 +10,8 @@ namespace npycrf {
 			class CRF{
 			public:
 				crf::CRF* _crf;
-				CRF(int num_character_ids,		// 文字IDの総数
+				CRF(Dataset* dataset_l,			// CRF素性の展開に用いる
+					int num_character_ids,		// 文字IDの総数
 					int feature_x_unigram_start,
 					int feature_x_unigram_end,
 					int feature_x_bigram_start,
