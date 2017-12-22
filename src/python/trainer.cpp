@@ -1,5 +1,7 @@
 #include <boost/python.hpp>
 #include <cassert>
+#include <chrono>
+#include <iomanip>
 #include <cmath>
 #include <iostream>
 #include "../npycrf/sampler.h"
@@ -255,6 +257,7 @@ namespace npycrf {
 			// 教師なしデータでモデルパラメータを更新
 			std::vector<int> segments;		// 分割の一時保存用
 			shuffle(_rand_indices_train_u.begin(), _rand_indices_train_u.end(), sampler::mt);		// データをシャッフル
+			auto start_time = std::chrono::system_clock::now();
 			for(int i = 0;i < _rand_indices_train_u.size();i++){
 				if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 					return;		
@@ -303,7 +306,16 @@ namespace npycrf {
 					_npycrf->_npylm->add_customer_at_time_t(sentence, t);
 				}
 				_added_to_npylm_u[data_index] = true;
+
+				if(_total_gibbs_iterations > 1 && (i % 100 == 0 || i == _rand_indices_train_u.size() - 1)){
+					auto diff = std::chrono::system_clock::now() - start_time;
+					double elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0;
+					double gibbs_per_sec = (double)(i + 1) / elapsed_time;
+					double percent = (double)i / (double)_rand_indices_train_u.size() * 100.0;
+					std::cout << "\r\033[2K" << i << "/" << _rand_indices_train_u.size() << " (" << std::fixed << std::setprecision(2) << percent << "%) " << gibbs_per_sec << " gibbs/s" << std::flush;
+				}
 			}
+			std::cout << "\r\033[2K" << std::flush;
 			// 客数チェック
 			assert(_npycrf->_npylm->_hpylm->_root->_num_tables <= _npycrf->_npylm->_vpylm->get_num_customers());
 
@@ -356,6 +368,8 @@ namespace npycrf {
 			mat::quad<double> &p_conc_tkji = lattice->_p_conc_tkji;
 			mat::tri<double> &pz_s = lattice->_pz_s;
 			lattice->set_pure_crf_mode(pure_crf);
+			int num_completed = 0;
+			auto start_time = std::chrono::system_clock::now();
 			for(int b = 0;b < total_batches;b++){
 				_sgd->clear_grads();
 				int size = std::min(batchsize, (int)(_rand_indices_train_l.size() - batchsize * b));
@@ -379,7 +393,15 @@ namespace npycrf {
 					}
 				}
 				_sgd->update(learning_rate / (double)size);	// 勾配の平均をとるため学習率を調整
+
+				num_completed += size;
+				auto diff = std::chrono::system_clock::now() - start_time;
+				double elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0;
+				double sgd_per_sec = (double)num_completed / elapsed_time;
+				double percent = (double)b / (double)total_batches * 100.0;
+				std::cout << "\r\033[2K" << num_completed << "/" << _rand_indices_train_l.size() << " (" << std::fixed << std::setprecision(2) << percent << "%) " << sgd_per_sec << " sgd/s" << std::flush;
 			}
+			std::cout << "\r\033[2K" << std::flush;
 			lattice->set_npycrf_mode();
 		}
 		double Trainer::compute_perplexity_train(){
