@@ -108,20 +108,22 @@ namespace npycrf {
 			// 例）
 			// i=1,   2,   3, 4,   5
 			//   t-2, t-1, t, t+1, t+2
-			int _index_w_label_u(int y_i);
-			int _index_w_label_b(int y_i_1, int y_i);
-			int _index_w_unigram_u(int y_i, int i, int x_i);
-			int _index_w_unigram_b(int y_i_1, int y_i, int i, int x_i);
-			int _index_w_bigram_u(int y_i, int i, int x_i_1, int x_i);
-			int _index_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i);
-			int _index_w_identical_1_u(int y_i, int i);
-			int _index_w_identical_1_b(int y_i_1, int y_i, int i);
-			int _index_w_identical_2_u(int y_i, int i);
-			int _index_w_identical_2_b(int y_i_1, int y_i, int i);
-			int _index_w_unigram_type_u(int y_i, int type_i);
-			int _index_w_unigram_type_b(int y_i_1, int y_i, int type_i);
-			int _index_w_bigram_type_u(int y_i, int type_i_1, int type_i);
-			int _index_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i);
+			// ラベルyと入力xの組み合わせから一意なIDを生成
+			// 素性IDではない
+			int _hash_label_u(int y_i);
+			int _hash_label_b(int y_i_1, int y_i);
+			int _hash_unigram_u(int y_i, int i, int x_i);
+			int _hash_unigram_b(int y_i_1, int y_i, int i, int x_i);
+			int _hash_bigram_u(int y_i, int i, int x_i_1, int x_i);
+			int _hash_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i);
+			int _hash_identical_1_u(int y_i, int i);
+			int _hash_identical_1_b(int y_i_1, int y_i, int i);
+			int _hash_identical_2_u(int y_i, int i);
+			int _hash_identical_2_b(int y_i_1, int y_i, int i);
+			int _hash_unigram_type_u(int y_i, int type_i);
+			int _hash_unigram_type_b(int y_i_1, int y_i, int type_i);
+			int _hash_bigram_type_u(int y_i, int type_i_1, int type_i);
+			int _hash_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i);
 			double bias();
 			// 以下のiは全て番号なので1スタート
 			double w_label_u(int y_i);

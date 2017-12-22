@@ -55,23 +55,23 @@ namespace npycrf {
 					int x_i = (r <= character_ids_length) ? character_ids[r - 1] : SPECIAL_CHARACTER_END;
 
 					// 発火
-					int k_u = _crf->_index_w_unigram_u(y_i, pos, x_i);
+					int k_u = _crf->_hash_unigram_u(y_i, pos, x_i);
 					_grad_weight[k_u] += 1;
-					int k_b = _crf->_index_w_unigram_b(y_i_1, y_i, pos, x_i);
+					int k_b = _crf->_hash_unigram_b(y_i_1, y_i, pos, x_i);
 					_grad_weight[k_b] += 1;
 
 					// 発火の期待値
-					int k_0 = _crf->_index_w_unigram_u(0, pos, x_i);
-					int k_1 = _crf->_index_w_unigram_u(1, pos, x_i);
+					int k_0 = _crf->_hash_unigram_u(0, pos, x_i);
+					int k_1 = _crf->_hash_unigram_u(1, pos, x_i);
 					_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
 					_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
 					_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
 					_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
-					int k_0_0 = _crf->_index_w_unigram_b(0, 0, pos, x_i);
-					int k_0_1 = _crf->_index_w_unigram_b(0, 1, pos, x_i);
-					int k_1_0 = _crf->_index_w_unigram_b(1, 0, pos, x_i);
-					int k_1_1 = _crf->_index_w_unigram_b(1, 1, pos, x_i);
+					int k_0_0 = _crf->_hash_unigram_b(0, 0, pos, x_i);
+					int k_0_1 = _crf->_hash_unigram_b(0, 1, pos, x_i);
+					int k_1_0 = _crf->_hash_unigram_b(1, 0, pos, x_i);
+					int k_1_1 = _crf->_hash_unigram_b(1, 1, pos, x_i);
 					_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
 					_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
 					_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
@@ -96,23 +96,23 @@ namespace npycrf {
 					int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 
 					// 発火
-					int k_u = _crf->_index_w_bigram_u(y_i, pos, x_i_1, x_i);
+					int k_u = _crf->_hash_bigram_u(y_i, pos, x_i_1, x_i);
 					_grad_weight[k_u] += 1;
-					int k_b = _crf->_index_w_bigram_b(y_i_1, y_i, pos, x_i_1, x_i);
+					int k_b = _crf->_hash_bigram_b(y_i_1, y_i, pos, x_i_1, x_i);
 					_grad_weight[k_b] += 1;
 
 					// 発火の期待値
-					int k_0 = _crf->_index_w_bigram_u(0, pos, x_i_1, x_i);
-					int k_1 = _crf->_index_w_bigram_u(1, pos, x_i_1, x_i);
+					int k_0 = _crf->_hash_bigram_u(0, pos, x_i_1, x_i);
+					int k_1 = _crf->_hash_bigram_u(1, pos, x_i_1, x_i);
 					_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
 					_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
 					_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
 					_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
-					int k_0_0 = _crf->_index_w_bigram_b(0, 0, pos, x_i_1, x_i);
-					int k_0_1 = _crf->_index_w_bigram_b(0, 1, pos, x_i_1, x_i);
-					int k_1_0 = _crf->_index_w_bigram_b(1, 0, pos, x_i_1, x_i);
-					int k_1_1 = _crf->_index_w_bigram_b(1, 1, pos, x_i_1, x_i);
+					int k_0_0 = _crf->_hash_bigram_b(0, 0, pos, x_i_1, x_i);
+					int k_0_1 = _crf->_hash_bigram_b(0, 1, pos, x_i_1, x_i);
+					int k_1_0 = _crf->_hash_bigram_b(1, 0, pos, x_i_1, x_i);
+					int k_1_1 = _crf->_hash_bigram_b(1, 1, pos, x_i_1, x_i);
 					_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
 					_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
 					_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
@@ -137,23 +137,23 @@ namespace npycrf {
 					int x_i_1 = (r - 1 <= character_ids_length) ? character_ids[r - 2] : SPECIAL_CHARACTER_END;
 					if(x_i == x_i_1){
 						// 発火
-						int k_u = _crf->_index_w_identical_1_u(y_i, pos);
+						int k_u = _crf->_hash_identical_1_u(y_i, pos);
 						_grad_weight[k_u] += 1;
-						int k_b = _crf->_index_w_identical_1_b(y_i_1, y_i, pos);
+						int k_b = _crf->_hash_identical_1_b(y_i_1, y_i, pos);
 						_grad_weight[k_b] += 1;
 
 						// 発火の期待値
-						int k_0 = _crf->_index_w_identical_1_u(0, pos);
-						int k_1 = _crf->_index_w_identical_1_u(1, pos);
+						int k_0 = _crf->_hash_identical_1_u(0, pos);
+						int k_1 = _crf->_hash_identical_1_u(1, pos);
 						_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
 						_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
 						_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
 						_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
-						int k_0_0 = _crf->_index_w_identical_1_b(0, 0, pos);
-						int k_0_1 = _crf->_index_w_identical_1_b(0, 1, pos);
-						int k_1_0 = _crf->_index_w_identical_1_b(1, 0, pos);
-						int k_1_1 = _crf->_index_w_identical_1_b(1, 1, pos);
+						int k_0_0 = _crf->_hash_identical_1_b(0, 0, pos);
+						int k_0_1 = _crf->_hash_identical_1_b(0, 1, pos);
+						int k_1_0 = _crf->_hash_identical_1_b(1, 0, pos);
+						int k_1_1 = _crf->_hash_identical_1_b(1, 1, pos);
 						_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
 						_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
 						_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
@@ -179,23 +179,23 @@ namespace npycrf {
 					int x_i_2 = (r - 2 <= character_ids_length) ? character_ids[r - 3] : SPECIAL_CHARACTER_END;
 					if(x_i == x_i_2){
 						// 発火
-						int k_u = _crf->_index_w_identical_2_u(y_i, pos);
+						int k_u = _crf->_hash_identical_2_u(y_i, pos);
 						_grad_weight[k_u] += 1;
-						int k_b = _crf->_index_w_identical_2_b(y_i_1, y_i, pos);
+						int k_b = _crf->_hash_identical_2_b(y_i_1, y_i, pos);
 						_grad_weight[k_b] += 1;
 
 						// 発火の期待値
-						int k_0 = _crf->_index_w_identical_2_u(0, pos);
-						int k_1 = _crf->_index_w_identical_2_u(1, pos);
+						int k_0 = _crf->_hash_identical_2_u(0, pos);
+						int k_1 = _crf->_hash_identical_2_u(1, pos);
 						_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
 						_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
 						_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
 						_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
-						int k_0_0 = _crf->_index_w_identical_2_b(0, 0, pos);
-						int k_0_1 = _crf->_index_w_identical_2_b(0, 1, pos);
-						int k_1_0 = _crf->_index_w_identical_2_b(1, 0, pos);
-						int k_1_1 = _crf->_index_w_identical_2_b(1, 1, pos);
+						int k_0_0 = _crf->_hash_identical_2_b(0, 0, pos);
+						int k_0_1 = _crf->_hash_identical_2_b(0, 1, pos);
+						int k_1_0 = _crf->_hash_identical_2_b(1, 0, pos);
+						int k_1_1 = _crf->_hash_identical_2_b(1, 1, pos);
 						_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
 						_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
 						_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
@@ -215,23 +215,23 @@ namespace npycrf {
 				int type_i = (i <= character_ids_length) ? ctype::get_type(characters[i - 1]) : CTYPE_UNKNOWN;
 
 				// 発火
-				int k_u = _crf->_index_w_unigram_type_u(y_i, type_i);
+				int k_u = _crf->_hash_unigram_type_u(y_i, type_i);
 				_grad_weight[k_u] += 1;
-				int k_b = _crf->_index_w_unigram_type_b(y_i_1, y_i, type_i);
+				int k_b = _crf->_hash_unigram_type_b(y_i_1, y_i, type_i);
 				_grad_weight[k_b] += 1;
 
 				// 発火の期待値
-				int k_0 = _crf->_index_w_unigram_type_u(0, type_i);
-				int k_1 = _crf->_index_w_unigram_type_u(1, type_i);
+				int k_0 = _crf->_hash_unigram_type_u(0, type_i);
+				int k_1 = _crf->_hash_unigram_type_u(1, type_i);
 				_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
 				_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
 				_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
 				_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
-				int k_0_0 = _crf->_index_w_unigram_type_b(0, 0, type_i);
-				int k_0_1 = _crf->_index_w_unigram_type_b(0, 1, type_i);
-				int k_1_0 = _crf->_index_w_unigram_type_b(1, 0, type_i);
-				int k_1_1 = _crf->_index_w_unigram_type_b(1, 1, type_i);
+				int k_0_0 = _crf->_hash_unigram_type_b(0, 0, type_i);
+				int k_0_1 = _crf->_hash_unigram_type_b(0, 1, type_i);
+				int k_1_0 = _crf->_hash_unigram_type_b(1, 0, type_i);
+				int k_1_1 = _crf->_hash_unigram_type_b(1, 1, type_i);
 				_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
 				_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
 				_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
@@ -250,23 +250,23 @@ namespace npycrf {
 				int type_i_1 = (i - 1 <= character_ids_length) ? ctype::get_type(characters[i - 2]) : CTYPE_UNKNOWN;
 
 				// 発火
-				int k_u = _crf->_index_w_bigram_type_u(y_i, type_i_1, type_i);
+				int k_u = _crf->_hash_bigram_type_u(y_i, type_i_1, type_i);
 				_grad_weight[k_u] += 1;
-				int k_b = _crf->_index_w_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
+				int k_b = _crf->_hash_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
 				_grad_weight[k_b] += 1;
 
 				// 発火の期待値
-				int k_0 = _crf->_index_w_bigram_type_u(0, type_i_1, type_i);
-				int k_1 = _crf->_index_w_bigram_type_u(1, type_i_1, type_i);
+				int k_0 = _crf->_hash_bigram_type_u(0, type_i_1, type_i);
+				int k_1 = _crf->_hash_bigram_type_u(1, type_i_1, type_i);
 				_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
 				_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
 				_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
 				_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
-				int k_0_0 = _crf->_index_w_bigram_type_b(0, 0, type_i_1, type_i);
-				int k_0_1 = _crf->_index_w_bigram_type_b(0, 1, type_i_1, type_i);
-				int k_1_0 = _crf->_index_w_bigram_type_b(1, 0, type_i_1, type_i);
-				int k_1_1 = _crf->_index_w_bigram_type_b(1, 1, type_i_1, type_i);
+				int k_0_0 = _crf->_hash_bigram_type_b(0, 0, type_i_1, type_i);
+				int k_0_1 = _crf->_hash_bigram_type_b(0, 1, type_i_1, type_i);
+				int k_1_0 = _crf->_hash_bigram_type_b(1, 0, type_i_1, type_i);
+				int k_1_1 = _crf->_hash_bigram_type_b(1, 1, type_i_1, type_i);
 				_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
 				_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
 				_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);
@@ -283,23 +283,23 @@ namespace npycrf {
 				int y_i = sentence->get_crf_label_at(i);
 
 				// 発火
-				int k_u = _crf->_index_w_label_u(y_i);
+				int k_u = _crf->_hash_label_u(y_i);
 				_grad_weight[k_u] += 1;
-				int k_b = _crf->_index_w_label_b(y_i_1, y_i);
+				int k_b = _crf->_hash_label_b(y_i_1, y_i);
 				_grad_weight[k_b] += 1;
 
 				// 発火の期待値
-				int k_0 = _crf->_index_w_label_u(0);
-				int k_1 = _crf->_index_w_label_u(1);
+				int k_0 = _crf->_hash_label_u(0);
+				int k_1 = _crf->_hash_label_u(1);
 				_grad_weight[k_0] -= pz_s(i - 1, 0, 0);
 				_grad_weight[k_0] -= pz_s(i - 1, 1, 0);
 				_grad_weight[k_1] -= pz_s(i - 1, 0, 1);
 				_grad_weight[k_1] -= pz_s(i - 1, 1, 1);
 
-				int k_0_0 = _crf->_index_w_label_b(0, 0);
-				int k_0_1 = _crf->_index_w_label_b(0, 1);
-				int k_1_0 = _crf->_index_w_label_b(1, 0);
-				int k_1_1 = _crf->_index_w_label_b(1, 1);
+				int k_0_0 = _crf->_hash_label_b(0, 0);
+				int k_0_1 = _crf->_hash_label_b(0, 1);
+				int k_1_0 = _crf->_hash_label_b(1, 0);
+				int k_1_1 = _crf->_hash_label_b(1, 1);
 				_grad_weight[k_0_0] -= pz_s(i - 1, 0, 0);
 				_grad_weight[k_0_1] -= pz_s(i - 1, 0, 1);
 				_grad_weight[k_1_0] -= pz_s(i - 1, 1, 0);

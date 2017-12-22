@@ -307,7 +307,7 @@ namespace npycrf {
 				}
 				_added_to_npylm_u[data_index] = true;
 
-				if(_total_gibbs_iterations > 1 && (i % 100 == 0 || i == _rand_indices_train_u.size() - 1)){
+				if(i % 100 == 0 || i == _rand_indices_train_u.size() - 1){
 					auto diff = std::chrono::system_clock::now() - start_time;
 					double elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0;
 					double gibbs_per_sec = (double)(i + 1) / elapsed_time;
