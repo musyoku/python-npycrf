@@ -95,7 +95,7 @@ namespace npycrf {
 			int num_tables_after = _hpylm->_root->_num_tables;
 			// 単語unigramノードでテーブル数が増えた場合VPYLMに追加
 			if(num_tables_before < num_tables_after){
-				_g0_cache.clear();
+				clear_g0_cache();
 				if(token_t == SPECIAL_CHARACTER_END){
 					_vpylm->_root->add_customer(token_t, _vpylm->_g0, _vpylm->_d_m, _vpylm->_theta_m, true, added_table_k);
 					return true;
@@ -137,7 +137,7 @@ namespace npycrf {
 			// 単語unigramノードでテーブル数が減った場合VPYLMから削除
 			int num_tables_after = _hpylm->_root->_num_tables;
 			if(num_tables_before > num_tables_after){
-				_g0_cache.clear();
+				clear_g0_cache();
 				if(word_t == SPECIAL_CHARACTER_END){
 					// <eos>は文字列に分解できないので常にVPYLMのルートノードに追加されている
 					_vpylm->_root->remove_customer(word_t, true, removed_from_table_k);

@@ -67,7 +67,7 @@ namespace npycrf {
 		void _enumerate_marginal_p_substring_given_sentence(mat::bi<double> &pc_s, int sentence_length, mat::tri<double> &alpha, mat::tri<double> &beta);
 		void _enumerate_forward_variables(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling = true);
 		void _enumerate_backward_variables(Sentence* sentence, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling = true);
-		void _clear_p_tkji(int size);
-		void _clear_word_id_cache(int size);
+		void _clear_p_tkji(int N);
+		void _clear_word_id_cache(int N);
 	};
 } // namespace npylm

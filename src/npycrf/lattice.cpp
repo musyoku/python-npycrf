@@ -80,7 +80,7 @@ namespace npycrf {
 		return _pure_crf_mode;
 	}
 	id Lattice::get_substring_word_id_at_t_k(Sentence* sentence, int t, int k){
-		assert(t < _max_sentence_length + 1);
+		assert(t <= sentence->size());
 		assert(k < _max_sentence_length + 1);
 		assert(t - k >= 0);
 		if(t == 0){
@@ -1059,12 +1059,12 @@ namespace npycrf {
 		}
 		return p_0_0;
 	}
-	void Lattice::_clear_p_tkji(int size){
-		_p_transition_tkji.fill(-1, size);
-		_pw_h_tkji.fill(-1, size);
+	void Lattice::_clear_p_tkji(int N){
+		_p_transition_tkji.fill(-1, N + 1);
+		_pw_h_tkji.fill(-1, N + 1);
 	}
-	void Lattice::_clear_word_id_cache(int size){
-		_substring_word_id_cache.fill(0, size);
+	void Lattice::_clear_word_id_cache(int N){
+		_substring_word_id_cache.fill(0, N + 1);
 	}
 	
 } // namespace npylm

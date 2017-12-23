@@ -33,7 +33,7 @@ namespace npycrf {
 			hashmap<id, std::vector<std::vector<int>>> _prev_depth_at_table_of_token;
 
 			hashmap<id, double> _g0_cache;
-			hashmap<id, double> _vpylm_g0_cache;
+			npycrf::mat::bi<double> _g0_tk;
 			npycrf::array<double> _lambda_for_type;
 			npycrf::array<double> _pk_vpylm;	// 文字n-gramから長さkの単語が生成される確率
 			npycrf::array<int> _token_ids;

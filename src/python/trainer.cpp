@@ -294,7 +294,7 @@ namespace npycrf {
 					#ifdef __DEBUG__
 						// 正規化しない場合の結果と比較
 						// std::cout << sentence->size() << std::endl;
-						if(sentence->size() < 150){
+						if(sentence->size() < 100){
 							std::vector<int> a = segments;
 							sampler::mt.seed(seed);
 							_npycrf->_lattice->blocked_gibbs(sentence, segments, false);
