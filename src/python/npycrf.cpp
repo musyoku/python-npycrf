@@ -56,6 +56,7 @@ namespace npycrf {
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
+			_npylm->clear_g0_cache();
 			double Zs = _lattice->compute_normalizing_constant(sentence, true);
 			#ifdef __DEBUG__
 				double __Zs = _lattice->_compute_normalizing_constant_backward(sentence, _lattice->_beta, _lattice->_p_transition_tkji);
@@ -76,6 +77,7 @@ namespace npycrf {
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
+			_npylm->clear_g0_cache();
 			double log_Zs = _lattice->compute_log_normalizing_constant(sentence, true);
 			#ifdef __DEBUG__
 				double _Zs = _lattice->compute_normalizing_constant(sentence, false);
@@ -87,6 +89,7 @@ namespace npycrf {
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
 			_npylm->reserve(sentence_str.size());
+			_npylm->clear_g0_cache();
 			std::vector<int> segments;		// 分割の一時保存用
 			// 構成文字を文字IDに変換
 			array<int> character_ids = array<int>(sentence_str.size());
@@ -104,6 +107,7 @@ namespace npycrf {
 		// 比例のままの確率を返す
 		double NPYCRF::compute_log_proportional_p_y_given_sentence(Sentence* sentence){
 			_npylm->reserve(sentence->size());	// キャッシュの再確保
+			_npylm->clear_g0_cache();
 			double log_crf = _crf->compute_log_p_y_given_sentence(sentence);
 			double log_npylm = _npylm->compute_log_p_y_given_sentence(sentence);
 			double log_py_x = log_crf + get_lambda_0() * log_npylm;
@@ -113,6 +117,7 @@ namespace npycrf {
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence->size());
 			_npylm->reserve(sentence->size());
+			_npylm->clear_g0_cache();
 			sentence->_features = _crf->extract_features(sentence, false);		// CRFの素性IDを展開
 			std::vector<int> segments;		// 分割の一時保存用
 			_lattice->viterbi_decode(sentence, segments);
@@ -122,6 +127,7 @@ namespace npycrf {
 			// キャッシュの再確保
 			_lattice->reserve(_npylm->_max_word_length, sentence_str.size());
 			_npylm->reserve(sentence_str.size());
+			_npylm->clear_g0_cache();
 			std::vector<int> segments;		// 分割の一時保存用
 			// 構成文字を文字IDに変換
 			array<int> character_ids = array<int>(sentence_str.size());

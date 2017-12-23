@@ -271,6 +271,9 @@ namespace npycrf {
 				Sentence* sentence = _dataset_u->_sentences_train[data_index];
 				assert(sentence->_features != NULL);
 
+				// NPYLMのg0キャッシュを消去（消す理由は単に重くなるから）
+				_npycrf->_npylm->clear_g0_cache();
+
 				// モデルに追加されているかチェック
 				if(_added_to_npylm_u[data_index] == true){
 					// 古い分割をモデルから削除
@@ -321,6 +324,7 @@ namespace npycrf {
 				}
 			}
 			std::cout << "\r\033[2K" << std::flush;
+
 			// 客数チェック
 			assert(_npycrf->_npylm->_hpylm->_root->_num_tables <= _npycrf->_npylm->_vpylm->get_num_customers());
 
@@ -350,6 +354,9 @@ namespace npycrf {
 				Sentence* sentence = _dataset_l->_sentences_train[data_index];
 				assert(sentence->_features != NULL);
 
+				// NPYLMのg0キャッシュを消去（消す理由は単に重くなるから）
+				_npycrf->_npylm->clear_g0_cache();
+
 				// 教師あり
 				// モデルに追加されているかチェック
 				if(_added_to_npylm_l[data_index] == true){
@@ -372,6 +379,7 @@ namespace npycrf {
 			Lattice* lattice = _npycrf->_lattice;
 			mat::quad<double> &p_conc_tkji = lattice->_p_conc_tkji;
 			mat::tri<double> &pz_s = lattice->_pz_s;
+			mat::quad<double> &pw_h_tkji = lattice->_pw_h_tkji;
 			lattice->set_pure_crf_mode(pure_crf);
 			int num_completed = 0;
 			auto start_time = std::chrono::system_clock::now();
@@ -384,18 +392,24 @@ namespace npycrf {
 						return;		
 					}
 					int data_index = _rand_indices_train_l[i + batchsize * b];
+
+					// NPYLMのg0キャッシュを消去（消す理由は単に重くなるから）
+					_npycrf->_npylm->clear_g0_cache();
+
 					// std::cout << "data_index: " << data_index << std::endl;
 					Sentence* sentence = _dataset_l->_sentences_train[data_index];
 					assert(sentence->_features != NULL);
-					// 周辺確率を求める
-					lattice->enumerate_marginal_p_path_given_sentence(sentence, pz_s);
-					// 更新
-					_sgd->backward_crf(sentence, pz_s);
-					if(pure_crf == false){
-						mat::quad<double> &pw_h_tkji = lattice->_pw_h_tkji;
-						lattice->enumerate_marginal_p_trigram_given_sentence(sentence, p_conc_tkji, pw_h_tkji, true);
+					if(pure_crf){
+						// 周辺確率を求める
+						lattice->enumerate_marginal_p_path_given_sentence(sentence, pz_s);
+						// 更新
+						_sgd->backward_crf(sentence, pz_s);
+					}else{
+						lattice->enumerate_marginal_p_path_and_trigram_given_sentence(sentence, p_conc_tkji, pw_h_tkji, pz_s);
+						_sgd->backward_crf(sentence, pz_s);
 						_sgd->backward_lambda_0(sentence, p_conc_tkji, pw_h_tkji, lattice->_max_word_length);
 					}
+					// 周辺確率を求める
 				}
 				_sgd->update(learning_rate / (double)size);	// 勾配の平均をとるため学習率を調整
 
@@ -579,7 +593,9 @@ namespace npycrf {
 				}
 				int data_index = rand_indices[n];
 				Sentence* sentence = dataset[data_index]->copy();
-				_npycrf->_lattice->blocked_gibbs(sentence, segments, true);
+				_npycrf->_npylm->reserve(sentence->size());
+				_npycrf->_npylm->clear_g0_cache();
+				_npycrf->_lattice->viterbi_decode(sentence, segments);
 				sentence->split(segments);
 				sentence->dump_words();
 				delete sentence;

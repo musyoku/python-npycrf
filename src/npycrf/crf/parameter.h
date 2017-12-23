@@ -18,8 +18,6 @@ namespace npycrf {
 			array<double> _weights;		// 重み
 			double _lambda_0;	// モデル補完重み
 			double _sigma;		// パラメータの事前分布の標準偏差
-			double weight_at_index(int index);
-			const double &operator[](int i) const;
 			Parameter();
 			Parameter(double weight_size, double lambda_0, double sigma);
 			~Parameter();

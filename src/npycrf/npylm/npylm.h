@@ -56,6 +56,7 @@ namespace npycrf {
 				double vpylm_beta_pass);
 			~NPYLM();
 			void reserve(int max_sentence_length);
+			void clear_g0_cache();
 			void set_vpylm_g0(double g0);
 			void set_lambda_prior(double a, double b);
 			void sample_lambda_with_initial_params();

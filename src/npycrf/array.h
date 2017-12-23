@@ -93,7 +93,10 @@ namespace npycrf {
 				return _k_size;
 			}
 			void fill(T value){
-				for(int t = 0;t < _t_size;t++){
+				fill(value, _t_size);
+			}
+			void fill(T value, int t_size){
+				for(int t = 0;t < t_size;t++){
 					for(int k = 0;k < _k_size;k++){
 						_array[t][k] = value;
 					}
@@ -199,7 +202,10 @@ namespace npycrf {
 				return _j_size;
 			}
 			void fill(T value){
-				for(int t = 0;t < _t_size;t++){
+				fill(value, _t_size);
+			}
+			void fill(T value, int t_size){
+				for(int t = 0;t < t_size;t++){
 					for(int k = 0;k < _k_size;k++){
 						for(int j = 0;j < _j_size;j++){
 							_array[t][k][j] = value;
@@ -327,7 +333,10 @@ namespace npycrf {
 				return _i_size;
 			}
 			void fill(T value){
-				for(int t = 0;t < _t_size;t++){
+				fill(value, _t_size);
+			}
+			void fill(T value, int t_size){
+				for(int t = 0;t < t_size;t++){
 					for(int k = 0;k < _k_size;k++){
 						for(int j = 0;j < _j_size;j++){
 							for(int i = 0;i < _i_size;i++){
@@ -382,6 +391,11 @@ namespace npycrf {
 				delete[] _array;
 			}
 		}
+		void fill(T value){
+			for(int i = 0;i < _size;i++){
+				_array[i] = value;
+			}
+		}
 		array &operator=(const array &a){
 			if(_array != nullptr){
 				delete[] _array;
@@ -401,7 +415,7 @@ namespace npycrf {
 			assert(i < _size);
 			return _array[i];
 		}
-		int size(){
+		int size() const{
 			return _size;
 		}
 	};

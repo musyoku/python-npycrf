@@ -51,6 +51,9 @@ namespace npycrf {
 			delete _hpylm;
 			delete _vpylm;
 		}
+		void NPYLM::clear_g0_cache(){
+			_g0_cache.clear();
+		}
 		void NPYLM::reserve(int max_sentence_length){
 			if(max_sentence_length <= _max_sentence_length){
 				return;
@@ -131,7 +134,7 @@ namespace npycrf {
 			int substr_t_end_index = sentence->_start[t] + sentence->_segments[t] - 1;
 			node->remove_customer(word_t, true, removed_from_table_k);
 
-			// 単語unigramノードでテーブル数が増えた場合VPYLMから削除
+			// 単語unigramノードでテーブル数が減った場合VPYLMから削除
 			int num_tables_after = _hpylm->_root->_num_tables;
 			if(num_tables_before > num_tables_after){
 				_g0_cache.clear();

@@ -318,8 +318,8 @@ namespace npycrf {
 
 		_alpha(0, 0, 0) = 1;
 		_scaling[0] = 1;
-		_clear_word_id_cache();
-		_clear_p_tkji();
+		_clear_word_id_cache(sentence->size());
+		_clear_p_tkji(sentence->size());
 		forward_filtering(sentence, use_scaling);
 		backward_sampling(sentence, segments);
 	}
@@ -533,8 +533,8 @@ namespace npycrf {
 
 		_alpha(0, 0, 0) = 0;
 		_scaling[0] = 1;
-		_clear_word_id_cache();
-		_clear_p_tkji();
+		_clear_word_id_cache(sentence->size());
+		_clear_p_tkji(sentence->size());
 		viterbi_forward(sentence);
 		viterbi_backward(sentence, segments);
 	}
@@ -542,8 +542,8 @@ namespace npycrf {
 	// use_scaling=trueならアンダーフローを防ぐ
 	double Lattice::compute_normalizing_constant(Sentence* sentence, bool use_scaling){
 		assert(sentence->size() <= _max_sentence_length);
-		_clear_word_id_cache();
-		_clear_p_tkji();
+		_clear_word_id_cache(sentence->size());
+		_clear_p_tkji(sentence->size());
 		// 前向き確率を求める
 		_enumerate_forward_variables(sentence, _alpha, _pw_h_tkji, _p_transition_tkji, _scaling, use_scaling);
 		// <eos>へ到達する確率を全部足す
@@ -567,7 +567,7 @@ namespace npycrf {
 	// スケーリング係数は前向き時のみ計算可能なので注意
 	double Lattice::_compute_normalizing_constant_backward(Sentence* sentence, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji){
 		assert(sentence->size() <= _max_sentence_length);
-		_clear_word_id_cache();
+		_clear_word_id_cache(sentence->size());
 		// 後向き確率を求める
 		_enumerate_backward_variables(sentence, beta, p_transition_tkji, _scaling, false);
 		double px = _beta(0, 1, 1);
@@ -577,8 +577,8 @@ namespace npycrf {
 	// 文の可能な分割全てを考慮した文の確率（<eos>への接続を含む）
 	// use_scaling=trueならアンダーフローを防ぐ
 	double Lattice::compute_log_normalizing_constant(Sentence* sentence, bool use_scaling){
-		_clear_word_id_cache();
-		_clear_p_tkji();
+		_clear_word_id_cache(sentence->size());
+		_clear_p_tkji(sentence->size());
 		// 前向き確率を求める
 		_enumerate_forward_variables(sentence, _alpha, _pw_h_tkji, _p_transition_tkji, _scaling, use_scaling);
 		// <eos>へ到達する確率を全部足す
@@ -889,8 +889,8 @@ namespace npycrf {
 	// Pconc(c^{t-k-j}_{t-k-j-i+1}, c^{t-k}_{t-k-j+1}, c^t_{t-k+1}|x)の計算
 	void Lattice::enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, bool use_scaling){
 		reserve(_max_word_length, sentence->size());
-		_clear_word_id_cache();
-		_clear_p_tkji();
+		_clear_word_id_cache(sentence->size());
+		_clear_p_tkji(sentence->size());
 		_enumerate_forward_variables(sentence, _alpha, pw_h_tkji, _p_transition_tkji, _scaling, use_scaling);
 		_enumerate_backward_variables(sentence, _beta, _p_transition_tkji, _scaling, use_scaling);
 		_enumerate_marginal_p_trigram_given_sentence(sentence, p_conc_tkji, _alpha, _beta, _p_transition_tkji, _scaling, use_scaling);
@@ -944,8 +944,8 @@ namespace npycrf {
 	// p(z_t, z_{t+1}|s)の計算
 	void Lattice::enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s){
 		reserve(_max_word_length, sentence->size());
-		_clear_word_id_cache();
-		_clear_p_tkji();
+		_clear_word_id_cache(sentence->size());
+		_clear_p_tkji(sentence->size());
 		_enumerate_forward_variables(sentence, _alpha, _pw_h_tkji, _p_transition_tkji, _scaling, true);
 		_enumerate_backward_variables(sentence, _beta, _p_transition_tkji, _scaling, true);
 		_enumerate_marginal_p_path_given_sentence(sentence, pz_s, _alpha, _beta);
@@ -953,6 +953,16 @@ namespace npycrf {
 	void Lattice::_enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s, mat::tri<double> &alpha, mat::tri<double> &beta){
 		_enumerate_marginal_p_substring_given_sentence(_pc_s, sentence->size(), alpha, beta);
 		_enumerate_marginal_p_path_given_sentence_using_p_substring(pz_s, sentence->size(), _pc_s);
+	}
+	void Lattice::enumerate_marginal_p_path_and_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, mat::tri<double> &pz_s){
+		reserve(_max_word_length, sentence->size());
+		_clear_word_id_cache(sentence->size());
+		_p_transition_tkji.fill(-1, sentence->size());
+		pw_h_tkji.fill(-1, sentence->size());
+		_enumerate_forward_variables(sentence, _alpha, pw_h_tkji, _p_transition_tkji, _scaling, true);
+		_enumerate_backward_variables(sentence, _beta, _p_transition_tkji, _scaling, true);
+		_enumerate_marginal_p_path_given_sentence(sentence, pz_s, _alpha, _beta);
+		_enumerate_marginal_p_trigram_given_sentence(sentence, p_conc_tkji, _alpha, _beta, _p_transition_tkji, _scaling, true);
 	}
 	// p(z_t, z_{t+1}|s)の計算
 	// Zsは統合モデル上での文の確率
@@ -1049,12 +1059,12 @@ namespace npycrf {
 		}
 		return p_0_0;
 	}
-	void Lattice::_clear_p_tkji(){
-		_p_transition_tkji.fill(-1);
-		_pw_h_tkji.fill(-1);
+	void Lattice::_clear_p_tkji(int size){
+		_p_transition_tkji.fill(-1, size);
+		_pw_h_tkji.fill(-1, size);
 	}
-	void Lattice::_clear_word_id_cache(){
-		_substring_word_id_cache.fill(0);
+	void Lattice::_clear_word_id_cache(int size){
+		_substring_word_id_cache.fill(0, size);
 	}
 	
 } // namespace npylm

@@ -12,6 +12,11 @@ namespace npycrf {
 	namespace python {
 		class Trainer{
 		private:
+			void _print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices);
+			double _compute_perplexity(std::vector<Sentence*> &dataset);
+			double _compute_log_likelihood(std::vector<Sentence*> &dataset, bool labeled = false);
+			void _gibbs_labeled();
+		public:
 			std::vector<int> _rand_indices_train_u;
 			std::vector<int> _rand_indices_train_l;
 			std::vector<int> _rand_indices_dev_u;
@@ -25,11 +30,6 @@ namespace npycrf {
 			npycrf::array<bool> _added_to_npylm_u;
 			npycrf::array<bool> _added_to_npylm_l;
 			int _total_gibbs_iterations;
-			void _print_segmentation(int num_to_print, std::vector<Sentence*> &dataset, std::vector<int> &rand_indices);
-			double _compute_perplexity(std::vector<Sentence*> &dataset);
-			double _compute_log_likelihood(std::vector<Sentence*> &dataset, bool labeled = false);
-			void _gibbs_labeled();
-		public:
 			Trainer(Dataset* dataset_l, Dataset* dataset_u, Dictionary* dict, NPYCRF* npycrf, double crf_regularization_constant);
 			void remove_all_data();
 			void add_labeled_data_to_npylm();

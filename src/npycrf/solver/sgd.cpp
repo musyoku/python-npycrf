@@ -22,10 +22,7 @@ namespace npycrf {
 		void SGD::update(double learning_rate){
 			crf::Parameter* params = _crf->_parameter;
 			for(int i = 0;i < params->get_num_features();i++){
-				params->_all_weights[i] += learning_rate * _grad_weight[i] - _regularization_constant * learning_rate * params->_all_weights[i];
-				if(_grad_weight[i] != 0){
-					params->_num_updates[i] += 1;
-				}
+				params->_weights[i] += learning_rate * _grad_weight[i] - _regularization_constant * learning_rate * params->_weights[i];
 			}
 			params->_lambda_0 += learning_rate * _grad_lambda_0 - _regularization_constant * learning_rate * (params->_lambda_0 - 1);
 		}

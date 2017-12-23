@@ -12,19 +12,12 @@ namespace npycrf {
 		}
 		Parameter::Parameter(double weight_size, double lambda_0, double sigma){
 			_bias = 0;
-			_pruned = false;
 			_weights = array<double>(weight_size);
 			for(int i = 0;i < weight_size;i++){
 				_weights[i] = sampler::uniform(-0.0001, 0.0001);
 			}
 			_lambda_0 = lambda_0;
 			_sigma = sigma;
-		}
-		double Parameter::weight_at_index(int index){
-			return _weights[index];
-		}
-		const double &Parameter::operator[](int i) const {    // [] 演算子の多重定義
-			return _weights[i];
 		}
 		int Parameter::get_num_features(){
 			return _weights.size();

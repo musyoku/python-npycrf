@@ -59,6 +59,7 @@ namespace npycrf {
 		void enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s);
 		void _enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s, mat::tri<double> &alpha, mat::tri<double> &beta);
 		void _enumerate_marginal_p_path_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::bi<double> &pc_s);
+		void enumerate_marginal_p_path_and_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, mat::tri<double> &pz_s);
 		double _compute_p_z_case_1_1(int sentence_length, int t, mat::bi<double> &pc_s);
 		double _compute_p_z_case_1_0(int sentence_length, int t, mat::bi<double> &pc_s);
 		double _compute_p_z_case_0_1(int sentence_length, int t, mat::bi<double> &pc_s);
@@ -66,7 +67,7 @@ namespace npycrf {
 		void _enumerate_marginal_p_substring_given_sentence(mat::bi<double> &pc_s, int sentence_length, mat::tri<double> &alpha, mat::tri<double> &beta);
 		void _enumerate_forward_variables(Sentence* sentence, mat::tri<double> &alpha, mat::quad<double> &pw_h_tkji, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling = true);
 		void _enumerate_backward_variables(Sentence* sentence, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, array<double> &scaling, bool use_scaling = true);
-		void _clear_p_tkji();
-		void _clear_word_id_cache();
+		void _clear_p_tkji(int size);
+		void _clear_word_id_cache(int size);
 	};
 } // namespace npylm

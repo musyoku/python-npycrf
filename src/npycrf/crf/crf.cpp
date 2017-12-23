@@ -17,123 +17,124 @@ namespace npycrf {
 			_parameter = parameter;
 		}
 		CRF::~CRF(){
+			delete _extractor;
 			delete _parameter;
 		}
 		int CRF::get_num_features(){
 			return _extractor->_function_id_to_feature_id.size();
 		}
-		double CRF::w_label_u(int y_i){
+		double CRF::w_label_u(int y_i) const {
 			int index = _extractor->feature_id_label_u(y_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_label_b(int y_i_1, int y_i){
+		double CRF::w_label_b(int y_i_1, int y_i) const {
 			int index = _extractor->feature_id_label_b(y_i_1, y_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_unigram_u(int y_i, int i, int x_i){
+		double CRF::w_unigram_u(int y_i, int i, int x_i) const {
 			int index = _extractor->feature_id_unigram_u(y_i, i, x_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_unigram_b(int y_i_1, int y_i, int i, int x_i){
+		double CRF::w_unigram_b(int y_i_1, int y_i, int i, int x_i) const {
 			int index = _extractor->feature_id_unigram_b(y_i_1, y_i, i, x_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_bigram_u(int y_i, int i, int x_i_1, int x_i){
+		double CRF::w_bigram_u(int y_i, int i, int x_i_1, int x_i) const {
 			int index = _extractor->feature_id_bigram_u(y_i, i, x_i_1, x_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i){
+		double CRF::w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i) const {
 			int index = _extractor->feature_id_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_identical_1_u(int y_i, int i){
+		double CRF::w_identical_1_u(int y_i, int i) const {
 			int index = _extractor->feature_id_identical_1_u(y_i, i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_identical_1_b(int y_i_1, int y_i, int i){
+		double CRF::w_identical_1_b(int y_i_1, int y_i, int i) const {
 			int index = _extractor->feature_id_identical_1_b(y_i_1, y_i, i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_identical_2_u(int y_i, int i){
+		double CRF::w_identical_2_u(int y_i, int i) const {
 			int index = _extractor->feature_id_identical_2_u(y_i, i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_identical_2_b(int y_i_1, int y_i, int i){
+		double CRF::w_identical_2_b(int y_i_1, int y_i, int i) const {
 			int index = _extractor->feature_id_identical_2_b(y_i_1, y_i, i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_unigram_type_u(int y_i, int type_i){
+		double CRF::w_unigram_type_u(int y_i, int type_i) const {
 			int index = _extractor->feature_id_unigram_type_u(y_i, type_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_unigram_type_b(int y_i_1, int y_i, int type_i){
+		double CRF::w_unigram_type_b(int y_i_1, int y_i, int type_i) const {
 			int index = _extractor->feature_id_unigram_type_b(y_i_1, y_i, type_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_bigram_type_u(int y_i, int type_i_1, int type_i){
+		double CRF::w_bigram_type_u(int y_i, int type_i_1, int type_i) const {
 			int index = _extractor->feature_id_bigram_type_u(y_i, type_i_1, type_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		double CRF::w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i){
+		double CRF::w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i) const {
 			int index = _extractor->feature_id_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
-			return _parameter->weight_at_index(index);
+			return _parameter->_weights[index];
 		}
-		void CRF::set_w_label_u(int y_i, double value){
-			int index = _extractor->feature_id_label_u(y_i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_label_b(int y_i_1, int y_i, double value){
-			int index = _extractor->feature_id_label_b(y_i_1, y_i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_unigram_u(int y_i, int i, int x_i, double value){
-			int index = _extractor->feature_id_unigram_u(y_i, i, x_i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_unigram_b(int y_i_1, int y_i, int i, int x_i, double value){
-			int index = _extractor->feature_id_unigram_b(y_i_1, y_i, i, x_i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_bigram_u(int y_i, int i, int x_i_1, int x_i, double value){
-			int index = _extractor->feature_id_bigram_u(y_i, i, x_i_1, x_i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i, double value){
-			int index = _extractor->feature_id_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_identical_1_u(int y_i, int i, double value){
-			int index = _extractor->feature_id_identical_1_u(y_i, i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_identical_1_b(int y_i_1, int y_i, int i, double value){
-			int index = _extractor->feature_id_identical_1_b(y_i_1, y_i, i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_identical_2_u(int y_i, int i, double value){
-			int index = _extractor->feature_id_identical_2_u(y_i, i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_identical_2_b(int y_i_1, int y_i, int i, double value){
-			int index = _extractor->feature_id_identical_2_b(y_i_1, y_i, i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_unigram_type_u(int y_i, int type_i, double value){
-			int index = _extractor->feature_id_unigram_type_u(y_i, type_i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_unigram_type_b(int y_i_1, int y_i, int type_i, double value){
-			int index = _extractor->feature_id_unigram_type_b(y_i_1, y_i, type_i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_bigram_type_u(int y_i, int type_i_1, int type_i, double value){
-			int index = _extractor->feature_id_bigram_type_u(y_i, type_i_1, type_i);
-			_parameter->set_weight_at_index(index, value);
-		}
-		void CRF::set_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i, double value){
-			int index = _extractor->feature_id_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
-			_parameter->set_weight_at_index(index, value);
-		}
+		// void CRF::set_w_label_u(int y_i, double value){
+		// 	int index = _extractor->feature_id_label_u(y_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_label_b(int y_i_1, int y_i, double value){
+		// 	int index = _extractor->feature_id_label_b(y_i_1, y_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_unigram_u(int y_i, int i, int x_i, double value){
+		// 	int index = _extractor->feature_id_unigram_u(y_i, i, x_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_unigram_b(int y_i_1, int y_i, int i, int x_i, double value){
+		// 	int index = _extractor->feature_id_unigram_b(y_i_1, y_i, i, x_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_bigram_u(int y_i, int i, int x_i_1, int x_i, double value){
+		// 	int index = _extractor->feature_id_bigram_u(y_i, i, x_i_1, x_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_bigram_b(int y_i_1, int y_i, int i, int x_i_1, int x_i, double value){
+		// 	int index = _extractor->feature_id_bigram_b(y_i_1, y_i, i, x_i_1, x_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_identical_1_u(int y_i, int i, double value){
+		// 	int index = _extractor->feature_id_identical_1_u(y_i, i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_identical_1_b(int y_i_1, int y_i, int i, double value){
+		// 	int index = _extractor->feature_id_identical_1_b(y_i_1, y_i, i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_identical_2_u(int y_i, int i, double value){
+		// 	int index = _extractor->feature_id_identical_2_u(y_i, i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_identical_2_b(int y_i_1, int y_i, int i, double value){
+		// 	int index = _extractor->feature_id_identical_2_b(y_i_1, y_i, i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_unigram_type_u(int y_i, int type_i, double value){
+		// 	int index = _extractor->feature_id_unigram_type_u(y_i, type_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_unigram_type_b(int y_i_1, int y_i, int type_i, double value){
+		// 	int index = _extractor->feature_id_unigram_type_b(y_i_1, y_i, type_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_bigram_type_u(int y_i, int type_i_1, int type_i, double value){
+		// 	int index = _extractor->feature_id_bigram_type_u(y_i, type_i_1, type_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
+		// void CRF::set_w_bigram_type_b(int y_i_1, int y_i, int type_i_1, int type_i, double value){
+		// 	int index = _extractor->feature_id_bigram_type_b(y_i_1, y_i, type_i_1, type_i);
+		// 	_parameter->set_weight_at_index(index, value);
+		// }
 		// γ(s, t) ∝ log{P(c_s^{t - 1}|・)}
 		// s、tはともに番号なので1から始まる
 		// あるノードから別のノードを辿るV字型のパスのコストの合計
@@ -183,11 +184,11 @@ namespace npycrf {
 			FeatureIndices* features = sentence->_features;
 			for(int m = 0;m < features->_num_features_u(i, y_i);m++){
 				int k = features->_feature_indices_u[i][y_i][m];
-				cost += _parameter->weight_at_index(k);
+				cost += _parameter->_weights[k];
 			}
 			for(int m = 0;m < features->_num_features_b(i, y_i_1, y_i);m++){
 				int k = features->_feature_indices_b[i][y_i_1][y_i][m];
-				cost += _parameter->weight_at_index(k);
+				cost += _parameter->_weights[k];
 			}
 
 			#ifdef __DEBUG__
@@ -290,9 +291,8 @@ namespace npycrf {
 		FeatureIndices* CRF::extract_features(Sentence* sentence, bool generate_feature_id_if_needed){
 			return _extractor->extract(sentence, generate_feature_id_if_needed);
 		}
-		
 		template <class Archive>
-		void CRF::serialize(Archive &archive, unsigned int version)
+		void CRF::serialize(Archive &ar, unsigned int version)
 		{
 			ar & _extractor;
 			ar & _parameter;
