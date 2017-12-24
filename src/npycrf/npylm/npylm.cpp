@@ -37,12 +37,10 @@ namespace npycrf {
 
 			_max_sentence_length = max_sentence_length;
 			_max_word_length = max_word_length;
-			_token_ids = array<int>(max_sentence_length + 1); 	// <eow>を含める
-			_pk_vpylm = array<double>(max_word_length + 2);			// kが1スタート、かつk > max_word_length用の領域も必要なので+2
-			for(int k = 1;k < max_word_length + 2;k++){
-				_pk_vpylm[k] = 1.0 / (max_word_length + 2);
-			}
 			_fix_g0_using_poisson = true;
+			_pk_vpylm = array<double>(max_word_length + 2);		// kが1スタート、かつk > max_word_length用の領域も必要なので+2
+			_pk_vpylm.fill(1.0 / (max_word_length + 2));
+			_allocate_capacity(max_sentence_length);
 			#ifdef __DEBUG__
 			std::cout << "Warning: Debug mode enabled!" << std::endl;
 			#endif
@@ -51,8 +49,9 @@ namespace npycrf {
 			delete _hpylm;
 			delete _vpylm;
 		}
-		void NPYLM::clear_g0_cache(){
-			_g0_cache.clear();
+		void NPYLM::clear_g0_cache(int N){
+			// _g0_cache.clear();
+			_g0_tk.fill(-1, N + 1);
 		}
 		void NPYLM::reserve(int max_sentence_length){
 			if(max_sentence_length <= _max_sentence_length){
@@ -65,6 +64,7 @@ namespace npycrf {
 		void NPYLM::_allocate_capacity(int max_sentence_length){
 			_max_sentence_length = max_sentence_length;
 			_token_ids = array<int>(max_sentence_length + 1);
+			_g0_tk = mat::bi<double>(max_sentence_length + 1, _max_word_length + 1);
 		}
 		void NPYLM::_delete_capacity(){
 
@@ -95,7 +95,7 @@ namespace npycrf {
 			int num_tables_after = _hpylm->_root->_num_tables;
 			// 単語unigramノードでテーブル数が増えた場合VPYLMに追加
 			if(num_tables_before < num_tables_after){
-				clear_g0_cache();
+				clear_g0_cache(sentence->size());
 				if(token_t == SPECIAL_CHARACTER_END){
 					_vpylm->_root->add_customer(token_t, _vpylm->_g0, _vpylm->_d_m, _vpylm->_theta_m, true, added_table_k);
 					return true;
@@ -137,7 +137,7 @@ namespace npycrf {
 			// 単語unigramノードでテーブル数が減った場合VPYLMから削除
 			int num_tables_after = _hpylm->_root->_num_tables;
 			if(num_tables_before > num_tables_after){
-				clear_g0_cache();
+				clear_g0_cache(sentence->size());
 				if(word_t == SPECIAL_CHARACTER_END){
 					// <eos>は文字列に分解できないので常にVPYLMのルートノードに追加されている
 					_vpylm->_root->remove_customer(word_t, true, removed_from_table_k);
@@ -282,51 +282,72 @@ namespace npycrf {
 			int word_length = substr_t_end_index - substr_t_start_index + 1;
 			assert(word_length <= character_ids_length);
 			assert(word_length <= _max_word_length);
-			auto itr = _g0_cache.find(word_t_id);
-			if(itr == _g0_cache.end()){
-				// 先頭に<bow>をつける
-				// wchar_t* token_ids = _characters;
-				// append_eow(characters, substr_t_start_index, substr_t_end_index, token_ids);
-				// int token_ids_length = substr_t_end_index - substr_t_start_index + 3;
-				// g0を計算
-				double pw = std::max(_vpylm->compute_p_w(character_ids, substr_t_start_index, substr_t_end_index), std::numeric_limits<double>::min());
 
-				// 学習の最初のイテレーションでは文が丸ごと1単語になるので補正する意味はない
-				if(_fix_g0_using_poisson == false){
-					_g0_cache[word_t_id] = pw;
-					return pw;
-				}
-
-				double p_k_given_vpylm = compute_p_k_given_vpylm(word_length);
-				int type = wordtype::detect_word_type_substr(characters, substr_t_start_index, substr_t_end_index);
-				assert(type <= WORDTYPE_NUM_TYPES);
-				assert(type > 0);
-				double lambda = _lambda_for_type[type];
-				double poisson = compute_poisson_k_lambda(word_length, lambda);
-				assert(poisson > 0);
-				double g0 = pw * poisson / p_k_given_vpylm;
-
-				// ごく稀にポアソン補正で1を超えることがある
-				if((0 < g0 && g0 < 1) == false){
-					for(int u = 0;u < character_ids_length;u++){
-						std::wcout << characters[u];
+			// 単語事前分布の計算は重いのでキャッシュする
+			double g0 = _g0_tk(substr_t_end_index, word_length);
+			if(g0 > 0){
+				#ifdef __DEBUG__
+					double _g0 = 0;
+					double pw = std::max(_vpylm->compute_p_w(character_ids, substr_t_start_index, substr_t_end_index), std::numeric_limits<double>::min());
+					if(_fix_g0_using_poisson == false){
+						_g0 = pw;
+					}else{
+						double p_k_given_vpylm = compute_p_k_given_vpylm(word_length);
+						int type = wordtype::detect_word_type_substr(characters, substr_t_start_index, substr_t_end_index);
+						assert(type <= WORDTYPE_NUM_TYPES);
+						assert(type > 0);
+						double lambda = _lambda_for_type[type];
+						double poisson = compute_poisson_k_lambda(word_length, lambda);
+						assert(poisson > 0);
+						_g0 = pw * poisson / p_k_given_vpylm;
 					}
-					std::wcout << std::endl;
-					for(int u = 0;u < character_ids_length;u++){
-						std::cout << character_ids[u] << ", ";
-					}
-					std::cout << std::endl;
-					std::cout << "pw = " << pw << std::endl;
-					std::cout << "poisson = " << poisson << std::endl;
-					std::cout << "p_k_given_vpylm = " << p_k_given_vpylm << std::endl;
-					std::cout << "g0 = " << g0 << std::endl;
-					std::cout << "word_length = " << word_length << std::endl;
-				}
-				assert(0 < g0 && g0 < 1);
-				_g0_cache[word_t_id] = g0;
+					assert(g0 == _g0);
+				#endif
+
 				return g0;
 			}
-			return itr->second;
+
+			// g0を計算
+			// g0は単語の文字列としての確率をVPYLMにより計算
+			double pw = std::max(_vpylm->compute_p_w(character_ids, substr_t_start_index, substr_t_end_index), std::numeric_limits<double>::min());
+
+			// 学習の最初のイテレーションでは文が丸ごと1単語になるので補正する意味はない
+			if(_fix_g0_using_poisson == false){
+				// _g0_cache[word_t_id] = pw;
+				_g0_tk(substr_t_end_index, word_length) = pw;
+				return pw;
+			}
+
+			// ポアソン分布による単語事前分布の補正
+			double p_k_given_vpylm = compute_p_k_given_vpylm(word_length);
+			int type = wordtype::detect_word_type_substr(characters, substr_t_start_index, substr_t_end_index);
+			assert(type <= WORDTYPE_NUM_TYPES);
+			assert(type > 0);
+			double lambda = _lambda_for_type[type];
+			double poisson = compute_poisson_k_lambda(word_length, lambda);
+			assert(poisson > 0);
+			g0 = pw * poisson / p_k_given_vpylm;
+
+			// ごく稀にポアソン補正で1を超えることがある
+			if((0 < g0 && g0 < 1) == false){
+				for(int u = 0;u < character_ids_length;u++){
+					std::wcout << characters[u];
+				}
+				std::wcout << std::endl;
+				for(int u = 0;u < character_ids_length;u++){
+					std::cout << character_ids[u] << ", ";
+				}
+				std::cout << std::endl;
+				std::cout << "pw = " << pw << std::endl;
+				std::cout << "poisson = " << poisson << std::endl;
+				std::cout << "p_k_given_vpylm = " << p_k_given_vpylm << std::endl;
+				std::cout << "g0 = " << g0 << std::endl;
+				std::cout << "word_length = " << word_length << std::endl;
+			}
+			assert(0 < g0 && g0 < 1);
+			// _g0_cache[word_t_id] = g0;
+			_g0_tk(substr_t_end_index, word_length) = g0;
+			return g0;
 		}
 		double NPYLM::compute_poisson_k_lambda(unsigned int k, double lambda){
 			return pow(lambda, k) * exp(-lambda) / factorial(k);
@@ -435,9 +456,8 @@ namespace npycrf {
 
 			_pk_vpylm = array<double>(_max_word_length + 2);
 			_lambda_for_type = array<double>(WORDTYPE_NUM_TYPES + 1);
-
 			_hpylm_parent_pw_cache = array<double>(3);
-			_token_ids = array<int>(_max_sentence_length + 1);
+			_allocate_capacity(_max_sentence_length);
 
 			for(int type = 1;type <= WORDTYPE_NUM_TYPES;type++){
 				archive & _lambda_for_type[type];

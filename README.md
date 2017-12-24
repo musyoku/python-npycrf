@@ -86,6 +86,8 @@ python3 train.py -file-l supervised.txt -file-u unsupervised.txt -td-split 0.9 -
 
 学習の一時停止や再開はできません。
 
+学習速度はCPUとコンパイラと最大単語長によりますが、200文/秒〜1500文/秒程度です。
+
 ## 分割
 
 ビタビアルゴリズムによる最尤分割を求めます。

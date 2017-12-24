@@ -257,6 +257,8 @@ namespace npycrf {
 			if(_total_gibbs_iterations < 3){
 				_npycrf->_npylm->_fix_g0_using_poisson = false;
 			}
+			Lattice* lattice = _npycrf->_lattice;
+			npylm::NPYLM* npylm = _npycrf->_npylm;
 			// 教師なしデータでモデルパラメータを更新
 			std::vector<int> segments;		// 分割の一時保存用
 			shuffle(_rand_indices_train_u.begin(), _rand_indices_train_u.end(), sampler::mt);		// データをシャッフル
@@ -272,13 +274,13 @@ namespace npycrf {
 				assert(sentence->_features != NULL);
 
 				// NPYLMのg0キャッシュを消去（消す理由は単に重くなるから）
-				_npycrf->_npylm->clear_g0_cache();
+				npylm->clear_g0_cache(sentence->size());
 
 				// モデルに追加されているかチェック
 				if(_added_to_npylm_u[data_index] == true){
 					// 古い分割をモデルから削除
 					for(int t = 2;t < sentence->get_num_segments();t++){
-						_npycrf->_npylm->remove_customer_at_time_t(sentence, t);
+						npylm->remove_customer_at_time_t(sentence, t);
 					}
 					
 					#ifdef __DEBUG__
@@ -288,7 +290,7 @@ namespace npycrf {
 					#endif
 
 					// 新しい分割を取得
-					_npycrf->_lattice->blocked_gibbs(sentence, segments, true);
+					lattice->blocked_gibbs(sentence, segments, true);
 					sentence->split(segments);
 					
 					#ifdef __DEBUG__
@@ -297,7 +299,7 @@ namespace npycrf {
 						if(sentence->size() < 100){
 							std::vector<int> a = segments;
 							sampler::mt.seed(seed);
-							_npycrf->_lattice->blocked_gibbs(sentence, segments, false);
+							lattice->blocked_gibbs(sentence, segments, false);
 							std::vector<int> b = segments;
 							if(a.size() != b.size()){
 								sentence->dump_words();
@@ -311,11 +313,11 @@ namespace npycrf {
 				}
 				// 新しい分割結果をモデルに追加
 				for(int t = 2;t < sentence->get_num_segments();t++){
-					_npycrf->_npylm->add_customer_at_time_t(sentence, t);
+					npylm->add_customer_at_time_t(sentence, t);
 				}
 				_added_to_npylm_u[data_index] = true;
 
-				if(i % 100 == 0 || i == _rand_indices_train_u.size() - 1){
+				if(i % 500 == 0 || i == _rand_indices_train_u.size() - 1){
 					auto diff = std::chrono::system_clock::now() - start_time;
 					double elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0;
 					double gibbs_per_sec = (double)(i + 1) / elapsed_time;
@@ -326,7 +328,7 @@ namespace npycrf {
 			std::cout << "\r\033[2K" << std::flush;
 
 			// 客数チェック
-			assert(_npycrf->_npylm->_hpylm->_root->_num_tables <= _npycrf->_npylm->_vpylm->get_num_customers());
+			assert(npylm->_hpylm->_root->_num_tables <= npylm->_vpylm->get_num_customers());
 
 			if(include_labeled_data){
 				_gibbs_labeled();
@@ -355,7 +357,7 @@ namespace npycrf {
 				assert(sentence->_features != NULL);
 
 				// NPYLMのg0キャッシュを消去（消す理由は単に重くなるから）
-				_npycrf->_npylm->clear_g0_cache();
+				_npycrf->_npylm->clear_g0_cache(sentence->size());
 
 				// 教師あり
 				// モデルに追加されているかチェック
@@ -377,6 +379,7 @@ namespace npycrf {
 			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
 			int total_batches = (double)_rand_indices_train_l.size() / (double)batchsize + ((_rand_indices_train_l.size() % batchsize) ? 1 : 0);
 			Lattice* lattice = _npycrf->_lattice;
+			npylm::NPYLM* npylm = _npycrf->_npylm;
 			mat::quad<double> &p_conc_tkji = lattice->_p_conc_tkji;
 			mat::tri<double> &pz_s = lattice->_pz_s;
 			mat::quad<double> &pw_h_tkji = lattice->_pw_h_tkji;
@@ -394,11 +397,11 @@ namespace npycrf {
 					int data_index = _rand_indices_train_l[i + batchsize * b];
 
 					// NPYLMのg0キャッシュを消去（消す理由は単に重くなるから）
-					_npycrf->_npylm->clear_g0_cache();
 
 					// std::cout << "data_index: " << data_index << std::endl;
 					Sentence* sentence = _dataset_l->_sentences_train[data_index];
 					assert(sentence->_features != NULL);
+					npylm->clear_g0_cache(sentence->size());
 					if(pure_crf){
 						// 周辺確率を求める
 						lattice->enumerate_marginal_p_path_given_sentence(sentence, pz_s);
@@ -594,7 +597,7 @@ namespace npycrf {
 				int data_index = rand_indices[n];
 				Sentence* sentence = dataset[data_index]->copy();
 				_npycrf->_npylm->reserve(sentence->size());
-				_npycrf->_npylm->clear_g0_cache();
+				_npycrf->_npylm->clear_g0_cache(sentence->size());
 				_npycrf->_lattice->viterbi_decode(sentence, segments);
 				sentence->split(segments);
 				sentence->dump_words();
