@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include "crf/feature/indices.h"
+#include "../python/dictionary.h"
 #include "common.h"
 #include "array.h"
 
@@ -37,4 +38,7 @@ namespace npycrf {
 		void split(int* segments_without_special_tokens, int num_segments_without_special_tokens);
 		void split(std::vector<int> &segments_without_special_tokens);
 	};
+	namespace sentence {
+		Sentence* from_wstring(std::wstring &sentence_str, python::Dictionary* dictionary);
+	}
 } // namespace npycrf

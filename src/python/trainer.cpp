@@ -257,8 +257,6 @@ namespace npycrf {
 			if(_total_gibbs_iterations < 3){
 				_npycrf->_npylm->_fix_g0_using_poisson = false;
 			}
-			Lattice* lattice = _npycrf->_lattice;
-			npylm::NPYLM* npylm = _npycrf->_npylm;
 			// 教師なしデータでモデルパラメータを更新
 			std::vector<int> segments;		// 分割の一時保存用
 			shuffle(_rand_indices_train_u.begin(), _rand_indices_train_u.end(), sampler::mt);		// データをシャッフル
@@ -273,62 +271,66 @@ namespace npycrf {
 				Sentence* sentence = _dataset_u->_sentences_train[data_index];
 				assert(sentence->_features != NULL);
 
-				// NPYLMのg0キャッシュを消去（消す理由は単に重くなるから）
-				npylm->clear_g0_cache(sentence->size());
+				if(_npycrf->with(sentence)){
+					Lattice* lattice = _npycrf->_lattice;
+					npylm::NPYLM* npylm = _npycrf->_npylm;
+					lattice->set_npycrf_mode();
 
-				// モデルに追加されているかチェック
-				if(_added_to_npylm_u[data_index] == true){
-					// 古い分割をモデルから削除
-					for(int t = 2;t < sentence->get_num_segments();t++){
-						npylm->remove_customer_at_time_t(sentence, t);
-					}
-					
-					#ifdef __DEBUG__
-						// 正規化しない場合の結果と比較するためシードを合わせる
-						int seed = (unsigned int)time(NULL);
-						sampler::mt.seed(seed);
-					#endif
-
-					// 新しい分割を取得
-					lattice->blocked_gibbs(sentence, segments, true);
-					sentence->split(segments);
-					
-					#ifdef __DEBUG__
-						// 正規化しない場合の結果と比較
-						// std::cout << sentence->size() << std::endl;
-						if(sentence->size() < 100){
-							std::vector<int> a = segments;
-							sampler::mt.seed(seed);
-							lattice->blocked_gibbs(sentence, segments, false);
-							std::vector<int> b = segments;
-							if(a.size() != b.size()){
-								sentence->dump_words();
-							}
-							assert(a.size() == b.size());
-							for(int i = 0;i < a.size();i++){
-								assert(a[i] == b[i]);
-							}
+					// モデルに追加されているかチェック
+					if(_added_to_npylm_u[data_index] == true){
+						// 古い分割をモデルから削除
+						for(int t = 2;t < sentence->get_num_segments();t++){
+							npylm->remove_customer_at_time_t(sentence, t);
 						}
-					#endif
-				}
-				// 新しい分割結果をモデルに追加
-				for(int t = 2;t < sentence->get_num_segments();t++){
-					npylm->add_customer_at_time_t(sentence, t);
-				}
-				_added_to_npylm_u[data_index] = true;
+						
+						#ifdef __DEBUG__
+							// 正規化しない場合の結果と比較するためシードを合わせる
+							int seed = (unsigned int)time(NULL);
+							sampler::mt.seed(seed);
+						#endif
 
-				if(i % 500 == 0 || i == _rand_indices_train_u.size() - 1){
-					auto diff = std::chrono::system_clock::now() - start_time;
-					double elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0;
-					double gibbs_per_sec = (double)(i + 1) / elapsed_time;
-					double percent = (double)i / (double)_rand_indices_train_u.size() * 100.0;
-					std::cout << "\r\033[2K" << i << "/" << _rand_indices_train_u.size() << " (" << std::fixed << std::setprecision(2) << percent << "%) " << gibbs_per_sec << " gibbs/s" << std::flush;
+						// 新しい分割を取得
+						lattice->blocked_gibbs(sentence, segments, true);
+						sentence->split(segments);
+						
+						#ifdef __DEBUG__
+							// 正規化しない場合の結果と比較
+							// std::cout << sentence->size() << std::endl;
+							if(sentence->size() < 100){
+								std::vector<int> a = segments;
+								sampler::mt.seed(seed);
+								lattice->blocked_gibbs(sentence, segments, false);
+								std::vector<int> b = segments;
+								if(a.size() != b.size()){
+									sentence->dump_words();
+								}
+								assert(a.size() == b.size());
+								for(int i = 0;i < a.size();i++){
+									assert(a[i] == b[i]);
+								}
+							}
+						#endif
+					}
+					// 新しい分割結果をモデルに追加
+					for(int t = 2;t < sentence->get_num_segments();t++){
+						npylm->add_customer_at_time_t(sentence, t);
+					}
+					_added_to_npylm_u[data_index] = true;
+
+					if(i % 500 == 0 || i == _rand_indices_train_u.size() - 1){
+						auto diff = std::chrono::system_clock::now() - start_time;
+						double elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0;
+						double gibbs_per_sec = (double)(i + 1) / elapsed_time;
+						double percent = (double)i / (double)_rand_indices_train_u.size() * 100.0;
+						std::cout << "\r\033[2K" << i << "/" << _rand_indices_train_u.size() << " (" << std::fixed << std::setprecision(2) << percent << "%) " << gibbs_per_sec << " gibbs/s" << std::flush;
+					}
 				}
+
 			}
 			std::cout << "\r\033[2K" << std::flush;
 
 			// 客数チェック
-			assert(npylm->_hpylm->_root->_num_tables <= npylm->_vpylm->get_num_customers());
+			assert(_npycrf->_npylm->_hpylm->_root->_num_tables <= _npycrf->_npylm->_vpylm->get_num_customers());
 
 			if(include_labeled_data){
 				_gibbs_labeled();
@@ -356,41 +358,34 @@ namespace npycrf {
 				Sentence* sentence = _dataset_l->_sentences_train[data_index];
 				assert(sentence->_features != NULL);
 
-				// NPYLMのg0キャッシュを消去（消す理由は単に重くなるから）
-				_npycrf->_npylm->clear_g0_cache(sentence->size());
-
-				// 教師あり
-				// モデルに追加されているかチェック
-				if(_added_to_npylm_l[data_index] == true){
-					// 古い分割をモデルから削除
-					for(int t = 2;t < sentence->get_num_segments();t++){
-						_npycrf->_npylm->remove_customer_at_time_t(sentence, t);
+				if(_npycrf->with(sentence)){
+					npylm::NPYLM* npylm = _npycrf->_npylm;
+					// 教師あり
+					// モデルに追加されているかチェック
+					if(_added_to_npylm_l[data_index] == true){
+						// 古い分割をモデルから削除
+						for(int t = 2;t < sentence->get_num_segments();t++){
+							npylm->remove_customer_at_time_t(sentence, t);
+						}
 					}
+					// 同じ分割結果を再度モデルに追加
+					// 追加と削除を繰り返すことでHPYLMとVPYLMのパラメータ（客の配置）がギブスサンプリングされる
+					for(int t = 2;t < sentence->get_num_segments();t++){
+						npylm->add_customer_at_time_t(sentence, t);
+					}
+					_added_to_npylm_l[data_index] = true;
 				}
-				// 同じ分割結果を再度モデルに追加
-				// 追加と削除を繰り返すことでHPYLMとVPYLMのパラメータ（客の配置）がギブスサンプリングされる
-				for(int t = 2;t < sentence->get_num_segments();t++){
-					_npycrf->_npylm->add_customer_at_time_t(sentence, t);
-				}
-				_added_to_npylm_l[data_index] = true;
 			}
 		}
-		void Trainer::sgd(double learning_rate, int batchsize, bool pure_crf){
+		void Trainer::sgd(double learning_rate, int batchsize, bool pure_crf_mode){
 			shuffle(_rand_indices_train_l.begin(), _rand_indices_train_l.end(), sampler::mt);		// データをシャッフル
 			int total_batches = (double)_rand_indices_train_l.size() / (double)batchsize + ((_rand_indices_train_l.size() % batchsize) ? 1 : 0);
-			Lattice* lattice = _npycrf->_lattice;
-			npylm::NPYLM* npylm = _npycrf->_npylm;
-			mat::quad<double> &p_conc_tkji = lattice->_p_conc_tkji;
-			mat::tri<double> &pz_s = lattice->_pz_s;
-			mat::quad<double> &pw_h_tkji = lattice->_pw_h_tkji;
-			lattice->set_pure_crf_mode(pure_crf);
 			int num_completed = 0;
 			auto start_time = std::chrono::system_clock::now();
 			for(int b = 0;b < total_batches;b++){
 				_sgd->clear_grads();
 				int size = std::min(batchsize, (int)(_rand_indices_train_l.size() - batchsize * b));
 				for(int i = 0;i < size;i++){
-					assert(lattice->get_pure_crf_mode() == pure_crf);
 					if (PyErr_CheckSignals() != 0) {	// ctrl+cが押されたかチェック
 						return;		
 					}
@@ -401,21 +396,30 @@ namespace npycrf {
 					// std::cout << "data_index: " << data_index << std::endl;
 					Sentence* sentence = _dataset_l->_sentences_train[data_index];
 					assert(sentence->_features != NULL);
-					npylm->clear_g0_cache(sentence->size());
-					if(pure_crf){
-						// 周辺確率を求める
-						lattice->enumerate_marginal_p_path_given_sentence(sentence, pz_s);
-						// 更新
-						_sgd->backward_crf(sentence, pz_s);
-					}else{
-						lattice->enumerate_marginal_p_path_and_trigram_given_sentence(sentence, p_conc_tkji, pw_h_tkji, pz_s);
-						_sgd->backward_crf(sentence, pz_s);
-						_sgd->backward_lambda_0(sentence, p_conc_tkji, pw_h_tkji, lattice->_max_word_length);
+
+					if(_npycrf->with(sentence)){
+						Lattice* lattice = _npycrf->_lattice;
+						lattice->set_pure_crf_mode(pure_crf_mode);
+
+						mat::tri<double> &pz_s = lattice->_pz_s;				// ラベルの周辺確率P(z_t, z_{t+1}|x)
+						// 以下は\lambda_0の勾配計算に必要
+						mat::quad<double> &p_conc_tkji = lattice->_p_conc_tkji;	// 単語列の周辺確率P(c_{t-k+1}^t, c_{t-k-j+1}^{t-k}, c_{t-k-j-i+1}^{t-k-j}|x)
+						mat::quad<double> &pw_h_tkji = lattice->_pw_h_tkji;		// NPYLM 単体の遷移確率P(c_{t-k+1}^t|c_{t-k-j+1}^{t-k}, c_{t-k-j-i+1}^{t-k-j})
+
+						if(pure_crf_mode){
+							// CRF単体の学習では\lambda_0を学習する必要はないためラベルの周辺確率だけ求めればよい
+							lattice->enumerate_marginal_p_z_given_sentence(sentence, pz_s);
+							_sgd->backward_crf(sentence, pz_s);
+						}else{
+							lattice->enumerate_marginal_p_z_and_trigram_given_sentence(sentence, p_conc_tkji, pw_h_tkji, pz_s);
+							_sgd->backward_crf(sentence, pz_s);
+							_sgd->backward_lambda_0(sentence, p_conc_tkji, pw_h_tkji, lattice->_max_word_length);
+						}
 					}
-					// 周辺確率を求める
 				}
 				_sgd->update(learning_rate / (double)size);	// 勾配の平均をとるため学習率を調整
 
+				// ログ表示
 				num_completed += size;
 				auto diff = std::chrono::system_clock::now() - start_time;
 				double elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() / 1000.0;
@@ -424,7 +428,6 @@ namespace npycrf {
 				std::cout << "\r\033[2K" << num_completed << "/" << _rand_indices_train_l.size() << " (" << std::fixed << std::setprecision(2) << percent << "%) " << sgd_per_sec << " sgd/s" << std::flush;
 			}
 			std::cout << "\r\033[2K" << std::flush;
-			lattice->set_npycrf_mode();
 		}
 		double Trainer::compute_perplexity_train(){
 			return _compute_perplexity(_dataset_u->_sentences_train);
@@ -596,11 +599,11 @@ namespace npycrf {
 				}
 				int data_index = rand_indices[n];
 				Sentence* sentence = dataset[data_index]->copy();
-				_npycrf->_npylm->reserve(sentence->size());
-				_npycrf->_npylm->clear_g0_cache(sentence->size());
-				_npycrf->_lattice->viterbi_decode(sentence, segments);
-				sentence->split(segments);
-				sentence->dump_words();
+				if(_npycrf->with(sentence)){
+					_npycrf->_lattice->viterbi_decode(sentence, segments);
+					sentence->split(segments);
+					sentence->dump_words();
+				}
 				delete sentence;
 			}
 		}

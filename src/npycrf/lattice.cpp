@@ -942,31 +942,31 @@ namespace npycrf {
 		}
 	}
 	// p(z_t, z_{t+1}|s)の計算
-	void Lattice::enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s){
+	void Lattice::enumerate_marginal_p_z_given_sentence(Sentence* sentence, mat::tri<double> &pz_s){
 		reserve(_max_word_length, sentence->size());
 		_clear_word_id_cache(sentence->size());
 		_clear_p_tkji(sentence->size());
 		_enumerate_forward_variables(sentence, _alpha, _pw_h_tkji, _p_transition_tkji, _scaling, true);
 		_enumerate_backward_variables(sentence, _beta, _p_transition_tkji, _scaling, true);
-		_enumerate_marginal_p_path_given_sentence(sentence, pz_s, _alpha, _beta);
+		_enumerate_marginal_p_z_given_sentence(sentence, pz_s, _alpha, _beta);
 	}
-	void Lattice::_enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s, mat::tri<double> &alpha, mat::tri<double> &beta){
+	void Lattice::_enumerate_marginal_p_z_given_sentence(Sentence* sentence, mat::tri<double> &pz_s, mat::tri<double> &alpha, mat::tri<double> &beta){
 		_enumerate_marginal_p_substring_given_sentence(_pc_s, sentence->size(), alpha, beta);
-		_enumerate_marginal_p_path_given_sentence_using_p_substring(pz_s, sentence->size(), _pc_s);
+		_enumerate_marginal_p_z_given_sentence_using_p_substring(pz_s, sentence->size(), _pc_s);
 	}
-	void Lattice::enumerate_marginal_p_path_and_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, mat::tri<double> &pz_s){
+	void Lattice::enumerate_marginal_p_z_and_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, mat::tri<double> &pz_s){
 		reserve(_max_word_length, sentence->size());
 		_clear_word_id_cache(sentence->size());
 		_p_transition_tkji.fill(-1, sentence->size());
 		pw_h_tkji.fill(-1, sentence->size());
 		_enumerate_forward_variables(sentence, _alpha, pw_h_tkji, _p_transition_tkji, _scaling, true);
 		_enumerate_backward_variables(sentence, _beta, _p_transition_tkji, _scaling, true);
-		_enumerate_marginal_p_path_given_sentence(sentence, pz_s, _alpha, _beta);
+		_enumerate_marginal_p_z_given_sentence(sentence, pz_s, _alpha, _beta);
 		_enumerate_marginal_p_trigram_given_sentence(sentence, p_conc_tkji, _alpha, _beta, _p_transition_tkji, _scaling, true);
 	}
 	// p(z_t, z_{t+1}|s)の計算
 	// Zsは統合モデル上での文の確率
-	void Lattice::_enumerate_marginal_p_path_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::bi<double> &pc_s){
+	void Lattice::_enumerate_marginal_p_z_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::bi<double> &pc_s){
 		assert(sentence_length <= _max_sentence_length);
 		pz_s(0, 0, 0) = 0;
 		pz_s(0, 0, 1) = 0;

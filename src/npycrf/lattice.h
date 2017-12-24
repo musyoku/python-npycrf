@@ -56,10 +56,10 @@ namespace npycrf {
 		double _compute_normalizing_constant_backward(Sentence* sentence, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji);
 		void enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, bool use_scaling = true);
 		void _enumerate_marginal_p_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::tri<double> &alpha, mat::tri<double> &beta, mat::quad<double> &p_transition_tkji, npycrf::array<double> &scaling, bool use_scaling = true);
-		void enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s);
-		void _enumerate_marginal_p_path_given_sentence(Sentence* sentence, mat::tri<double> &pz_s, mat::tri<double> &alpha, mat::tri<double> &beta);
-		void _enumerate_marginal_p_path_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::bi<double> &pc_s);
-		void enumerate_marginal_p_path_and_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, mat::tri<double> &pz_s);
+		void enumerate_marginal_p_z_given_sentence(Sentence* sentence, mat::tri<double> &pz_s);
+		void _enumerate_marginal_p_z_given_sentence(Sentence* sentence, mat::tri<double> &pz_s, mat::tri<double> &alpha, mat::tri<double> &beta);
+		void _enumerate_marginal_p_z_given_sentence_using_p_substring(mat::tri<double> &pz_s, int sentence_length, mat::bi<double> &pc_s);
+		void enumerate_marginal_p_z_and_trigram_given_sentence(Sentence* sentence, mat::quad<double> &p_conc_tkji, mat::quad<double> &pw_h_tkji, mat::tri<double> &pz_s);
 		double _compute_p_z_case_1_1(int sentence_length, int t, mat::bi<double> &pc_s);
 		double _compute_p_z_case_1_0(int sentence_length, int t, mat::bi<double> &pc_s);
 		double _compute_p_z_case_0_1(int sentence_length, int t, mat::bi<double> &pc_s);

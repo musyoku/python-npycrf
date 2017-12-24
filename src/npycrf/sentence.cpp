@@ -5,6 +5,18 @@
 // <bos>と<eos>は長さが0文字であることに注意
 
 namespace npycrf {
+	namespace sentence {
+		Sentence* from_wstring(std::wstring &sentence_str, python::Dictionary* dictionary){
+			// 構成文字を文字IDに変換
+			array<int> character_ids = array<int>(sentence_str.size());
+			for(int i = 0;i < sentence_str.size();i++){
+				wchar_t character = sentence_str[i];
+				int character_id = dictionary->get_character_id(character);
+				character_ids[i] = character_id;
+			}
+			return new Sentence(sentence_str, character_ids);
+		}
+	}
 	Sentence::Sentence(std::wstring sentence, array<int> &character_ids){
 		_sentence_str = sentence;
 		_characters = _sentence_str.data();

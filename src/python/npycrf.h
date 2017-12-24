@@ -29,6 +29,7 @@ namespace npycrf {
 			double compute_normalizing_constant(Sentence* sentence);
 			double compute_log_normalizing_constant(Sentence* sentence);
 			double python_compute_normalizing_constant(std::wstring sentence_str, Dictionary* dictionary);
+			bool with(Sentence* sentence);
 			void parse(Sentence* sentence);
 			boost::python::list python_parse(std::wstring sentence_str, Dictionary* dictionary);
 		};

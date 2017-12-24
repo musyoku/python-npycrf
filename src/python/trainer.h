@@ -34,7 +34,7 @@ namespace npycrf {
 			void remove_all_data();
 			void add_labeled_data_to_npylm();
 			void gibbs(bool include_labeled_data = false);
-			void sgd(double learning_rate, int batchsize = 32, bool pure_crf = false);
+			void sgd(double learning_rate, int batchsize = 32, bool pure_crf_mode = false);
 			void sample_hpylm_vpylm_hyperparameters();
 			void sample_npylm_lambda();
 			int sample_word_from_vpylm_given_context(array<int> &context_ids, int sample_t);
@@ -52,6 +52,7 @@ namespace npycrf {
 			void print_segmentation_unlabeled_dev(int num_to_print);
 			void print_p_k_vpylm();
 			int detect_hash_collision(int max_word_length);
+			bool with(Sentence* sentence);
 		};
 	}
 }
