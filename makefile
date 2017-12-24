@@ -13,7 +13,7 @@ SOURCES = 	src/python/*.cpp \
 			src/npycrf/solver/*.cpp
 
 install: ## npycrf.soを生成
-	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npycrf.so -O0 -g
+	$(CC) $(INCLUDE) $(SOFLAGS) src/python.cpp $(SOURCES) $(LDFLAGS) -o run/npycrf.so -O3 -DNDEBUG
 	cp run/npycrf.so run/split_file/npycrf.so
 	cp run/npycrf.so run/separate_files/npycrf.so
 	rm -rf run/npycrf.so
