@@ -327,7 +327,7 @@ namespace npycrf {
 				}
 
 			}
-			std::cout << "\r\033[2K" << std::flush;
+			std::cout << "\r\033[2K" << std::defaultfloat << std::flush;
 
 			// 客数チェック
 			assert(_npycrf->_npylm->_hpylm->_root->_num_tables <= _npycrf->_npylm->_vpylm->get_num_customers());
@@ -427,7 +427,7 @@ namespace npycrf {
 				double percent = (double)b / (double)total_batches * 100.0;
 				std::cout << "\r\033[2K" << num_completed << "/" << _rand_indices_train_l.size() << " (" << std::fixed << std::setprecision(2) << percent << "%) " << sgd_per_sec << " sgd/s" << std::flush;
 			}
-			std::cout << "\r\033[2K" << std::flush;
+			std::cout << "\r\033[2K" << std::defaultfloat <<  std::flush;
 		}
 		double Trainer::compute_perplexity_train(){
 			return _compute_perplexity(_dataset_u->_sentences_train);

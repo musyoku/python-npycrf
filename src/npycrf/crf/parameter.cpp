@@ -22,6 +22,28 @@ namespace npycrf {
 		int Parameter::get_num_features(){
 			return _weights.size();
 		}
+		void Parameter::print_distribution(){
+			hashmap<int, int> distribution;
+			int min_value = 0;
+			int max_value = 0;
+			for(int i = 0;i < _weights.size();i++){
+				double abs_value = std::abs(_weights[i]);
+				if(abs_value == 0){
+					continue;
+				}
+				int log10_value = (int)log10(abs_value);
+				distribution[log10_value] += 1;
+				if(min_value == 0 || log10_value < min_value){
+					min_value =  log10_value;
+				}
+				if(max_value == 0 || log10_value > max_value){
+					max_value =  log10_value;
+				}
+			}
+			for(int d = max_value;d >= min_value;d--){
+				std::cout << pow(10, d) << "	" << distribution[d] << std::endl;
+			}
+		}
 		template <class Archive>
 		void Parameter::serialize(Archive &ar, unsigned int version)
 		{

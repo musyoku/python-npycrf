@@ -60,17 +60,19 @@ def build_corpus(filepath, directory, semi_supervised_split_ratio, max_word_leng
 	for sentence_str in sentence_list_l:
 		m = tagger.parseToNode(sentence_str)	# 形態素解析
 		words = []
+		skip = False
 		while m:
 			word = m.surface
-			if len(word) > max_word_length:
-				print("max_word_length must be greater or equal to {} ({})".format(len(word), word))
-				words = []
-				break
-			if len(word) > 0:
-				words.append(word)
+			split = word.split("・")
+			for word in split:
+				if len(word) > args.max_word_length:
+					print("max_word_length must be greater or equal to {} ({})".format(len(word), word))
+					skip = True
+				if len(word) > 0:
+					words.append(word)
 			m = m.next
-		if len(words) > 0:
-			corpus_l.add_words(words)
+		if len(words) > 0 and skip == False:
+			corpus.add_words(words)
 
 	for sentence_str in sentence_list_u:
 		corpus_u.add_words([sentence_str])	# 教師なしデータは文を単語とみなす
@@ -219,7 +221,7 @@ if __name__ == "__main__":
 	parser.add_argument("--npylm-lambda-b", "-lam-b", type=float, default=1)
 	parser.add_argument("--vpylm-beta-stop", "-beta-stop", type=float, default=4)
 	parser.add_argument("--vpylm-beta-pass", "-beta-pass", type=float, default=1)
-	parser.add_argument("--max-word-length", "-l", type=int, default=12, help="可能な単語の最大長.")
+	parser.add_argument("--max-word-length", "-l", type=int, default=14, help="可能な単語の最大長.")
 	parser.add_argument("--max-sentence-length", type=int, default=300, help="長すぎる文を除外する.")
 
 	# CRF

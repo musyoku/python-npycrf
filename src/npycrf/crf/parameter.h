@@ -22,6 +22,7 @@ namespace npycrf {
 			Parameter(double weight_size, double lambda_0, double sigma);
 			~Parameter();
 			int get_num_features();
+			void print_distribution();
 		};
 	}
 }

@@ -28,6 +28,7 @@ namespace npycrf {
 				double get_lambda_0();
 				bool load(std::string filename);
 				bool save(std::string filename);
+				void print_weight_distribution();
 			};
 		}
 	}

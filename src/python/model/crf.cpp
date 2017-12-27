@@ -62,6 +62,9 @@ namespace npycrf {
 			double CRF::get_lambda_0(){
 				return _crf->_parameter->_lambda_0;
 			}
+			void CRF::print_weight_distribution(){
+				_crf->_parameter->print_distribution();
+			}
 			bool CRF::load(std::string filename){
 				bool success = false;
 				std::ifstream ifs(filename);
