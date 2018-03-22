@@ -46,7 +46,7 @@ brew install python3
 #### Boostのインストール
 
 ```bash
-brew install boost-python --with-python3
+brew install boost-python3
 ```
 
 ### Ubuntu
@@ -62,13 +62,13 @@ Pythonのバージョンを自身のものと置き換えてください。
 
 ### ビルド
 
+makefileの`BOOST`と`BOOST_PYTHON3`を自分の環境に合わせ書き換えます。
+
 以下のコマンドで`npycrf.so`が`/run/`に生成されます。
 
 ```bash
 make install
 ```
-
-`makefile`内のBoostのパスを環境に合わせて変更してください。
 
 ## 学習
 
