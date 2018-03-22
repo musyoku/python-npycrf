@@ -1,7 +1,8 @@
 CC = g++
-BOOST = /usr/local/Cellar/boost/1.65.0
+BOOST = /usr/local/Cellar/boost/1.66.0
+BOOST_PYTHON3 = /usr/local/Cellar/boost-python3/1.66.0_1
 INCLUDE = `python3-config --includes` -std=c++14 -I$(BOOST)/include
-LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(BOOST)/lib
+LDFLAGS = `python3-config --ldflags` -lboost_serialization -lboost_python3 -L$(BOOST)/lib -L$(BOOST_PYTHON3)/lib
 SOFLAGS = -shared -fPIC -march=native
 SOURCES = 	src/python/*.cpp \
 			src/python/model/*.cpp \
